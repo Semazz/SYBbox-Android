@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">SYBbox</string>
+
+    
+    <string name="nav_home">Inicio</string>
+    <string name="nav_servers">Servidores</string>
+    <string name="nav_routing">Enrutamiento</string>
+    <string name="nav_settings">Ajustes</string>
+    <string name="logs">Registros</string>
+
+    
+    <string name="connect">Conectar</string>
+    <string name="disconnect">Desconectar</string>
+    <string name="connecting">Conectando…</string>
+    <string name="connected">Conectado</string>
+    <string name="disconnected">Sin conexión</string>
+    <string name="connection_failed">Error de conexión</string>
+    <string name="tap_to_connect">Toca para conectar</string>
+    <string name="tap_to_disconnect">Toca para desconectar</string>
+    <string name="no_server_selected">Ningún servidor seleccionado</string>
+    <string name="select_server_first">Selecciona un servidor primero</string>
+
+    
+    <string name="upload">Subida</string>
+    <string name="download">Bajada</string>
+    <string name="uptime">Tiempo activo</string>
+    <string name="total_traffic">Total</string>
+    <string name="active_server">Servidor activo</string>
+    <string name="test_connection">Medir ping</string>
+    <string name="testing">Probando…</string>
+    <string name="latency_ms">%1$d ms</string>
+    <string name="latency_unavailable">sin respuesta</string>
+    <string name="measure_ping">Medir ping</string>
+
+    
+    <string name="servers">Servidores</string>
+    <string name="subscriptions">Suscripciones</string>
+    <string name="add_server">Añadir servidor</string>
+    <string name="add_subscription">Añadir suscripción</string>
+    <string name="no_servers_title">Aún no hay servidores</string>
+    <string name="no_servers_hint">Añade uno con un enlace, un código QR o una suscripción</string>
+    <string name="scan_qr">Escanear código QR</string>
+    <string name="import_from_clipboard">Pegar desde el portapapeles</string>
+    <string name="import_link">Importar enlace</string>
+    <string name="server_link">Enlace del servidor</string>
+    <string name="server_link_hint">vless://, vmess://, trojan://, ss://, hy2://, tuic://</string>
+    <string name="subscription_url">URL de suscripción</string>
+    <string name="name_optional">Nombre (opcional)</string>
+    <string name="update">Actualizar</string>
+    <string name="updating">Actualizando…</string>
+    <string name="ping_all">Probar todos</string>
+    <string name="sort_by_latency">Ordenar por latencia</string>
+    <string name="share">Compartir</string>
+    <string name="share_link">Compartir enlace</string>
+    <string name="share_qr">Compartir código QR</string>
+    <string name="copy_link">Copiar enlace</string>
+    <string name="server_count">%1$d servidores</string>
+    <string name="expires_on">Expira el %1$s</string>
+    <string name="traffic_used">%1$s de %2$s</string>
+
+    
+    <string name="routing_rules">Reglas</string>
+    <string name="add_rule">Añadir regla</string>
+    <string name="edit_rule">Editar regla</string>
+    <string name="no_rules_title">Sin reglas personalizadas</string>
+    <string name="no_rules_hint">Todo sigue los ajustes predefinidos</string>
+    <string name="rule_name">Nombre de la regla</string>
+    <string name="rule_type">Coincidir por</string>
+    <string name="rule_value">Valor</string>
+    <string name="rule_value_hint">Separado por comas</string>
+    <string name="rule_action">Acción</string>
+    <string name="action_proxy">Proxy</string>
+    <string name="action_direct">Directo</string>
+    <string name="action_block">Bloquear</string>
+    <string name="action_dns">Secuestrar DNS</string>
+    <string name="per_app_routing">Enrutamiento por app</string>
+    <string name="per_app_summary">Elige qué apps usan el túnel</string>
+    <string name="apps_selected">%1$d seleccionadas</string>
+    <string name="mode_include">Solo apps seleccionadas</string>
+    <string name="mode_exclude">Todas excepto las seleccionadas</string>
+    <string name="search_apps">Buscar apps</string>
+    <string name="show_system_apps">Mostrar apps del sistema</string>
+
+    
+    <string name="group_connection">Conexión</string>
+    <string name="group_routing">Enrutamiento</string>
+    <string name="group_dns">DNS</string>
+    <string name="group_tls">TLS y anticensura</string>
+    <string name="group_tun">Túnel</string>
+    <string name="group_subscriptions">Suscripciones</string>
+    <string name="group_appearance">Apariencia</string>
+    <string name="group_diagnostics">Diagnósticos</string>
+    <string name="group_about">Acerca de</string>
+
+    
+    <string name="always_on_vpn">VPN siempre activa</string>
+    <string name="always_on_vpn_summary">Abre la configuración del sistema para mantener el túnel activo</string>
+    <string name="auto_failover">Conmutación automática</string>
+    <string name="auto_failover_summary">Cambia al siguiente servidor si la conexión falla</string>
+    <string name="block_without_vpn">Bloquear conexiones sin VPN</string>
+    <string name="block_without_vpn_summary">También conocido como interruptor de emergencia, se configura en los ajustes del sistema</string>
+    <string name="auto_connect_boot">Conectar al iniciar</string>
+    <string name="auto_connect_boot_summary">Reconectar al último servidor tras reiniciar</string>
+    <string name="connection_timeout">Tiempo de espera de conexión</string>
+    <string name="seconds_value">%1$d s</string>
+
+    <string name="routing_mode">Modo</string>
+    <string name="mode_balanced">Equilibrado</string>
+    <string name="mode_global">Todo por proxy</string>
+    <string name="mode_direct_only">Solo directo</string>
+    <string name="mode_custom">Personalizado</string>
+    <string name="block_ads">Bloquear anuncios</string>
+    <string name="block_ads_summary">Rechazar dominios publicitarios conocidos</string>
+    <string name="block_trackers">Bloquear rastreadores</string>
+    <string name="block_trackers_summary">Rechazar dominios de análisis conocidos</string>
+    <string name="bypass_russia">Sitios rusos en directo</string>
+    <string name="bypass_russia_summary">Mantener .ru y rangos de IPs rusas fuera del túnel</string>
+    <string name="bypass_china">Sitios chinos en directo</string>
+    <string name="bypass_china_summary">Mantener .cn y rangos de IPs chinas fuera del túnel</string>
+    <string name="bypass_local">Red local en directo</string>
+    <string name="bypass_local_summary">Las direcciones privadas nunca entran en el túnel</string>
+
+    <string name="remote_dns">DNS remoto</string>
+    <string name="remote_dns_summary">Resuelve dominios proxy a través del túnel</string>
+    <string name="direct_dns">DNS directo</string>
+    <string name="direct_dns_summary">Resuelve todo lo que evita el túnel</string>
+    <string name="dns_strategy">Familia de direcciones</string>
+    <string name="strategy_prefer_ipv4">Preferir IPv4</string>
+    <string name="strategy_prefer_ipv6">Preferir IPv6</string>
+    <string name="strategy_ipv4_only">Solo IPv4</string>
+    <string name="strategy_ipv6_only">Solo IPv6</string>
+    <string name="fake_ip">FakeIP</string>
+    <string name="fake_ip_summary">Responde al instante con una dirección ficticia y resuelve dentro del túnel</string>
+    <string name="fake_ip_range">Rango de FakeIP</string>
+
+    <string name="custom_sni">Sobrescribir SNI</string>
+    <string name="custom_sni_summary">Déjalo vacío para usar el valor del perfil</string>
+    <string name="tls_fragment">Fragmentación TLS</string>
+    <string name="tls_fragment_summary">Divide el handshake para que los filtros de SNI no puedan detectarlo</string>
+    <string name="fragment_delay">Retardo de fragmentación</string>
+    <string name="record_fragment">Fragmentación de registros</string>
+    <string name="record_fragment_summary">Divide los registros TLS además del handshake</string>
+    <string name="multiplex">Multiplex</string>
+    <string name="multiplex_summary">Transmite varios flujos en una conexión, se ignora con xtls-rprx-vision</string>
+
+    <string name="tun_stack">Pila de red</string>
+    <string name="tun_stack_gvisor">gVisor (espacio de usuario, más seguro)</string>
+    <string name="tun_stack_system">Sistema (más rápido)</string>
+    <string name="tun_stack_mixed">Mixta</string>
+    <string name="tun_mtu">MTU</string>
+    <string name="auto_route">Rutas automáticas</string>
+    <string name="auto_route_summary">Enrutar todo el tráfico por el túnel</string>
+    <string name="strict_route">Enrutamiento estricto</string>
+    <string name="strict_route_summary">Evitar que el tráfico se escape del túnel</string>
+
+    <string name="sub_auto_update">Actualizar automáticamente</string>
+    <string name="sub_interval">Intervalo de actualización</string>
+    <string name="hours_value">%1$d h</string>
+
+    <string name="theme">Tema</string>
+    <string name="theme_system">Seguir sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="language">Idioma</string>
+    <string name="language_system">Seguir sistema</string>
+    <string name="language_en" translatable="false">English</string>
+    <string name="language_ru" translatable="false">Русский</string>
+    <string name="dynamic_color">Color dinámico</string>
+    <string name="dynamic_color_summary">Usar colores del fondo de pantalla en Android 12 y superior</string>
+
+    <string name="log_level">Nivel de registro</string>
+    <string name="open_logs">Abrir registros</string>
+    <string name="clear_logs">Borrar registros</string>
+    <string name="copy_logs">Copiar registros</string>
+    <string name="export_config">Exportar configuración</string>
+    <string name="export_config_summary">Guardar la configuración generada de sing-box para inspeccionarla</string>
+    <string name="no_logs">Aún no hay registros</string>
+    <string name="filter_all">Todos</string>
+
+    <string name="version">Versión</string>
+    <string name="core_version">Núcleo</string>
+    <string name="developed_by" translatable="false">SYBcreate</string>
+
+    
+    <string name="add">Añadir</string>
+    <string name="save">Guardar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="delete">Eliminar</string>
+    <string name="rename">Renombrar</string>
+    <string name="rename_subscription">Renombrar suscripción</string>
+    <string name="subscription_name">Nombre de suscripción</string>
+    <string name="edit">Editar</string>
+    <string name="close">Cerrar</string>
+    <string name="retry">Reintentar</string>
+    <string name="ok">Aceptar</string>
+
+    
+    <string name="msg_vpn_permission_denied">Permiso de VPN denegado</string>
+    <string name="msg_clipboard_empty">El portapapeles está vacío</string>
+    <string name="msg_invalid_link">Ese enlace no tiene un formato compatible</string>
+    <string name="msg_server_added">Añadido %1$s</string>
+    <string name="msg_servers_added">Añadidos %1$d servidores</string>
+    <string name="msg_no_servers_in_subscription">No se encontraron servidores en esa suscripción</string>
+    <string name="msg_sub_debug">No se encontraron servidores. Inicio de la respuesta: %1$s</string>
+    <string name="msg_sub_already_added">Esta suscripción ya está añadida</string>
+    <string name="msg_subscription_empty">La suscripción no devolvió nada</string>
+    <string name="msg_subscription_deleted">Suscripción eliminada</string>
+    <string name="msg_server_deleted">Servidor eliminado</string>
+    <string name="msg_rule_deleted">Regla eliminada</string>
+    <string name="msg_copied">Copiado</string>
+    <string name="msg_error">Error: %1$s</string>
+    <string name="msg_url_empty">Introduce una URL</string>
+    <string name="msg_link_empty">Introduce un enlace</string>
+
+    
+    <string name="scanner_title">Apunta a un código QR</string>
+    <string name="scanner_permission">Se necesita acceso a la cámara para escanear códigos QR</string>
+    <string name="grant_permission">Conceder permiso</string>
+
+    
+    <string name="channel_vpn">Estado de la VPN</string>
+    <string name="channel_vpn_description">Muestra el estado del túnel y el tráfico</string>
+    <string name="channel_updates">Actualizaciones de suscripciones</string>
+    <string name="channel_updates_description">Progreso al actualizar suscripciones</string>
+
+    
+    <string name="cd_add">Añadir</string>
+    <string name="cd_back">Atrás</string>
+    <string name="cd_more">Más opciones</string>
+    <string name="cd_refresh">Actualizar</string>
+    <string name="check_ping">Ping</string>
+    <string name="msg_ping_failed">Servidor inaccesible</string>
+</resources>
+

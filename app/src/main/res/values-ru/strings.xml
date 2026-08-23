@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    
+    <string name="nav_home">Главная</string>
+    <string name="nav_servers">Серверы</string>
+    <string name="nav_routing">Маршруты</string>
+    <string name="nav_settings">Настройки</string>
+    <string name="logs">Логи</string>
+
+    
+    <string name="connect">Подключить</string>
+    <string name="disconnect">Отключить</string>
+    <string name="connecting">Подключение…</string>
+    <string name="connected">Подключено</string>
+    <string name="disconnected">Не подключено</string>
+    <string name="connection_failed">Не удалось подключиться</string>
+    <string name="tap_to_connect">Нажмите, чтобы подключиться</string>
+    <string name="tap_to_disconnect">Нажмите, чтобы отключиться</string>
+    <string name="no_server_selected">Сервер не выбран</string>
+    <string name="select_server_first">Сначала выберите сервер</string>
+
+    
+    <string name="upload">Отдача</string>
+    <string name="download">Загрузка</string>
+    <string name="uptime">Время сессии</string>
+    <string name="total_traffic">Всего</string>
+    <string name="active_server">Активный сервер</string>
+    <string name="test_connection">Измерить пинг</string>
+    <string name="testing">Проверка…</string>
+    <string name="latency_ms">%1$d мс</string>
+    <string name="latency_unavailable">нет ответа</string>
+    <string name="measure_ping">Измерить пинг</string>
+
+    
+    <string name="servers">Серверы</string>
+    <string name="subscriptions">Подписки</string>
+    <string name="add_server">Добавить сервер</string>
+    <string name="add_subscription">Добавить подписку</string>
+    <string name="no_servers_title">Серверов пока нет</string>
+    <string name="no_servers_hint">Добавьте по ссылке, QR-коду или через подписку</string>
+    <string name="scan_qr">Сканировать QR-код</string>
+    <string name="import_from_clipboard">Вставить из буфера</string>
+    <string name="import_link">Импорт по ссылке</string>
+    <string name="server_link">Ссылка на сервер</string>
+    <string name="server_link_hint">vless://, vmess://, trojan://, ss://, hy2://, tuic://</string>
+    <string name="subscription_url">Ссылка на подписку</string>
+    <string name="name_optional">Название (необязательно)</string>
+    <string name="update">Обновить</string>
+    <string name="updating">Обновление…</string>
+    <string name="ping_all">Проверить все</string>
+    <string name="sort_by_latency">Сортировать по задержке</string>
+    <string name="share">Поделиться</string>
+    <string name="share_link">Поделиться ссылкой</string>
+    <string name="share_qr">Поделиться QR-кодом</string>
+    <string name="copy_link">Скопировать ссылку</string>
+    <string name="server_count">Серверов: %1$d</string>
+    <string name="expires_on">Действует до %1$s</string>
+    <string name="traffic_used">%1$s из %2$s</string>
+
+    
+    <string name="routing_rules">Правила</string>
+    <string name="add_rule">Добавить правило</string>
+    <string name="edit_rule">Изменить правило</string>
+    <string name="no_rules_title">Своих правил нет</string>
+    <string name="no_rules_hint">Всё идёт по пресетам из настроек</string>
+    <string name="rule_name">Название правила</string>
+    <string name="rule_type">Совпадение по</string>
+    <string name="rule_value">Значение</string>
+    <string name="rule_value_hint">Через запятую</string>
+    <string name="rule_action">Действие</string>
+    <string name="action_proxy">Через прокси</string>
+    <string name="action_direct">Напрямую</string>
+    <string name="action_block">Блокировать</string>
+    <string name="action_dns">Перехват DNS</string>
+    <string name="per_app_routing">Приложения</string>
+    <string name="per_app_summary">Выберите, какие приложения идут через туннель</string>
+    <string name="apps_selected">Выбрано: %1$d</string>
+    <string name="mode_include">Только выбранные приложения</string>
+    <string name="mode_exclude">Все, кроме выбранных</string>
+    <string name="search_apps">Поиск приложений</string>
+    <string name="show_system_apps">Показать системные</string>
+
+    
+    <string name="group_connection">Подключение</string>
+    <string name="group_routing">Маршрутизация</string>
+    <string name="group_dns">DNS</string>
+    <string name="group_tls">TLS и обход блокировок</string>
+    <string name="group_tun">Туннель</string>
+    <string name="group_subscriptions">Подписки</string>
+    <string name="group_appearance">Внешний вид</string>
+    <string name="group_diagnostics">Диагностика</string>
+    <string name="group_about">О программе</string>
+
+    
+    <string name="always_on_vpn">Постоянный VPN</string>
+    <string name="always_on_vpn_summary">Откроет системную настройку, чтобы туннель не выключался</string>
+    <string name="block_without_vpn">Блокировать трафик без VPN</string>
+    <string name="block_without_vpn_summary">Так называемый kill switch, включается в настройках системы</string>
+    <string name="auto_connect_boot">Подключаться при загрузке</string>
+    <string name="auto_connect_boot_summary">Восстановить последний сервер после перезагрузки</string>
+    <string name="connection_timeout">Таймаут подключения</string>
+    <string name="seconds_value">%1$d с</string>
+
+    <string name="routing_mode">Режим</string>
+    <string name="mode_balanced">Сбалансированный</string>
+    <string name="mode_global">Всё через прокси</string>
+    <string name="mode_direct_only">Только напрямую</string>
+    <string name="mode_custom">Свой</string>
+    <string name="block_ads">Блокировать рекламу</string>
+    <string name="block_ads_summary">Отклонять известные рекламные домены</string>
+    <string name="block_trackers">Блокировать трекеры</string>
+    <string name="block_trackers_summary">Отклонять известные домены аналитики</string>
+    <string name="bypass_russia">Российские сайты напрямую</string>
+    <string name="bypass_russia_summary">Домены .ru и российские адреса минуют туннель</string>
+    <string name="bypass_china">Китайские сайты напрямую</string>
+    <string name="bypass_china_summary">Домены .cn и китайские адреса минуют туннель</string>
+    <string name="bypass_local">Локальная сеть напрямую</string>
+    <string name="bypass_local_summary">Частные адреса никогда не попадают в туннель</string>
+
+    <string name="remote_dns">Удалённый DNS</string>
+    <string name="remote_dns_summary">Резолвит проксируемые домены через туннель</string>
+    <string name="direct_dns">Прямой DNS</string>
+    <string name="direct_dns_summary">Резолвит всё, что идёт мимо туннеля</string>
+    <string name="dns_strategy">Тип адресов</string>
+    <string name="strategy_prefer_ipv4">Сначала IPv4</string>
+    <string name="strategy_prefer_ipv6">Сначала IPv6</string>
+    <string name="strategy_ipv4_only">Только IPv4</string>
+    <string name="strategy_ipv6_only">Только IPv6</string>
+    <string name="fake_ip">FakeIP</string>
+    <string name="fake_ip_summary">Мгновенный ответ подставным адресом, а настоящий резолв идёт в туннеле</string>
+    <string name="fake_ip_range">Диапазон FakeIP</string>
+
+    <string name="custom_sni">Переопределить SNI</string>
+    <string name="custom_sni_summary">Пусто — берётся значение из профиля</string>
+    <string name="tls_fragment">Фрагментация TLS</string>
+    <string name="tls_fragment_summary">Разбивает рукопожатие, чтобы фильтры не увидели SNI</string>
+    <string name="fragment_delay">Задержка фрагментов</string>
+    <string name="record_fragment">Фрагментация записей</string>
+    <string name="record_fragment_summary">Разбивать и сами TLS-записи, а не только рукопожатие</string>
+    <string name="multiplex">Мультиплексирование</string>
+    <string name="multiplex_summary">Несколько потоков в одном соединении, не работает с xtls-rprx-vision</string>
+
+    <string name="tun_stack">Сетевой стек</string>
+    <string name="tun_stack_gvisor">gVisor (в пространстве пользователя, надёжнее)</string>
+    <string name="tun_stack_system">Системный (быстрее)</string>
+    <string name="tun_stack_mixed">Смешанный</string>
+    <string name="tun_mtu">MTU</string>
+    <string name="auto_route">Автоматические маршруты</string>
+    <string name="auto_route_summary">Направлять весь трафик в туннель</string>
+    <string name="strict_route">Строгая маршрутизация</string>
+    <string name="strict_route_summary">Не давать трафику утекать мимо туннеля</string>
+
+    <string name="sub_auto_update">Обновлять автоматически</string>
+    <string name="sub_interval">Интервал обновления</string>
+    <string name="hours_value">%1$d ч</string>
+
+    <string name="theme">Тема</string>
+    <string name="theme_system">Как в системе</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="language">Язык</string>
+    <string name="language_system">Как в системе</string>
+    <string name="dynamic_color">Динамические цвета</string>
+    <string name="dynamic_color_summary">Брать цвета из обоев на Android 12 и новее</string>
+
+    <string name="log_level">Уровень логов</string>
+    <string name="open_logs">Открыть логи</string>
+    <string name="clear_logs">Очистить логи</string>
+    <string name="copy_logs">Скопировать логи</string>
+    <string name="export_config">Экспорт конфигурации</string>
+    <string name="export_config_summary">Сохранить сгенерированный конфиг sing-box для проверки</string>
+    <string name="no_logs">Пока ничего не записано</string>
+    <string name="filter_all">Все</string>
+
+    <string name="version">Версия</string>
+    <string name="core_version">Ядро</string>
+
+    
+    <string name="add">Добавить</string>
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+    <string name="delete">Удалить</string>
+    <string name="edit">Изменить</string>
+    <string name="close">Закрыть</string>
+    <string name="retry">Повторить</string>
+    <string name="ok">ОК</string>
+
+    
+    <string name="msg_vpn_permission_denied">Разрешение на VPN не выдано</string>
+    <string name="msg_clipboard_empty">Буфер обмена пуст</string>
+    <string name="msg_invalid_link">Такой формат ссылки не поддерживается</string>
+    <string name="msg_server_added">Добавлен %1$s</string>
+    <string name="msg_servers_added">Добавлено серверов: %1$d</string>
+    <string name="msg_no_servers_in_subscription">В подписке не нашлось серверов</string>
+    <string name="msg_sub_debug">Серверов нет. Ответ: %1$s</string>
+    <string name="msg_sub_already_added">Эта подписка уже добавлена</string>
+    <string name="msg_subscription_empty">Подписка вернула пустой ответ</string>
+    <string name="msg_subscription_deleted">Подписка удалена</string>
+    <string name="msg_server_deleted">Сервер удалён</string>
+    <string name="msg_rule_deleted">Правило удалено</string>
+    <string name="msg_copied">Скопировано</string>
+    <string name="msg_error">Ошибка: %1$s</string>
+    <string name="msg_url_empty">Введите ссылку</string>
+    <string name="msg_link_empty">Введите ссылку</string>
+
+    
+    <string name="scanner_title">Наведите на QR-код</string>
+    <string name="scanner_permission">Для сканирования QR-кодов нужен доступ к камере</string>
+    <string name="grant_permission">Разрешить</string>
+
+    
+    <string name="channel_vpn">Состояние VPN</string>
+    <string name="channel_vpn_description">Показывает состояние туннеля и скорость</string>
+    <string name="channel_updates">Обновления подписок</string>
+    <string name="channel_updates_description">Ход обновления подписок</string>
+
+    
+    <string name="cd_add">Добавить</string>
+    <string name="cd_back">Назад</string>
+    <string name="cd_more">Ещё</string>
+    <string name="cd_refresh">Обновить</string>
+    <string name="check_ping">Пинг</string>
+    <string name="msg_ping_failed">Сервер недоступен</string>
+</resources>
+

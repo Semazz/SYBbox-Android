@@ -1,0 +1,62 @@
+# Built application files
+*.apk
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+release/
+
+# Gradle files
+.gradle/
+build/
+app/build/
+libcore/singbox-fork/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Android Studio
+*.iml
+.idea/
+.DS_Store
+
+# NDK
+obj/
+jniLibs/
+
+# Go
+*.o
+*.a
+*.so
+*.syso
+
+# sing-box fork and build artifacts
+libcore/singbox-fork/
+libcore/aar_extract*/
+libcore/sybbox_core.aar
+libcore/sybbox_core-sources.jar
+
+# Kotlin
+.kotlin/
+
+# Keystore
+*.jks
+*.keystore
+
+# Google Services
+google-services.json
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*~

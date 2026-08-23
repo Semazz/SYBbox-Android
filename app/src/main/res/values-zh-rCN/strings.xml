@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">SYBbox</string>
+
+    
+    <string name="nav_home">首页</string>
+    <string name="nav_servers">服务器</string>
+    <string name="nav_routing">路由</string>
+    <string name="nav_settings">设置</string>
+    <string name="logs">日志</string>
+
+    
+    <string name="connect">连接</string>
+    <string name="disconnect">断开</string>
+    <string name="connecting">连接中…</string>
+    <string name="connected">已连接</string>
+    <string name="disconnected">未连接</string>
+    <string name="connection_failed">连接失败</string>
+    <string name="tap_to_connect">点击连接</string>
+    <string name="tap_to_disconnect">点击断开</string>
+    <string name="no_server_selected">未选择服务器</string>
+    <string name="select_server_first">请先选择服务器</string>
+
+    
+    <string name="upload">上行</string>
+    <string name="download">下行</string>
+    <string name="uptime">运行时间</string>
+    <string name="total_traffic">总流量</string>
+    <string name="active_server">当前服务器</string>
+    <string name="test_connection">测试延迟</string>
+    <string name="testing">测试中…</string>
+    <string name="latency_ms">%1$d ms</string>
+    <string name="latency_unavailable">超时</string>
+    <string name="measure_ping">测试延迟</string>
+
+    
+    <string name="servers">服务器</string>
+    <string name="subscriptions">订阅</string>
+    <string name="add_server">添加服务器</string>
+    <string name="add_subscription">添加订阅</string>
+    <string name="no_servers_title">暂无服务器</string>
+    <string name="no_servers_hint">通过链接、二维码或订阅添加</string>
+    <string name="scan_qr">扫描二维码</string>
+    <string name="import_from_clipboard">从剪贴板粘贴</string>
+    <string name="import_link">导入链接</string>
+    <string name="server_link">服务器链接</string>
+    <string name="server_link_hint">vless://, vmess://, trojan://, ss://, hy2://, tuic://</string>
+    <string name="subscription_url">订阅地址</string>
+    <string name="name_optional">名称（可选）</string>
+    <string name="update">更新</string>
+    <string name="updating">更新中…</string>
+    <string name="ping_all">全部测速</string>
+    <string name="sort_by_latency">按延迟排序</string>
+    <string name="share">分享</string>
+    <string name="share_link">分享链接</string>
+    <string name="share_qr">分享二维码</string>
+    <string name="copy_link">复制链接</string>
+    <string name="server_count">共 %1$d 个服务器</string>
+    <string name="expires_on">到期时间：%1$s</string>
+    <string name="traffic_used">已用 %1$s / 共 %2$s</string>
+
+    
+    <string name="routing_rules">规则</string>
+    <string name="add_rule">添加规则</string>
+    <string name="edit_rule">编辑规则</string>
+    <string name="no_rules_title">无自定义规则</string>
+    <string name="no_rules_hint">全部使用设置中的预设</string>
+    <string name="rule_name">规则名称</string>
+    <string name="rule_type">匹配方式</string>
+    <string name="rule_value">值</string>
+    <string name="rule_value_hint">逗号分隔</string>
+    <string name="rule_action">动作</string>
+    <string name="action_proxy">代理</string>
+    <string name="action_direct">直连</string>
+    <string name="action_block">拦截</string>
+    <string name="action_dns">劫持 DNS</string>
+    <string name="per_app_routing">按应用分流</string>
+    <string name="per_app_summary">选择哪些应用使用隧道</string>
+    <string name="apps_selected">已选 %1$d 个</string>
+    <string name="mode_include">仅所选应用</string>
+    <string name="mode_exclude">除所选外全部</string>
+    <string name="search_apps">搜索应用</string>
+    <string name="show_system_apps">显示系统应用</string>
+
+    
+    <string name="group_connection">连接</string>
+    <string name="group_routing">路由</string>
+    <string name="group_dns">DNS</string>
+    <string name="group_tls">TLS 与反审查</string>
+    <string name="group_tun">隧道</string>
+    <string name="group_subscriptions">订阅</string>
+    <string name="group_appearance">外观</string>
+    <string name="group_diagnostics">诊断</string>
+    <string name="group_about">关于</string>
+
+    
+    <string name="always_on_vpn">始终开启 VPN</string>
+    <string name="always_on_vpn_summary">打开系统设置以保持隧道运行</string>
+    <string name="auto_failover">自动故障转移</string>
+    <string name="auto_failover_summary">连接失败时自动切换到下一个服务器</string>
+    <string name="block_without_vpn">未连接 VPN 时阻止联网</string>
+    <string name="block_without_vpn_summary">即紧急开关，在系统设置中配置</string>
+    <string name="auto_connect_boot">开机自动连接</string>
+    <string name="auto_connect_boot_summary">重启后自动重连上次的服务器</string>
+    <string name="connection_timeout">连接超时</string>
+    <string name="seconds_value">%1$d 秒</string>
+
+    <string name="routing_mode">模式</string>
+    <string name="mode_balanced">均衡</string>
+    <string name="mode_global">全局代理</string>
+    <string name="mode_direct_only">仅直连</string>
+    <string name="mode_custom">自定义</string>
+    <string name="block_ads">拦截广告</string>
+    <string name="block_ads_summary">拒绝已知广告域名</string>
+    <string name="block_trackers">拦截追踪</string>
+    <string name="block_trackers_summary">拒绝已知数据分析域名</string>
+    <string name="bypass_russia">俄罗斯网站直连</string>
+    <string name="bypass_russia_summary">.ru 及俄罗斯 IP 段不走隧道</string>
+    <string name="bypass_china">中国网站直连</string>
+    <string name="bypass_china_summary">.cn 及中国 IP 段不走隧道</string>
+    <string name="bypass_local">局域网直连</string>
+    <string name="bypass_local_summary">私有地址不经过隧道</string>
+
+    <string name="remote_dns">远程 DNS</string>
+    <string name="remote_dns_summary">通过隧道解析代理域名</string>
+    <string name="direct_dns">直连 DNS</string>
+    <string name="direct_dns_summary">解析所有绕过隧道的域名</string>
+    <string name="dns_strategy">地址族</string>
+    <string name="strategy_prefer_ipv4">优先 IPv4</string>
+    <string name="strategy_prefer_ipv6">优先 IPv6</string>
+    <string name="strategy_ipv4_only">仅 IPv4</string>
+    <string name="strategy_ipv6_only">仅 IPv6</string>
+    <string name="fake_ip">FakeIP</string>
+    <string name="fake_ip_summary">立即返回占位地址，然后在隧道内解析</string>
+    <string name="fake_ip_range">FakeIP 范围</string>
+
+    <string name="custom_sni">覆盖 SNI</string>
+    <string name="custom_sni_summary">留空则使用配置文件中的值</string>
+    <string name="tls_fragment">TLS 分片</string>
+    <string name="tls_fragment_summary">拆分握手过程以绕过 SNI 过滤</string>
+    <string name="fragment_delay">分片回退延迟</string>
+    <string name="record_fragment">记录分片</string>
+    <string name="record_fragment_summary">同时拆分 TLS 记录和握手</string>
+    <string name="multiplex">多路复用</string>
+    <string name="multiplex_summary">在一条连接上传输多条流，与 xtls-rprx-vision 不兼容</string>
+
+    <string name="tun_stack">网络栈</string>
+    <string name="tun_stack_gvisor">gVisor（用户态，更安全）</string>
+    <string name="tun_stack_system">系统（更快）</string>
+    <string name="tun_stack_mixed">混合</string>
+    <string name="tun_mtu">MTU</string>
+    <string name="auto_route">自动路由</string>
+    <string name="auto_route_summary">将所有流量导入隧道</string>
+    <string name="strict_route">严格路由</string>
+    <string name="strict_route_summary">防止流量绕过隧道泄漏</string>
+
+    <string name="sub_auto_update">自动更新</string>
+    <string name="sub_interval">更新间隔</string>
+    <string name="hours_value">%1$d 小时</string>
+
+    <string name="theme">主题</string>
+    <string name="theme_system">跟随系统</string>
+    <string name="theme_light">浅色</string>
+    <string name="theme_dark">深色</string>
+    <string name="language">语言</string>
+    <string name="language_system">跟随系统</string>
+    <string name="language_en" translatable="false">English</string>
+    <string name="language_ru" translatable="false">Русский</string>
+    <string name="dynamic_color">动态取色</string>
+    <string name="dynamic_color_summary">Android 12 及以上版本使用壁纸配色</string>
+
+    <string name="log_level">日志级别</string>
+    <string name="open_logs">查看日志</string>
+    <string name="clear_logs">清除日志</string>
+    <string name="copy_logs">复制日志</string>
+    <string name="export_config">导出配置</string>
+    <string name="export_config_summary">保存生成的 sing-box 配置以便查看</string>
+    <string name="no_logs">暂无日志</string>
+    <string name="filter_all">全部</string>
+
+    <string name="version">版本</string>
+    <string name="core_version">内核</string>
+    <string name="developed_by" translatable="false">SYBcreate</string>
+
+    
+    <string name="add">添加</string>
+    <string name="save">保存</string>
+    <string name="cancel">取消</string>
+    <string name="delete">删除</string>
+    <string name="rename">重命名</string>
+    <string name="rename_subscription">重命名订阅</string>
+    <string name="subscription_name">订阅名称</string>
+    <string name="edit">编辑</string>
+    <string name="close">关闭</string>
+    <string name="retry">重试</string>
+    <string name="ok">确定</string>
+
+    
+    <string name="msg_vpn_permission_denied">VPN 权限被拒绝</string>
+    <string name="msg_clipboard_empty">剪贴板为空</string>
+    <string name="msg_invalid_link">链接格式不支持</string>
+    <string name="msg_server_added">已添加 %1$s</string>
+    <string name="msg_servers_added">已添加 %1$d 个服务器</string>
+    <string name="msg_no_servers_in_subscription">该订阅中未找到服务器</string>
+    <string name="msg_sub_debug">未找到服务器。响应开头：%1$s</string>
+    <string name="msg_sub_already_added">该订阅已添加</string>
+    <string name="msg_subscription_empty">订阅返回内容为空</string>
+    <string name="msg_subscription_deleted">订阅已删除</string>
+    <string name="msg_server_deleted">服务器已删除</string>
+    <string name="msg_rule_deleted">规则已删除</string>
+    <string name="msg_copied">已复制</string>
+    <string name="msg_error">错误：%1$s</string>
+    <string name="msg_url_empty">请输入 URL</string>
+    <string name="msg_link_empty">请输入链接</string>
+
+    
+    <string name="scanner_title">对准二维码</string>
+    <string name="scanner_permission">扫描二维码需要相机权限</string>
+    <string name="grant_permission">授予权限</string>
+
+    
+    <string name="channel_vpn">VPN 状态</string>
+    <string name="channel_vpn_description">显示隧道状态和流量</string>
+    <string name="channel_updates">订阅更新</string>
+    <string name="channel_updates_description">订阅刷新进度</string>
+
+    
+    <string name="cd_add">添加</string>
+    <string name="cd_back">返回</string>
+    <string name="cd_more">更多选项</string>
+    <string name="cd_refresh">刷新</string>
+    <string name="check_ping">Ping</string>
+    <string name="msg_ping_failed">服务器无法连接</string>
+</resources>

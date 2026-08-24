@@ -72,6 +72,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            signingConfig = if (hasSigningKey) signingConfigs.getByName("release") else signingConfig
+            applicationIdSuffix = ""
+        }
+
         release {
 
             signingConfig = if (hasSigningKey) signingConfigs.getByName("release") else null
@@ -94,10 +99,12 @@ android {
     }
 
     applicationVariants.all {
+        val variantName = name
         outputs.all {
             val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
             val abi = output.getFilter(com.android.build.OutputFile.ABI) ?: "universal"
-            output.outputFileName = "SYBbox-${versionName}-${abi}.apk"
+            val marker = if (variantName == "release") "" else "-$variantName"
+            output.outputFileName = "SYBbox-${versionName}$marker-${abi}.apk"
         }
     }
 

@@ -2,8 +2,6 @@
 
 # SYBbox
 
-**Android VPN клиент на базе [sing-box](https://github.com/SagerNet/sing-box)**
-
 [![Android](https://img.shields.io/badge/Android-7.0%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=24)
 [![Release](https://img.shields.io/badge/release-2.0.1-blue?style=flat)](https://github.com/Semazz/SYBbox-Android/releases/latest)
 [![License](https://img.shields.io/badge/license-GPL--3.0-orange.svg)](https://www.gnu.org/licenses/gpl-3.0)

@@ -25,7 +25,7 @@ android {
 
         // Only the languages the app is translated into ship, so the dependencies do not drag
         // in resource tables for dozens of locales.
-        resourceConfigurations += listOf("en", "ru", "es")
+        resourceConfigurations += listOf("en", "ru", "es", "zh-rCN")
     }
 
     buildTypes {

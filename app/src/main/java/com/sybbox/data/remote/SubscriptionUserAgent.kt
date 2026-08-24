@@ -13,8 +13,6 @@ object SubscriptionUserAgent {
             "Android"
     }
 
-    private fun shortVersion(): String = BuildConfig.VERSION_NAME.removeSuffix(".0")
-
     suspend fun value(dataStore: SettingsDataStore): String =
-        "SYBbox/${shortVersion()}/${platform()}/${dataStore.getOrCreateClientId()}"
+        "SYBbox/${BuildConfig.VERSION_NAME}/${platform()}/${dataStore.getOrCreateClientId()}"
 }

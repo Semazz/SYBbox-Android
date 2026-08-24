@@ -31,6 +31,10 @@ class ProfileRepository @Inject constructor(
         }
     }
 
+    suspend fun getAllProfilesOnce(): List<ServerProfile> {
+        return profileDao.getAllProfilesOnce().map { it.toDomain() }
+    }
+
     suspend fun getProfileById(id: Long): ServerProfile? {
         return profileDao.getProfileById(id)?.toDomain()
     }

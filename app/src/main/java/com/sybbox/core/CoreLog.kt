@@ -14,7 +14,7 @@ data class LogEntry(
 
 object CoreLog {
 
-    private const val CAPACITY = 800
+    private const val CAPACITY = 300
 
     private val buffer = ArrayDeque<LogEntry>(CAPACITY)
     private val _entries = MutableStateFlow<List<LogEntry>>(emptyList())

@@ -23,6 +23,10 @@ class SubscriptionRepository @Inject constructor(
         return subscriptionDao.getSubscriptionById(id)?.toDomain()
     }
 
+    suspend fun getSubscriptionByUrl(url: String): Subscription? {
+        return subscriptionDao.getSubscriptionByUrl(url)?.toDomain()
+    }
+
     suspend fun insertSubscription(subscription: Subscription): Long {
         return subscriptionDao.insertSubscription(subscription.toEntity())
     }

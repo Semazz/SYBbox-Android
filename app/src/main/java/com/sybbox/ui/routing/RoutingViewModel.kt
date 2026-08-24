@@ -123,14 +123,9 @@ class RoutingViewModel @Inject constructor(
             val packageManager = getApplication<Application>().packageManager
             val self = getApplication<Application>().packageName
             val loaded = withContext(Dispatchers.IO) {
-                val launchable = packageManager
-                    .queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
-                    .mapNotNull { it.activityInfo?.packageName }
-                    .toSet()
                 packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
                     .asSequence()
                     .filter { it.packageName != self }
-                    .filter { it.packageName in launchable || !it.isSystem() }
                     .map { info ->
                         InstalledApp(
                             packageName = info.packageName,
@@ -140,7 +135,7 @@ class RoutingViewModel @Inject constructor(
                             system = info.isSystem(),
                         )
                     }
-                    .sortedBy { it.label.lowercase() }
+                    .sortedWith(compareBy({ it.system }, { it.label.lowercase() }))
                     .toList()
             }
             _apps.value = loaded

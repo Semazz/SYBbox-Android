@@ -24,6 +24,9 @@ interface SubscriptionDao {
     @Query("DELETE FROM subscriptions WHERE id = :id")
     suspend fun deleteSubscriptionById(id: Long)
 
+    @Query("SELECT * FROM subscriptions WHERE url = :url LIMIT 1")
+    suspend fun getSubscriptionByUrl(url: String): SubscriptionEntity?
+
     @Query("UPDATE subscriptions SET lastUpdate = :timestamp, profileCount = :count WHERE id = :id")
     suspend fun updateSubscriptionStats(id: Long, timestamp: Long, count: Int)
 }

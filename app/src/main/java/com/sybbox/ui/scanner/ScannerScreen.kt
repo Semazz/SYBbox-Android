@@ -1,8 +1,13 @@
 package com.sybbox.ui.scanner
 
 import android.Manifest
+import android.graphics.ImageDecoder
+import android.os.Build
+import android.provider.MediaStore
 import android.util.Log
 import android.view.ViewGroup
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -57,6 +62,28 @@ import java.util.concurrent.Executors
 fun ScannerScreen(onScanned: (String) -> Unit, onDismiss: () -> Unit) {
     val cameraPermission = rememberPermissionState(Manifest.permission.CAMERA)
     val context = LocalContext.current
+    val galleryScanner = remember { BarcodeScanning.getClient() }
+
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        try {
+            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val source = ImageDecoder.createSource(context.contentResolver, uri)
+                ImageDecoder.decodeBitmap(source) { decoder, _, _ -> decoder.isMutableRequired = true }
+            } else {
+                @Suppress("DEPRECATION")
+                MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+            }
+            val image = InputImage.fromBitmap(bitmap, 0)
+            galleryScanner.process(image)
+                .addOnSuccessListener { barcodes ->
+                    for (barcode in barcodes) {
+                        val value = if (barcode.valueType == Barcode.TYPE_URL) barcode.url?.url else barcode.rawValue
+                        if (!value.isNullOrBlank()) { onScanned(value); break }
+                    }
+                }
+        } catch (_: Exception) {}
+    }
 
     LaunchedEffect(Unit) {
         if (!cameraPermission.status.isGranted) cameraPermission.launchPermissionRequest()
@@ -67,35 +94,14 @@ fun ScannerScreen(onScanned: (String) -> Unit, onDismiss: () -> Unit) {
             CameraPreview(onBarcodeScanned = onScanned, modifier = Modifier.fillMaxSize())
             ScannerOverlay()
             TopBar(onDismiss)
-            BottomHint()
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 40.dp),
-                contentAlignment = Alignment.BottomCenter,
-            ) {
-                androidx.compose.material3.TextButton(
-                    onClick = {
-                        val clip = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
-                        val text = clip?.primaryClip?.getItemAt(0)?.text?.toString()
-                        if (!text.isNullOrBlank()) onScanned(text)
-                    },
-                ) {
-                    Icon(
-                        Icons.Filled.ContentPaste,
-                        null,
-                        tint = Color.White.copy(alpha = 0.7f),
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        stringResource(R.string.import_from_clipboard),
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 13.sp,
-                    )
-                }
-            }
+            ScannerBottomBar(
+                onPaste = {
+                    val clip = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                    val text = clip?.primaryClip?.getItemAt(0)?.text?.toString()
+                    if (!text.isNullOrBlank()) onScanned(text)
+                },
+                onGallery = { galleryLauncher.launch("image/*") },
+            )
         } else {
             Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Icon(Icons.Filled.CameraAlt, null, modifier = Modifier.size(48.dp), tint = Color.Gray)
@@ -124,12 +130,58 @@ private fun TopBar(onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun BottomHint() {
-    Box(modifier = Modifier.fillMaxSize().padding(bottom = 60.dp), contentAlignment = Alignment.BottomCenter) {
+private fun ScannerBottomBar(onPaste: () -> Unit, onGallery: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = 20.dp, start = 16.dp, end = 16.dp),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(R.string.scanner_title), color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp, textAlign = TextAlign.Center)
+            Text(
+                stringResource(R.string.scanner_title),
+                color = Color.White.copy(alpha = 0.85f),
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+            )
             Spacer(modifier = Modifier.height(4.dp))
-            Text(stringResource(R.string.server_link_hint), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp, textAlign = TextAlign.Center)
+            Text(
+                stringResource(R.string.server_link_hint),
+                color = Color.White.copy(alpha = 0.45f),
+                fontSize = 10.sp,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+            Spacer(modifier = Modifier.height(14.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                androidx.compose.material3.TextButton(onClick = onGallery) {
+                    Icon(
+                        Icons.Filled.PhotoLibrary,
+                        null,
+                        tint = Color.White.copy(alpha = 0.85f),
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("Галерея", color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
+                }
+                androidx.compose.material3.TextButton(onClick = onPaste) {
+                    Icon(
+                        Icons.Filled.ContentPaste,
+                        null,
+                        tint = Color.White.copy(alpha = 0.85f),
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        stringResource(R.string.import_from_clipboard),
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontSize = 13.sp,
+                    )
+                }
+            }
         }
     }
 }

@@ -43,6 +43,8 @@
     <string name="scan_qr">Escanear código QR</string>
     <string name="import_from_clipboard">Pegar desde el portapapeles</string>
     <string name="import_link">Importar enlace</string>
+    <string name="import_from_file">Importar desde archivo</string>
+    <string name="open_link">Abrir enlace</string>
     <string name="server_link">Enlace del servidor</string>
     <string name="server_link_hint">vless://, vmess://, trojan://, ss://, hy2://, tuic://</string>
     <string name="subscription_url">URL de suscripción</string>
@@ -206,6 +208,7 @@
     <string name="msg_sub_already_added">Esta suscripción ya está añadida</string>
     <string name="msg_subscription_empty">La suscripción no devolvió nada</string>
     <string name="msg_subscription_deleted">Suscripción eliminada</string>
+    <string name="msg_subscription_updated">Suscripción actualizada</string>
     <string name="msg_server_deleted">Servidor eliminado</string>
     <string name="msg_rule_deleted">Regla eliminada</string>
     <string name="msg_copied">Copiado</string>

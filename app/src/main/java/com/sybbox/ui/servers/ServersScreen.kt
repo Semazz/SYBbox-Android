@@ -2,7 +2,20 @@ package com.sybbox.ui.servers
 
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,7 +39,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.CloudSync
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.ContentPaste
+import androidx.compose.material.icons.rounded.OpenInBrowser
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Link
@@ -35,6 +51,7 @@ import androidx.compose.material.icons.rounded.QrCode
 import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material3.AlertDialog
@@ -77,10 +94,12 @@ import com.sybbox.domain.model.Subscription
 import com.sybbox.service.ConfigShare
 import com.sybbox.service.SybBoxVpnService
 import com.sybbox.ui.components.EmptyState
+import com.sybbox.ui.components.IconTile
 import com.sybbox.ui.components.LatencyBadge
 import com.sybbox.ui.components.ProtocolChip
 import com.sybbox.ui.components.SectionHeader
 import com.sybbox.ui.components.SybCard
+import com.sybbox.ui.components.protocolColor
 import java.text.DateFormat
 import java.util.Date
 
@@ -96,7 +115,15 @@ fun ServersScreen(
     val testing by viewModel.testing.collectAsStateWithLifecycle()
     val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
     val vpnConnected by SybBoxVpnService.appState.collectAsStateWithLifecycle()
+    val pingVisibleUntil by viewModel.pingVisibleUntil.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var nowTick by remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(1000)
+            nowTick = System.currentTimeMillis()
+        }
+    }
 
     var showAddMenu by remember { mutableStateOf(false) }
     var addServerDialog by remember { mutableStateOf(false) }
@@ -107,6 +134,15 @@ fun ServersScreen(
     var qrDialogProfile by remember { mutableStateOf<ServerProfile?>(null) }
 
     val manual = profiles.filter { it.subscriptionId == 0L }
+
+    val filePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.readText()
+                if (!text.isNullOrBlank()) viewModel.importText(text)
+            } catch (_: Exception) {}
+        }
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -124,15 +160,6 @@ fun ServersScreen(
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
                 )
-                if (profiles.isNotEmpty() && vpnConnected.connectionState != ConnectionState.CONNECTED) {
-                    IconButton(onClick = { viewModel.measureAll(profiles) }) {
-                        Icon(
-                            Icons.Rounded.Speed,
-                            stringResource(R.string.ping_all),
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                }
                 Box {
                     IconButton(
                         onClick = { showAddMenu = true },
@@ -160,6 +187,7 @@ fun ServersScreen(
                             else viewModel.importText(text)
                         },
                         onLink = { showAddMenu = false; addServerDialog = true },
+                        onFile = { showAddMenu = false; filePickerLauncher.launch("*/*") },
                     )
                 }
             }
@@ -177,10 +205,17 @@ fun ServersScreen(
 
         if (manual.isNotEmpty()) {
             item(key = "manual-group") {
-                Column(modifier = Modifier.animateContentSize()) {
+                Column(
+                    modifier = Modifier.animateContentSize(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        ),
+                    ).padding(bottom = 8.dp),
+                ) {
                     SybCard(modifier = Modifier.fillMaxWidth(), onClick = { expandedManual = !expandedManual }) {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(start = 14.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 14.dp, bottom = 14.dp, end = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
@@ -199,29 +234,105 @@ fun ServersScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            Icon(
-                                Icons.Rounded.ExpandMore,
-                                null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(20.dp).rotate(if (expandedManual) 180f else 0f),
-                            )
+                            IconButton(
+                                onClick = {
+                                    expandedManual = true
+                                    viewModel.measureAll(manual)
+                                },
+                                modifier = Modifier.size(36.dp),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        Icons.Rounded.Speed,
+                                        stringResource(R.string.ping_all),
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.width(4.dp))
+                            IconButton(
+                                onClick = { expandedManual = !expandedManual },
+                                modifier = Modifier.size(36.dp),
+                            ) {
+                                val rot by animateFloatAsState(
+                                    targetValue = if (expandedManual) 180f else 0f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioLowBouncy,
+                                        stiffness = Spring.StiffnessMedium,
+                                    ),
+                                    label = "expandManual",
+                                )
+                                Icon(
+                                    Icons.Rounded.ExpandMore,
+                                    null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp).rotate(rot),
+                                )
+                            }
                         }
                     }
-                    if (expandedManual) {
-                        Spacer(Modifier.height(8.dp))
-                        manual.forEach { profile ->
-                            Box(modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)) {
-                                ServerRow(
-                                    profile = profile,
-                                    selected = profile.id == selectedId,
-                                    latency = latencies[profile.id] ?: profile.lastLatency,
-                                    testing = profile.id in testing,
-                                    onSelect = { viewModel.select(profile.id) },
-                                    onPing = { viewModel.measureLatency(profile) },
-                                    onDelete = { viewModel.deleteProfile(profile) },
-                                    onCopied = { viewModel.notifyCopied() },
-                                    onShareQr = { qrDialogProfile = profile; showQrDialog = true },
-                                )
+                    val manualHasSelected = manual.any { it.id == selectedId }
+                    val manualVisible = when {
+                        expandedManual -> manual
+                        manualHasSelected -> manual.filter { it.id == selectedId }
+                        else -> emptyList()
+                    }
+                    AnimatedVisibility(
+                        visible = manualVisible.isNotEmpty(),
+                        enter = fadeIn(animationSpec = tween(220)) +
+                            expandVertically(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessMedium,
+                                ),
+                            ),
+                        exit = fadeOut(animationSpec = tween(180)) +
+                            shrinkVertically(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                    stiffness = Spring.StiffnessMedium,
+                                ),
+                            ),
+                    ) {
+                        Column {
+                            Spacer(Modifier.height(8.dp))
+                            manualVisible.forEachIndexed { index, profile ->
+                                val showLatency = nowTick < (pingVisibleUntil[profile.id] ?: 0L)
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = fadeIn(animationSpec = tween(220, delayMillis = (index * 28).coerceAtMost(180))) +
+                                        expandVertically(
+                                            animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                                stiffness = Spring.StiffnessMedium,
+                                            ),
+                                        ),
+                                    exit = fadeOut() + shrinkVertically(),
+                                ) {
+                                    Box(modifier = Modifier.padding(bottom = 6.dp)) {
+                                        ServerRow(
+                                            profile = profile,
+                                            selected = profile.id == selectedId,
+                                            latency = if (showLatency) latencies[profile.id] ?: profile.lastLatency else 0,
+                                            testing = profile.id in testing,
+                                            onSelect = { viewModel.select(profile.id) },
+                                            onPing = {
+                                                expandedManual = true
+                                                viewModel.measureLatency(profile)
+                                            },
+                                            onDelete = { viewModel.deleteProfile(profile) },
+                                            onCopied = { viewModel.notifyCopied() },
+                                            onShareQr = { qrDialogProfile = profile; showQrDialog = true },
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -232,38 +343,97 @@ fun ServersScreen(
         subscriptions.forEach { subscription ->
             val members = profiles.filter { it.subscriptionId == subscription.id }
             val isSelectedInside = members.any { it.id == selectedId }
-            val isExpanded = expandedSubscription == subscription.id || isSelectedInside
+            val isExpanded = expandedSubscription == subscription.id
+            val visibleMembers = when {
+                isExpanded -> members
+                isSelectedInside -> members.filter { it.id == selectedId }
+                else -> emptyList()
+            }
             item(key = "sub-${subscription.id}") {
-                Column(modifier = Modifier.animateContentSize()) {
+                Column(
+                    modifier = Modifier.animateContentSize(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        ),
+                    ).padding(bottom = 8.dp),
+                ) {
                     SubscriptionHeader(
                         subscription = subscription,
                         count = members.size,
                         expanded = isExpanded,
                         refreshing = subscription.id in refreshing,
-                        showPing = vpnConnected.connectionState != ConnectionState.CONNECTED,
+                        showPing = true,
                         onToggle = {
                             expandedSubscription =
                                 if (expandedSubscription == subscription.id) null else subscription.id
                         },
                         onRefresh = { viewModel.refreshSubscription(subscription) },
-                        onPingAll = { viewModel.measureAll(members) },
+                        onPingAll = {
+                            expandedSubscription = subscription.id
+                            viewModel.measureAll(members)
+                        },
+                        onCopyLink = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                            clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("subscription", subscription.url))
+                            viewModel.notifyCopied()
+                        },
+                        onOpenLink = {
+                            try {
+                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(subscription.url)))
+                            } catch (_: Exception) {}
+                        },
                         onDelete = { viewModel.deleteSubscription(subscription) },
                     )
-                    if (isExpanded) {
-                        Spacer(Modifier.height(8.dp))
-                        members.forEach { profile ->
-                            Box(modifier = Modifier.padding(bottom = 6.dp)) {
-                                ServerRow(
-                                    profile = profile,
-                                    selected = profile.id == selectedId,
-                                    latency = latencies[profile.id] ?: profile.lastLatency,
-                                    testing = profile.id in testing,
-                                    onSelect = { viewModel.select(profile.id) },
-                                    onPing = { viewModel.measureLatency(profile) },
-                                    onDelete = { viewModel.deleteProfile(profile) },
-                                    onCopied = { viewModel.notifyCopied() },
-                                    onShareQr = { qrDialogProfile = profile; showQrDialog = true },
-                                )
+                    AnimatedVisibility(
+                        visible = visibleMembers.isNotEmpty(),
+                        enter = fadeIn(animationSpec = tween(220)) +
+                            expandVertically(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessMedium,
+                                ),
+                            ),
+                        exit = fadeOut(animationSpec = tween(180)) +
+                            shrinkVertically(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                    stiffness = Spring.StiffnessMedium,
+                                ),
+                            ),
+                    ) {
+                        Column {
+                            Spacer(Modifier.height(8.dp))
+                            visibleMembers.forEachIndexed { index, profile ->
+                                val showLatency = nowTick < (pingVisibleUntil[profile.id] ?: 0L)
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = fadeIn(animationSpec = tween(220, delayMillis = (index * 28).coerceAtMost(180))) +
+                                        expandVertically(
+                                            animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                                stiffness = Spring.StiffnessMedium,
+                                            ),
+                                        ),
+                                    exit = fadeOut() + shrinkVertically(),
+                                ) {
+                                    Box(modifier = Modifier.padding(bottom = 6.dp)) {
+                                        ServerRow(
+                                            profile = profile,
+                                            selected = profile.id == selectedId,
+                                            latency = if (showLatency) latencies[profile.id] ?: profile.lastLatency else 0,
+                                            testing = profile.id in testing,
+                                            onSelect = { viewModel.select(profile.id) },
+                                            onPing = {
+                                                expandedSubscription = subscription.id
+                                                viewModel.measureLatency(profile)
+                                            },
+                                            onDelete = { viewModel.deleteProfile(profile) },
+                                            onCopied = { viewModel.notifyCopied() },
+                                            onShareQr = { qrDialogProfile = profile; showQrDialog = true },
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -306,6 +476,7 @@ private fun AddMenu(
     onScan: () -> Unit,
     onPaste: () -> Unit,
     onLink: () -> Unit,
+    onFile: () -> Unit,
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -326,6 +497,11 @@ private fun AddMenu(
             text = { Text(stringResource(R.string.import_link)) },
             leadingIcon = { Icon(Icons.Rounded.Link, null) },
             onClick = onLink,
+        )
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.import_from_file)) },
+            leadingIcon = { Icon(Icons.Rounded.Storage, null) },
+            onClick = onFile,
         )
     }
 }
@@ -351,11 +527,18 @@ private fun ServerRow(
             modifier = Modifier.fillMaxWidth().padding(start = 14.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val pColor = protocolColor(profile.protocol)
+            IconTile(
+                Icons.Rounded.Shield,
+                tint = pColor,
+                container = pColor.copy(alpha = 0.14f),
+            )
+            Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     profile.displayName(),
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -369,10 +552,32 @@ private fun ServerRow(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Spacer(Modifier.width(8.dp))
-            LatencyBadge(latency, testing, modifier = Modifier.clickable(onClick = onPing))
+            Spacer(Modifier.width(6.dp))
+            LatencyBadge(latency, testing)
+            IconButton(
+                onClick = onPing,
+                modifier = Modifier.size(32.dp),
+            ) {
+                if (testing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                } else {
+                    Icon(
+                        Icons.Rounded.Speed,
+                        stringResource(R.string.check_ping),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
             Box {
-                IconButton(onClick = { menu = true }) {
+                IconButton(
+                    onClick = { menu = true },
+                    modifier = Modifier.size(32.dp),
+                ) {
                     Icon(
                         Icons.Rounded.MoreVert,
                         stringResource(R.string.cd_more),
@@ -428,6 +633,8 @@ private fun SubscriptionHeader(
     onToggle: () -> Unit,
     onRefresh: () -> Unit,
     onPingAll: () -> Unit,
+    onCopyLink: () -> Unit,
+    onOpenLink: () -> Unit,
     onDelete: () -> Unit,
 ) {
     var menu by remember { mutableStateOf(false) }
@@ -435,8 +642,10 @@ private fun SubscriptionHeader(
     val progress = if (subscription.total > 0) (used.toFloat() / subscription.total).coerceIn(0f, 1f) else null
     Column {
         SybCard(modifier = Modifier.fillMaxWidth(), onClick = onToggle) {
-            Column(modifier = Modifier.fillMaxWidth().padding(start = 14.dp, top = 12.dp, bottom = 12.dp, end = 4.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 14.dp, bottom = 14.dp, end = 12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconTile(Icons.Rounded.CloudSync)
+                    Spacer(Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             subscription.name.ifBlank { stringResource(R.string.subscriptions) },
@@ -459,35 +668,76 @@ private fun SubscriptionHeader(
                             strokeWidth = 2.dp,
                             color = MaterialTheme.colorScheme.primary,
                         )
-                        Spacer(Modifier.width(12.dp))
+                        Spacer(Modifier.width(10.dp))
                     } else {
                         if (showPing) {
-                            IconButton(onClick = onPingAll) {
+                            IconButton(
+                                onClick = onPingAll,
+                                modifier = Modifier.size(36.dp),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        Icons.Rounded.Speed,
+                                        stringResource(R.string.ping_all),
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.width(4.dp))
+                        }
+                        IconButton(
+                            onClick = onRefresh,
+                            modifier = Modifier.size(36.dp),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center,
+                            ) {
                                 Icon(
-                                    Icons.Rounded.Speed,
-                                    stringResource(R.string.ping_all),
+                                    Icons.Rounded.Refresh,
+                                    stringResource(R.string.cd_refresh),
                                     tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(22.dp),
+                                    modifier = Modifier.size(18.dp),
                                 )
                             }
                         }
-                        IconButton(onClick = onRefresh) {
-                            Icon(
-                                Icons.Rounded.Refresh,
-                                stringResource(R.string.cd_refresh),
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp),
-                            )
-                        }
+                        Spacer(Modifier.width(4.dp))
                     }
-                    Icon(
-                        Icons.Rounded.ExpandMore,
-                        null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp).rotate(if (expanded) 180f else 0f),
-                    )
+                    IconButton(
+                        onClick = onToggle,
+                        modifier = Modifier.size(36.dp),
+                    ) {
+                        val rot by animateFloatAsState(
+                            targetValue = if (expanded) 180f else 0f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessMedium,
+                            ),
+                            label = "expandSub",
+                        )
+                        Icon(
+                            Icons.Rounded.ExpandMore,
+                            null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp).rotate(rot),
+                        )
+                    }
+                    Spacer(Modifier.width(4.dp))
                     Box {
-                        IconButton(onClick = { menu = true }) {
+                        IconButton(
+                            onClick = { menu = true },
+                            modifier = Modifier.size(36.dp),
+                        ) {
                             Icon(
                                 Icons.Rounded.MoreVert,
                                 stringResource(R.string.cd_more),
@@ -500,6 +750,16 @@ private fun SubscriptionHeader(
                                 text = { Text(stringResource(R.string.update)) },
                                 leadingIcon = { Icon(Icons.Rounded.Refresh, null) },
                                 onClick = { menu = false; onRefresh() },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.copy_link)) },
+                                leadingIcon = { Icon(Icons.Rounded.ContentCopy, null) },
+                                onClick = { menu = false; onCopyLink() },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.open_link)) },
+                                leadingIcon = { Icon(Icons.Rounded.OpenInBrowser, null) },
+                                onClick = { menu = false; onOpenLink() },
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.delete)) },
@@ -524,7 +784,7 @@ private fun SubscriptionHeader(
                     Spacer(Modifier.height(6.dp))
                     LinearProgressIndicator(
                         progress = { progress },
-                        modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                        modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)),
                         color = if (progress > 0.9f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                         trackColor = MaterialTheme.colorScheme.surfaceVariant,
                     )

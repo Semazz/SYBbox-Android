@@ -84,28 +84,19 @@ class HomeViewModel @Inject constructor(
         if (profileId <= 0 || _pingTesting.value) return
         viewModelScope.launch {
             _pingTesting.value = true
-            val connected =
-                SybBoxVpnService.appState.value.connectionState == ConnectionState.CONNECTED
-            val latency = if (connected) {
-                SybBoxVpnService.activeLatency()
+            val target = profiles.value.firstOrNull { it.id == profileId }
+            val latency = if (target == null) {
+                com.sybbox.core.PingTool.UNREACHABLE
             } else {
-                val target = profiles.value.firstOrNull { it.id == profileId }
-                if (target == null) -1 else withContext(Dispatchers.IO) { tcpPing(target) }
+                withContext(Dispatchers.IO) {
+                    com.sybbox.core.PingTool.tcp(getApplication(), target.address, target.port)
+                }
             }
             _latencies.update { it + (profileId to latency) }
             profileRepository.updateLatency(profileId, latency)
             if (latency <= 0) _messages.tryEmit(UiMessage(R.string.msg_ping_failed))
-            _pingVisibleUntil.value = System.currentTimeMillis() + 20_000
+            _pingVisibleUntil.value = System.currentTimeMillis() + 10_000
             _pingTesting.value = false
         }
     }
-
-    private fun tcpPing(profile: ServerProfile): Int = runCatching {
-        val start = System.nanoTime()
-        java.net.Socket().use { socket ->
-            socket.connect(java.net.InetSocketAddress(profile.address, profile.port), 3000)
-        }
-        val millis = ((System.nanoTime() - start) / 1_000_000).toInt()
-        if (millis in 1..2999) millis else -1
-    }.getOrDefault(-1)
 }

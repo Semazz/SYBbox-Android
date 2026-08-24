@@ -43,6 +43,8 @@
     <string name="scan_qr">Scan QR code</string>
     <string name="import_from_clipboard">Paste from clipboard</string>
     <string name="import_link">Import link</string>
+    <string name="import_from_file">Import from file</string>
+    <string name="open_link">Open link</string>
     <string name="server_link">Server link</string>
     <string name="server_link_hint">vless://, vmess://, trojan://, ss://, hy2://, tuic://</string>
     <string name="subscription_url">Subscription URL</string>
@@ -208,6 +210,7 @@
     <string name="msg_sub_already_added">This subscription is already added</string>
     <string name="msg_subscription_empty">The subscription returned nothing</string>
     <string name="msg_subscription_deleted">Subscription deleted</string>
+    <string name="msg_subscription_updated">Subscription updated</string>
     <string name="msg_server_deleted">Server deleted</string>
     <string name="msg_rule_deleted">Rule deleted</string>
     <string name="msg_copied">Copied</string>

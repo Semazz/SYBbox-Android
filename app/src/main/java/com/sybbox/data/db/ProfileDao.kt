@@ -43,6 +43,9 @@ interface ProfileDao {
     @Query("UPDATE profiles SET lastLatency = :latency WHERE id = :id")
     suspend fun updateLatency(id: Long, latency: Int)
 
+    @Query("SELECT * FROM profiles")
+    suspend fun getAllProfilesOnce(): List<ProfileEntity>
+
     @Query("SELECT COUNT(*) FROM profiles")
     suspend fun getProfileCount(): Int
 }

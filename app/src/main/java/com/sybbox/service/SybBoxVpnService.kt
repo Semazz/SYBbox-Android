@@ -161,6 +161,7 @@ class SybBoxVpnService : VpnService() {
     }
 
     private suspend fun startConnection(profileId: Long) {
+        CoreLog.clear()
         setState(ConnectionState.CONNECTING)
         val autoFailover = settingsDataStore.autoFailover.first()
         var currentProfileId = profileId

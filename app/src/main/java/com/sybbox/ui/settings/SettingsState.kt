@@ -35,7 +35,7 @@ data class SettingsState(
     val strictRoute: Boolean = false,
 
     val subAutoUpdate: Boolean = true,
-    val defaultSubInterval: Int = 6,
+    val defaultSubInterval: Int = 12,
 
     val autoFailover: Boolean = false,
 

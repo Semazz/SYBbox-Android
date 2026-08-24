@@ -44,7 +44,7 @@ class SettingsDataStore @Inject constructor(
 
     val logLevel: Flow<String> = dataStore.data.map { it[KEY_LOG_LEVEL] ?: "INFO" }
 
-    val defaultSubInterval: Flow<Int> = dataStore.data.map { it[KEY_DEFAULT_SUB_INTERVAL] ?: 6 }
+    val defaultSubInterval: Flow<Int> = dataStore.data.map { it[KEY_DEFAULT_SUB_INTERVAL] ?: 12 }
     val enableSubAutoUpdate: Flow<Boolean> = dataStore.data.map { it[KEY_SUB_AUTO_UPDATE] ?: true }
 
     val routingMode: Flow<String> = dataStore.data.map { it[KEY_ROUTING_MODE] ?: "BALANCED" }

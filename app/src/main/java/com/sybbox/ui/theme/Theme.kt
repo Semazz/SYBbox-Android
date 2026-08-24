@@ -3,7 +3,9 @@ package com.sybbox.ui.theme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -13,6 +15,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 
 const val THEME_SYSTEM = "SYSTEM"
@@ -85,6 +88,14 @@ private val LightScheme = lightColorScheme(
     surfaceContainerHighest = Color(0xFFF3F5E9),
 )
 
+private val ExpressiveShapes = Shapes(
+    extraSmall = RoundedCornerShape(10.dp),
+    small = RoundedCornerShape(14.dp),
+    medium = RoundedCornerShape(18.dp),
+    large = RoundedCornerShape(22.dp),
+    extraLarge = RoundedCornerShape(28.dp),
+)
+
 @Composable
 fun SYBboxTheme(
     themeMode: String = THEME_DARK,
@@ -116,5 +127,10 @@ fun SYBboxTheme(
         }
     }
 
-    MaterialTheme(colorScheme = scheme, typography = Typography, content = content)
+    MaterialTheme(
+        colorScheme = scheme,
+        typography = Typography,
+        shapes = ExpressiveShapes,
+        content = content,
+    )
 }

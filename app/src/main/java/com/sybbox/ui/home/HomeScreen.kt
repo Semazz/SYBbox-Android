@@ -14,9 +14,9 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,17 +31,20 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
-import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.Power
+import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,7 +60,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -65,15 +67,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sybbox.R
 import com.sybbox.domain.model.ConnectionState
 import com.sybbox.domain.model.ServerProfile
 import com.sybbox.service.SybBoxVpnService
+import com.sybbox.ui.components.CardShape
+import com.sybbox.ui.components.IconTile
 import com.sybbox.ui.components.LatencyBadge
-import com.sybbox.ui.components.ProtocolChip
+import com.sybbox.ui.components.PillShape
 import com.sybbox.ui.components.SybCard
 import com.sybbox.ui.theme.LatencySlow
 
@@ -181,7 +184,7 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f),
                     )
                     StatTile(
-                        icon = Icons.Rounded.Speed,
+                        icon = Icons.Rounded.SwapVert,
                         label = stringResource(R.string.total_traffic),
                         value = SybBoxVpnService.formatBytes(
                             appState.stats.totalUpload + appState.stats.totalDownload,
@@ -325,37 +328,26 @@ private fun ActiveServerCard(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            IconTile(Icons.Rounded.Public)
+            Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     stringResource(R.string.active_server),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(2.dp))
                 Text(
                     profile?.name?.ifBlank { profile.address } ?: stringResource(R.string.no_server_selected),
                     style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                if (profile != null) {
-                    Spacer(Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        ProtocolChip(profile.protocol)
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "${profile.address}:${profile.port}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
             }
             if (profile != null) {
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(10.dp))
                 when {
                     pingBusy -> Icon(
                         Icons.Rounded.Speed,
@@ -367,45 +359,56 @@ private fun ActiveServerCard(
                         latency = latency ?: profile.lastLatency,
                         modifier = Modifier.clickable(onClick = onTest),
                     )
-                    else -> IconButton(onClick = onTest, modifier = Modifier.size(38.dp)) {
+                    else -> Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(PillShape)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                            .clickable(onClick = onTest),
+                        contentAlignment = Alignment.Center,
+                    ) {
                         Icon(
                             Icons.Rounded.Speed,
                             contentDescription = stringResource(R.string.check_ping),
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(22.dp),
                         )
                     }
                 }
+                Spacer(Modifier.width(6.dp))
+                Icon(
+                    Icons.Rounded.ChevronRight,
+                    null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(22.dp),
+                )
             }
         }
     }
 }
 
 @Composable
-private fun StatTile(icon: ImageVector, label: String, value: String, modifier: Modifier = Modifier) {
-    SybCard(modifier = modifier) {
-        Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    icon,
-                    null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(15.dp),
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    label,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Spacer(Modifier.height(6.dp))
+private fun StatTile(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .clip(CardShape)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow),
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            IconTile(icon, size = 18)
+            Spacer(Modifier.height(10.dp))
             Text(
                 value,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

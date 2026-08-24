@@ -31,7 +31,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.net.URI
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -55,6 +54,9 @@ class ServersViewModel @Inject constructor(
     private val _latencies = MutableStateFlow<Map<Long, Int>>(emptyMap())
     val latencies: StateFlow<Map<Long, Int>> = _latencies.asStateFlow()
 
+    private val _pingVisibleUntil = MutableStateFlow<Map<Long, Long>>(emptyMap())
+    val pingVisibleUntil: StateFlow<Map<Long, Long>> = _pingVisibleUntil.asStateFlow()
+
     private val _testing = MutableStateFlow<Set<Long>>(emptySet())
     val testing: StateFlow<Set<Long>> = _testing.asStateFlow()
 
@@ -65,6 +67,18 @@ class ServersViewModel @Inject constructor(
 
     private val _messages = MutableSharedFlow<UiMessage>(extraBufferCapacity = 8)
     val messages: SharedFlow<UiMessage> = _messages
+
+    init {
+        viewModelScope.launch {
+            var measured = false
+            profiles.collect { list ->
+                if (!measured && list.isNotEmpty()) {
+                    measured = true
+                    measureAll(list)
+                }
+            }
+        }
+    }
 
     fun select(profileId: Long) {
         viewModelScope.launch { settingsDataStore.setLastProfileId(profileId) }
@@ -86,6 +100,12 @@ class ServersViewModel @Inject constructor(
         viewModelScope.launch {
             val direct = SubscriptionParser.parse(trimmed, SubType.STANDARD)
             if (direct.isNotEmpty()) {
+                val existing = profileRepository.getAllProfilesOnce().filter { it.subscriptionId == 0L }
+                for (newProfile in direct) {
+                    val key = "${newProfile.protocol}|${newProfile.address}|${newProfile.port}"
+                    existing.filter { "${it.protocol}|${it.address}|${it.port}" == key }
+                        .forEach { profileRepository.deleteProfile(it) }
+                }
                 profileRepository.insertProfiles(direct)
                 emit(
                     if (direct.size == 1) {
@@ -115,23 +135,23 @@ class ServersViewModel @Inject constructor(
             return
         }
 
-        if (subscriptions.value.any { it.url == trimmed }) {
-            emit(UiMessage(R.string.msg_sub_already_added))
-            return
-        }
         viewModelScope.launch {
+            val existing = subscriptionRepository.getSubscriptionByUrl(trimmed)
+            if (existing != null) {
+                subscriptionRepository.deleteSubscription(existing)
+            }
             val subscriptionId = subscriptionRepository.insertSubscription(
-                Subscription(name = customName?.takeIf { it.isNotBlank() } ?: nameFromUrl(trimmed), url = trimmed),
+                Subscription(name = customName?.takeIf { it.isNotBlank() }.orEmpty(), url = trimmed),
             )
             val added = refresh(subscriptionId, trimmed)
-            if (added > 0) emit(UiMessage(R.string.msg_servers_added, listOf(added)))
+            if (added > 0) emit(UiMessage(R.string.msg_subscription_updated))
         }
     }
 
     fun refreshSubscription(subscription: Subscription) {
         viewModelScope.launch {
             val added = refresh(subscription.id, subscription.url)
-            if (added > 0) emit(UiMessage(R.string.msg_servers_added, listOf(added)))
+            if (added > 0) emit(UiMessage(R.string.msg_subscription_updated))
         }
     }
 
@@ -264,16 +284,6 @@ class ServersViewModel @Inject constructor(
     private fun String.readCounter(key: String): Long =
         Regex("$key\\s*=\\s*(-?\\d+)").find(this)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
 
-    private fun nameFromUrl(url: String) =
-        runCatching {
-            val host = URI(url).host?.removePrefix("www.") ?: ""
-            if (host.isBlank()) return@runCatching "Subscription"
-
-            val parts = host.split(".")
-            val name = if (parts.size >= 2) parts[parts.size - 2] else parts.first()
-            name.replaceFirstChar { it.uppercase() }
-        }.getOrNull() ?: "Subscription"
-
     private data class SubscriptionResponse(
         val body: String,
         val upload: Long = 0,
@@ -287,45 +297,33 @@ class ServersViewModel @Inject constructor(
     fun measureLatency(profile: ServerProfile) {
         viewModelScope.launch {
             _testing.update { it + profile.id }
-            val connected =
-                SybBoxVpnService.appState.value.connectionState == ConnectionState.CONNECTED
-            val latency = when {
-                connected && profile.id == selectedProfileId.value ->
-                    SybBoxVpnService.activeLatency()
-                connected -> {
-                    _testing.update { it - profile.id }
-                    emit(UiMessage(R.string.msg_ping_failed))
-                    return@launch
-                }
-                else -> withContext(Dispatchers.IO) { tcpPing(profile) }
+            val latency = withContext(Dispatchers.IO) {
+                com.sybbox.core.PingTool.tcp(getApplication(), profile.address, profile.port)
             }
             _latencies.update { it + (profile.id to latency) }
+            _pingVisibleUntil.update { it + (profile.id to (System.currentTimeMillis() + 10_000)) }
             _testing.update { it - profile.id }
             profileRepository.updateLatency(profile.id, latency)
         }
     }
 
     fun measureAll(targets: List<ServerProfile>) {
-        if (SybBoxVpnService.appState.value.connectionState == ConnectionState.CONNECTED) return
         viewModelScope.launch {
             _testing.update { it + targets.map(ServerProfile::id) }
             val results = withContext(Dispatchers.IO) {
-                targets.associate { it.id to tcpPing(it) }
+                targets.associate { target ->
+                    target.id to com.sybbox.core.PingTool.tcp(getApplication(), target.address, target.port)
+                }
             }
             _latencies.update { it + results }
+            _pingVisibleUntil.update { current ->
+                val now = System.currentTimeMillis() + 10_000
+                current + results.keys.associateWith { now }
+            }
             _testing.update { it - targets.map(ServerProfile::id).toSet() }
             results.forEach { (id, latency) -> profileRepository.updateLatency(id, latency) }
         }
     }
-
-    private fun tcpPing(profile: ServerProfile): Int = runCatching {
-        val start = System.nanoTime()
-        java.net.Socket().use { socket ->
-            socket.connect(java.net.InetSocketAddress(profile.address, profile.port), 3000)
-        }
-        val millis = ((System.nanoTime() - start) / 1_000_000).toInt()
-        if (millis in 1..2999) millis else -1
-    }.getOrDefault(-1)
 
     fun deleteProfile(profile: ServerProfile) {
         viewModelScope.launch {

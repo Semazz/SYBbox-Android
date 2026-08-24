@@ -4,7 +4,6 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,14 +12,40 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AltRoute
 import androidx.compose.material.icons.rounded.Apps
+import androidx.compose.material.icons.rounded.Article
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.material.icons.rounded.Dns
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Layers
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.MergeType
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.PowerSettingsNew
+import androidx.compose.material.icons.rounded.Public
+import androidx.compose.material.icons.rounded.Route
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.SettingsEthernet
 import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Sort
+import androidx.compose.material.icons.rounded.Storage
+import androidx.compose.material.icons.rounded.SwapHoriz
+import androidx.compose.material.icons.rounded.Sync
+import androidx.compose.material.icons.rounded.Terminal
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.Translate
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -54,7 +79,7 @@ fun SettingsScreen(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 96.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
     ) {
         item {
             Text(
@@ -85,6 +110,7 @@ fun SettingsScreen(
                             else -> stringResource(R.string.language_system)
                         }
                     },
+                    icon = Icons.Rounded.Translate,
                 )
                 SettingsDivider()
                 SettingsChoice(
@@ -101,6 +127,7 @@ fun SettingsScreen(
                             },
                         )
                     },
+                    icon = Icons.Rounded.DarkMode,
                 )
                 SettingsDivider()
                 SettingsToggle(
@@ -108,6 +135,7 @@ fun SettingsScreen(
                     summary = stringResource(R.string.dynamic_color_summary),
                     checked = state.dynamicColor,
                     onCheckedChange = viewModel::setDynamicColor,
+                    icon = Icons.Rounded.Palette,
                 )
             }
         }
@@ -119,6 +147,7 @@ fun SettingsScreen(
                     summary = stringResource(R.string.auto_connect_boot_summary),
                     checked = state.autoConnectOnBoot,
                     onCheckedChange = viewModel::setAutoConnectOnBoot,
+                    icon = Icons.Rounded.PowerSettingsNew,
                 )
                 SettingsDivider()
                 SettingsChoice(
@@ -127,6 +156,7 @@ fun SettingsScreen(
                     selected = state.connectionTimeout,
                     onSelect = viewModel::setConnectionTimeout,
                     label = { stringResource(R.string.seconds_value, it) },
+                    icon = Icons.Rounded.Timer,
                 )
                 SettingsDivider()
                 SettingsToggle(
@@ -134,9 +164,9 @@ fun SettingsScreen(
                     summary = stringResource(R.string.auto_failover_summary),
                     checked = state.autoFailover,
                     onCheckedChange = viewModel::setAutoFailover,
+                    icon = Icons.Rounded.SwapHoriz,
                 )
                 SettingsDivider()
-
                 SettingsAction(
                     title = stringResource(R.string.always_on_vpn),
                     summary = stringResource(R.string.always_on_vpn_summary),
@@ -170,6 +200,7 @@ fun SettingsScreen(
                             },
                         )
                     },
+                    icon = Icons.Rounded.AltRoute,
                 )
                 SettingsDivider()
                 SettingsToggle(
@@ -177,6 +208,7 @@ fun SettingsScreen(
                     summary = stringResource(R.string.bypass_local_summary),
                     checked = state.bypassLocalNetwork,
                     onCheckedChange = viewModel::setBypassLocalNetwork,
+                    icon = Icons.Rounded.Home,
                 )
                 SettingsDivider()
                 SettingsToggle(
@@ -184,6 +216,7 @@ fun SettingsScreen(
                     summary = stringResource(R.string.block_ads_summary),
                     checked = state.blockAds,
                     onCheckedChange = viewModel::setBlockAds,
+                    icon = Icons.Rounded.Block,
                 )
                 SettingsDivider()
                 SettingsToggle(
@@ -191,6 +224,7 @@ fun SettingsScreen(
                     summary = stringResource(R.string.block_trackers_summary),
                     checked = state.blockTrackers,
                     onCheckedChange = viewModel::setBlockTrackers,
+                    icon = Icons.Rounded.VisibilityOff,
                 )
                 SettingsDivider()
                 SettingsAction(
@@ -218,6 +252,7 @@ fun SettingsScreen(
                     value = state.remoteDns,
                     onValueChange = viewModel::setRemoteDns,
                     placeholder = "udp://8.8.8.8",
+                    icon = Icons.Rounded.Public,
                 )
                 SettingsDivider()
                 SettingsText(
@@ -226,6 +261,7 @@ fun SettingsScreen(
                     value = state.directDns,
                     onValueChange = viewModel::setDirectDns,
                     placeholder = "77.88.8.8",
+                    icon = Icons.Rounded.Dns,
                 )
                 SettingsDivider()
                 SettingsChoice(
@@ -243,6 +279,7 @@ fun SettingsScreen(
                             },
                         )
                     },
+                    icon = Icons.Rounded.Sort,
                 )
                 SettingsDivider()
                 SettingsToggle(
@@ -250,6 +287,7 @@ fun SettingsScreen(
                     summary = stringResource(R.string.fake_ip_summary),
                     checked = state.enableFakeIp,
                     onCheckedChange = viewModel::setEnableFakeIp,
+                    icon = Icons.Rounded.Layers,
                 )
                 if (state.enableFakeIp) {
                     SettingsDivider()
@@ -258,6 +296,7 @@ fun SettingsScreen(
                         value = state.fakeIpRange,
                         onValueChange = viewModel::setFakeIpRange,
                         placeholder = "198.18.0.0/15",
+                        icon = Icons.Rounded.Storage,
                     )
                 }
             }
@@ -270,6 +309,7 @@ fun SettingsScreen(
                     summary = stringResource(R.string.custom_sni_summary),
                     value = state.customSni,
                     onValueChange = viewModel::setCustomSni,
+                    icon = Icons.Rounded.Language,
                 )
                 SettingsDivider()
                 SettingsToggle(
@@ -277,6 +317,7 @@ fun SettingsScreen(
                     summary = stringResource(R.string.tls_fragment_summary),
                     checked = state.fragmentEnabled,
                     onCheckedChange = viewModel::setFragmentEnabled,
+                    icon = Icons.Rounded.Bolt,
                 )
                 if (state.fragmentEnabled) {
                     SettingsDivider()
@@ -286,6 +327,7 @@ fun SettingsScreen(
                         selected = state.fragmentSleep,
                         onSelect = viewModel::setFragmentSleep,
                         label = { "$it ms" },
+                        icon = Icons.Rounded.Timer,
                     )
                 }
                 SettingsDivider()
@@ -294,6 +336,7 @@ fun SettingsScreen(
                     summary = stringResource(R.string.record_fragment_summary),
                     checked = state.recordFragment,
                     onCheckedChange = viewModel::setRecordFragment,
+                    icon = Icons.Rounded.Layers,
                 )
                 SettingsDivider()
                 SettingsToggle(
@@ -301,6 +344,7 @@ fun SettingsScreen(
                     summary = stringResource(R.string.multiplex_summary),
                     checked = state.enableMux,
                     onCheckedChange = viewModel::setEnableMux,
+                    icon = Icons.Rounded.MergeType,
                 )
             }
         }
@@ -321,6 +365,7 @@ fun SettingsScreen(
                             },
                         )
                     },
+                    icon = Icons.Rounded.SettingsEthernet,
                 )
                 SettingsDivider()
                 SettingsChoice(
@@ -329,6 +374,7 @@ fun SettingsScreen(
                     selected = state.tunMTU,
                     onSelect = viewModel::setTunMTU,
                     label = { it.toString() },
+                    icon = Icons.Rounded.Tune,
                 )
                 SettingsDivider()
                 SettingsToggle(
@@ -336,6 +382,7 @@ fun SettingsScreen(
                     summary = stringResource(R.string.auto_route_summary),
                     checked = state.autoRoute,
                     onCheckedChange = viewModel::setAutoRoute,
+                    icon = Icons.Rounded.Route,
                 )
                 SettingsDivider()
                 SettingsToggle(
@@ -343,6 +390,7 @@ fun SettingsScreen(
                     summary = stringResource(R.string.strict_route_summary),
                     checked = state.strictRoute,
                     onCheckedChange = viewModel::setStrictRoute,
+                    icon = Icons.Rounded.Lock,
                 )
             }
         }
@@ -353,6 +401,7 @@ fun SettingsScreen(
                     title = stringResource(R.string.sub_auto_update),
                     checked = state.subAutoUpdate,
                     onCheckedChange = viewModel::setSubAutoUpdate,
+                    icon = Icons.Rounded.Sync,
                 )
                 SettingsDivider()
                 SettingsChoice(
@@ -361,6 +410,7 @@ fun SettingsScreen(
                     selected = state.defaultSubInterval,
                     onSelect = viewModel::setSubInterval,
                     label = { stringResource(R.string.hours_value, it) },
+                    icon = Icons.Rounded.Schedule,
                 )
             }
         }
@@ -373,21 +423,22 @@ fun SettingsScreen(
                     selected = state.logLevel.lowercase(),
                     onSelect = viewModel::setLogLevel,
                     label = { it.uppercase() },
+                    icon = Icons.Rounded.Terminal,
                 )
                 SettingsDivider()
                 SettingsAction(
                     title = stringResource(R.string.open_logs),
-                    icon = Icons.Rounded.BugReport,
+                    icon = Icons.Rounded.Article,
                     onClick = onOpenLogs,
                 )
             }
         }
 
         item {
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(12.dp))
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
             ) {
                 Text(
                     "${stringResource(R.string.version)} ${BuildConfig.VERSION_NAME}",

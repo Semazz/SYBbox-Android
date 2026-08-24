@@ -203,9 +203,9 @@ private fun ActionChip(action: RoutingAction) {
     }
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(6.dp))
+            .clip(RoundedCornerShape(50))
             .background(color.copy(alpha = 0.16f))
-            .padding(horizontal = 7.dp, vertical = 3.dp),
+            .padding(horizontal = 10.dp, vertical = 4.dp),
     ) {
         Text(stringResource(labelRes), style = MaterialTheme.typography.labelSmall, color = color)
     }

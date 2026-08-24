@@ -42,6 +42,8 @@
     <string name="scan_qr">Сканировать QR-код</string>
     <string name="import_from_clipboard">Вставить из буфера</string>
     <string name="import_link">Импорт по ссылке</string>
+    <string name="import_from_file">Импорт из файла</string>
+    <string name="open_link">Открыть ссылку</string>
     <string name="server_link">Ссылка на сервер</string>
     <string name="server_link_hint">vless://, vmess://, trojan://, ss://, hy2://, tuic://</string>
     <string name="subscription_url">Ссылка на подписку</string>
@@ -197,6 +199,7 @@
     <string name="msg_sub_already_added">Эта подписка уже добавлена</string>
     <string name="msg_subscription_empty">Подписка вернула пустой ответ</string>
     <string name="msg_subscription_deleted">Подписка удалена</string>
+    <string name="msg_subscription_updated">Подписка обновлена</string>
     <string name="msg_server_deleted">Сервер удалён</string>
     <string name="msg_rule_deleted">Правило удалено</string>
     <string name="msg_copied">Скопировано</string>

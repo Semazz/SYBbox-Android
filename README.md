@@ -172,8 +172,7 @@ git push origin v2.0.2
 ./gradlew assembleRelease
 ```
 
-Тег `v2.0.2` даст `versionName 2.0.2`. Сборка не на теге получит в версию хеш коммита,
-чтобы отладочный APK не спутали с релизным.
+Тег `v2.0.2` даст `versionName 2.0.2` и имя файла `SYBbox-2.0.2-arm64-v8a.apk`.
 
 ---
 

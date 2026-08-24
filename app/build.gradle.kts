@@ -9,8 +9,8 @@ plugins {
 }
 
 // The version comes from the git tag, so a release is cut by tagging rather than by
-// editing this file. `v2.0.1` gives versionName 2.0.1; a build made past the tag carries
-// the short commit after it so a dev apk is never mistaken for the release.
+// editing this file: `v2.0.1` gives versionName 2.0.1. Builds made after the tag carry the
+// same version, so the apk is named for the version alone.
 fun git(vararg args: String): String? = runCatching {
     val process = ProcessBuilder(listOf("git") + args)
         .directory(rootProject.projectDir)
@@ -23,15 +23,9 @@ fun git(vararg args: String): String? = runCatching {
 // Used when there is no git checkout at all, such as a source archive download.
 val fallbackVersion = "2.0.1"
 
-val exactTag = git("describe", "--tags", "--exact-match")
 val latestTag = git("describe", "--tags", "--abbrev=0")
-val releaseVersion = (exactTag ?: latestTag)?.removePrefix("v") ?: fallbackVersion
-
-val computedVersionName = when {
-    exactTag != null -> releaseVersion
-    latestTag != null -> "$releaseVersion-${git("rev-parse", "--short", "HEAD") ?: "dev"}"
-    else -> fallbackVersion
-}
+val computedVersionName = latestTag?.removePrefix("v") ?: fallbackVersion
+val releaseVersion = computedVersionName
 
 // 2.0.1 becomes 20001, which keeps rising as the version does.
 val computedVersionCode = releaseVersion.split(".")

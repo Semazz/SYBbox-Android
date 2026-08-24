@@ -8,6 +8,37 @@ plugins {
     id("com.google.dagger.hilt.android")
 }
 
+// The version comes from the git tag, so a release is cut by tagging rather than by
+// editing this file. `v2.0.1` gives versionName 2.0.1; a build made past the tag carries
+// the short commit after it so a dev apk is never mistaken for the release.
+fun git(vararg args: String): String? = runCatching {
+    val process = ProcessBuilder(listOf("git") + args)
+        .directory(rootProject.projectDir)
+        .redirectErrorStream(true)
+        .start()
+    val output = process.inputStream.bufferedReader().use { it.readText() }.trim()
+    if (process.waitFor() == 0 && output.isNotEmpty()) output else null
+}.getOrNull()
+
+// Used when there is no git checkout at all, such as a source archive download.
+val fallbackVersion = "2.0.1"
+
+val exactTag = git("describe", "--tags", "--exact-match")
+val latestTag = git("describe", "--tags", "--abbrev=0")
+val releaseVersion = (exactTag ?: latestTag)?.removePrefix("v") ?: fallbackVersion
+
+val computedVersionName = when {
+    exactTag != null -> releaseVersion
+    latestTag != null -> "$releaseVersion-${git("rev-parse", "--short", "HEAD") ?: "dev"}"
+    else -> fallbackVersion
+}
+
+// 2.0.1 becomes 20001, which keeps rising as the version does.
+val computedVersionCode = releaseVersion.split(".")
+    .map { it.takeWhile(Char::isDigit).toIntOrNull() ?: 0 }
+    .let { (it + listOf(0, 0, 0)).take(3) }
+    .let { (major, minor, patch) -> major * 10000 + minor * 100 + patch }
+
 // Signing credentials live outside the tree: keystore.properties and the .jks are both
 // gitignored. The repository is public, and a signing key is the one thing that must never
 // enter it — whoever holds it can publish updates as this app.
@@ -28,8 +59,8 @@ android {
         applicationId = "com.sybbox"
         minSdk = 24
         targetSdk = 35
-        versionCode = 3
-        versionName = "2.0.1"
+        versionCode = computedVersionCode
+        versionName = computedVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

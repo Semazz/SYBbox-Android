@@ -3,6 +3,16 @@
 [![API](https://img.shields.io/badge/API-24%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=24)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-orange.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
+## Скачать
+
+[<img src="https://img.shields.io/badge/Скачать-RELEASE-brightgreen?style=for-the-badge" alt="Download" height="40">](https://github.com/Semazz/SYBbox/releases/latest)
+
+| ABI | Ссылка |
+| --- | --- |
+| arm64-v8a | [SYBbox-2.0.0-arm64-v8a.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.0/SYBbox-2.0.0-arm64-v8a.apk) |
+| armeabi-v7a | [SYBbox-2.0.0-armeabi-v7a.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.0/SYBbox-2.0.0-armeabi-v7a.apk) |
+| x86_64 | [SYBbox-2.0.0-x86_64.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.0/SYBbox-2.0.0-x86_64.apk) |
+
 Android VPN клиент на базе [sing-box](https://github.com/SagerNet/sing-box).
 
 ## Протоколы

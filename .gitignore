@@ -42,8 +42,10 @@ jniLibs/
 # sing-box fork and build artifacts
 libcore/singbox-fork/
 libcore/aar_extract*/
+libcore/jar_extract*/
 libcore/sybbox_core.aar
 libcore/sybbox_core-sources.jar
+app/libs/sybbox_core-sources.jar
 
 # Kotlin
 .kotlin/

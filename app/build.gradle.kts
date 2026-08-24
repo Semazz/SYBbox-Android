@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -5,6 +7,18 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
 }
+
+// Signing credentials live outside the tree: keystore.properties and the .jks are both
+// gitignored. The repository is public, and a signing key is the one thing that must never
+// enter it — whoever holds it can publish updates as this app.
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { load(it) }
+    }
+}
+val hasSigningKey = keystoreProperties.getProperty("storeFile")
+    ?.let { rootProject.file(it).exists() } == true
 
 android {
     namespace = "com.sybbox"
@@ -28,8 +42,27 @@ android {
         resourceConfigurations += listOf("en", "ru", "es", "zh-rCN")
     }
 
+    signingConfigs {
+        if (hasSigningKey) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                // minSdk is 24, and every release of Android from 7.0 verifies v2, so the
+                // old JAR signature buys nothing here. v3 carries the same signature plus
+                // room to rotate the key later without breaking updates.
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // Without a key the build still succeeds and produces an unsigned apk, so a
+            // fresh clone can compile. Only this machine holds the key.
+            signingConfig = if (hasSigningKey) signingConfigs.getByName("release") else null
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

@@ -56,6 +56,27 @@ cd libcore && ./build.sh
 
 APK появятся в `app/build/outputs/apk/release/`, по одному на каждый ABI.
 
+### Подпись
+
+Сборка подписывается ключом, путь и пароли к которому берутся из `keystore.properties`
+в корне проекта — он и сам `.jks` не входят в репозиторий:
+
+```properties
+storeFile=sybbox-release.jks
+storePassword=...
+keyAlias=sybbox
+keyPassword=...
+```
+
+Свой ключ создаётся так:
+
+```bash
+keytool -genkeypair -v -keystore sybbox-release.jks -alias sybbox   -keyalg RSA -keysize 4096 -validity 10950
+```
+
+Без `keystore.properties` сборка не падает, а выдаёт неподписанный APK — чтобы проект
+собирался и без ключа. Установить на устройство можно только подписанный.
+
 ### Тесты
 
 ```bash

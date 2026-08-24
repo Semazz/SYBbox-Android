@@ -64,3 +64,5 @@ Thumbs.db
 *~
 libcore/shadowsocks2-patch/
 cache.db
+keystore.properties
+*.p12

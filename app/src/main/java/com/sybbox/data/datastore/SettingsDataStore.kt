@@ -27,14 +27,14 @@ class SettingsDataStore @Inject constructor(
     val customSni: Flow<String> = dataStore.data.map { it[KEY_CUSTOM_SNI] ?: "" }
     val connectionTimeout: Flow<Int> = dataStore.data.map { it[KEY_CONNECTION_TIMEOUT] ?: 30 }
 
-    val remoteDns: Flow<String> = dataStore.data.map { it[KEY_REMOTE_DNS] ?: "udp://8.8.8.8" }
-    val directDns: Flow<String> = dataStore.data.map { it[KEY_DIRECT_DNS] ?: "223.5.5.5" }
-    val dnsQueryStrategy: Flow<String> = dataStore.data.map { it[KEY_DNS_QUERY_STRATEGY] ?: "PreferIPv4" }
+    val remoteDns: Flow<String> = dataStore.data.map { it[KEY_REMOTE_DNS] ?: "https://8.8.8.8/dns-query" }
+    val directDns: Flow<String> = dataStore.data.map { it[KEY_DIRECT_DNS] ?: "https://1.1.1.1/dns-query" }
+    val dnsQueryStrategy: Flow<String> = dataStore.data.map { it[KEY_DNS_QUERY_STRATEGY] ?: "ipv4_only" }
     val enableFakeIp: Flow<Boolean> = dataStore.data.map { it[KEY_ENABLE_FAKE_IP] ?: false }
     val fakeIpRange: Flow<String> = dataStore.data.map { it[KEY_FAKE_IP_RANGE] ?: "198.18.0.0/15" }
 
     val tunStack: Flow<String> = dataStore.data.map { it[KEY_TUN_STACK] ?: "gvisor" }
-    val tunMTU: Flow<Int> = dataStore.data.map { it[KEY_TUN_MTU] ?: 9000 }
+    val tunMTU: Flow<Int> = dataStore.data.map { it[KEY_TUN_MTU] ?: 1500 }
     val autoRoute: Flow<Boolean> = dataStore.data.map { it[KEY_AUTO_ROUTE] ?: true }
     val strictRoute: Flow<Boolean> = dataStore.data.map { it[KEY_STRICT_ROUTE] ?: false }
 

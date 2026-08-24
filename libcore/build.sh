@@ -9,7 +9,7 @@ TARGETS="${TARGETS:-android/arm64,android/arm,android/amd64}"
 export ANDROID_HOME="$SDK_DIR"
 export ANDROID_NDK_HOME="$NDK_DIR"
 
-TAGS="with_gvisor,with_quic,with_utls"
+TAGS="with_gvisor,with_quic,with_utls,with_clash_api,with_wireguard"
 LDFLAGS="-s -w -buildid= -checklinkname=0"
 
 mkdir -p "$(dirname "$OUT")"

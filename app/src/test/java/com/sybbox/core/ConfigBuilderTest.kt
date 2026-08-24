@@ -16,13 +16,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
-/**
- * Covers the shape of the generated configuration.
- *
- * The assertions here catch structural mistakes, but they cannot prove sing-box accepts the
- * result: only the core's own parser can. Set `SYBBOX_CONFIG_DUMP` to a directory and the
- * fixtures are written there so `libcore/cmd/validate` can check them for real.
- */
 class ConfigBuilderTest {
 
     private val realityVless = ServerProfile(
@@ -147,7 +140,7 @@ class ConfigBuilderTest {
         val tun = inbounds[0].asJsonObject
         assertEquals("tun", tun.get("type").asString)
         val addresses = tun.getAsJsonArray("address").map { it.asString }
-        // A /30 leaves room for the address the core hijacks DNS on.
+
         assertTrue(addresses.any { it.endsWith("/30") })
         assertTrue(tun.get("auto_route").asBoolean)
     }
@@ -240,11 +233,11 @@ class ConfigBuilderTest {
         val remote = servers.first { it.get("tag").asString == "dns-remote" }
         assertEquals("https", remote.get("type").asString)
         assertEquals("dns.google", remote.get("server").asString)
-        assertEquals("proxy", remote.get("detour").asString)
+        assertEquals(ConfigBuilder.TAG_PROXY, remote.get("detour").asString)
 
         val direct = servers.first { it.get("tag").asString == "dns-direct" }
         assertEquals("udp", direct.get("type").asString)
-        assertEquals("direct", direct.get("detour").asString)
+        assertTrue(direct.get("detour") == null || direct.get("detour").isJsonNull)
 
         assertNotNull(servers.firstOrNull { it.get("type").asString == "fakeip" })
     }
@@ -256,10 +249,6 @@ class ConfigBuilderTest {
         assertTrue(error is UnsupportedProtocolException)
     }
 
-    /**
-     * Writes one fixture per protocol so the Go validator can run the core's own parser over
-     * them. Skipped unless a dump directory is configured.
-     */
     @Test
     fun `global mode sends everything through the proxy`() {
         val global = everythingOn.copy(routingMode = ConfigBuilder.MODE_GLOBAL)
@@ -312,8 +301,7 @@ class ConfigBuilderTest {
             val (profile, settings) = pair
             File(directory, "$name.json").writeText(ConfigBuilder.build(profile, settings, customRules))
         }
-        // The rule-set-free fallback has to parse too, since it is what a first connection on
-        // a filtered network actually ends up running.
+
         File(directory, "fallback-no-rule-sets.json")
             .writeText(ConfigBuilder.build(realityVless, everythingOn, customRules, useRuleSets = false))
     }

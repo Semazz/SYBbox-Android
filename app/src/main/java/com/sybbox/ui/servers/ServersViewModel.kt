@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.sybbox.R
 import com.sybbox.data.datastore.SettingsDataStore
 import com.sybbox.data.parser.SubscriptionParser
+import com.sybbox.data.parser.WireGuardParser
 import com.sybbox.data.repository.ProfileRepository
 import com.sybbox.data.repository.SubscriptionRepository
 import com.sybbox.domain.model.ConnectionState
@@ -98,6 +99,18 @@ class ServersViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
+            if (trimmed.contains("[Interface]", ignoreCase = true) && trimmed.contains("PrivateKey", ignoreCase = true)) {
+                val wg = WireGuardParser.parse(trimmed)
+                if (wg != null) {
+                    val existing = profileRepository.getAllProfilesOnce().filter { it.subscriptionId == 0L }
+                    val key = "${wg.protocol}|${wg.address}|${wg.port}"
+                    existing.filter { "${it.protocol}|${it.address}|${it.port}" == key }
+                        .forEach { profileRepository.deleteProfile(it) }
+                    profileRepository.insertProfiles(listOf(wg))
+                    emit(UiMessage(R.string.msg_server_added, listOf(wg.displayName())))
+                    return@launch
+                }
+            }
             val direct = SubscriptionParser.parse(trimmed, SubType.STANDARD)
             if (direct.isNotEmpty()) {
                 val existing = profileRepository.getAllProfilesOnce().filter { it.subscriptionId == 0L }
@@ -298,7 +311,7 @@ class ServersViewModel @Inject constructor(
         viewModelScope.launch {
             _testing.update { it + profile.id }
             val latency = withContext(Dispatchers.IO) {
-                com.sybbox.core.PingTool.tcp(getApplication(), profile.address, profile.port)
+                com.sybbox.core.PingTool.pingForProfile(getApplication(), profile)
             }
             _latencies.update { it + (profile.id to latency) }
             _pingVisibleUntil.update { it + (profile.id to (System.currentTimeMillis() + 10_000)) }
@@ -312,7 +325,7 @@ class ServersViewModel @Inject constructor(
             _testing.update { it + targets.map(ServerProfile::id) }
             val results = withContext(Dispatchers.IO) {
                 targets.associate { target ->
-                    target.id to com.sybbox.core.PingTool.tcp(getApplication(), target.address, target.port)
+                    target.id to com.sybbox.core.PingTool.pingForProfile(getApplication(), target)
                 }
             }
             _latencies.update { it + results }

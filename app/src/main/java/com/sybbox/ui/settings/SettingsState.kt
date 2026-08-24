@@ -15,9 +15,9 @@ data class SettingsState(
     val includedApps: List<String> = emptyList(),
     val excludedApps: List<String> = emptyList(),
 
-    val remoteDns: String = "udp://8.8.8.8",
-    val directDns: String = "77.88.8.8",
-    val dnsQueryStrategy: String = "PreferIPv4",
+    val remoteDns: String = "https://8.8.8.8/dns-query",
+    val directDns: String = "https://1.1.1.1/dns-query",
+    val dnsQueryStrategy: String = "ipv4_only",
     val enableFakeIp: Boolean = false,
     val fakeIpRange: String = "198.18.0.0/15",
 
@@ -30,7 +30,7 @@ data class SettingsState(
     val enableMux: Boolean = false,
 
     val tunStack: String = "gvisor",
-    val tunMTU: Int = 9000,
+    val tunMTU: Int = 1500,
     val autoRoute: Boolean = true,
     val strictRoute: Boolean = false,
 

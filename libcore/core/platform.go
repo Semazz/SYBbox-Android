@@ -184,7 +184,7 @@ func (w *platformWrapper) NetworkInterfaces() ([]adapter.NetworkInterface, error
 	}
 	var interfaces []adapter.NetworkInterface
 	for _, item := range raw {
-		if item.Name == w.myTunName {
+		if item.Name == w.myTunName || strings.HasPrefix(item.Name, "tun") {
 			continue
 		}
 		addresses, err := parsePrefixes(item.Addresses)

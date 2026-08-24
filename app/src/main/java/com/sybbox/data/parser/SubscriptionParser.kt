@@ -106,13 +106,17 @@ object SubscriptionParser {
     }
 
     fun parseUri(uri: String): ServerProfile? {
+        val lower = uri.lowercase()
         return when {
-            uri.startsWith("vless://") -> VlessParser.parse(uri)
-            uri.startsWith("vmess://") -> VmessParser.parse(uri)
-            uri.startsWith("trojan://") -> TrojanParser.parse(uri)
-            uri.startsWith("ss://") -> SsParser.parse(uri)
-            uri.startsWith("hysteria2://") || uri.startsWith("hy2://") -> Hysteria2Parser.parse(uri)
-            uri.startsWith("tuic://") -> TuicParser.parse(uri)
+            lower.startsWith("vless://") -> VlessParser.parse(uri)
+            lower.startsWith("vmess://") -> VmessParser.parse(uri)
+            lower.startsWith("trojan://") -> TrojanParser.parse(uri)
+            lower.startsWith("ss://") -> SsParser.parse(uri)
+            lower.startsWith("hysteria2://") || lower.startsWith("hy2://") -> Hysteria2Parser.parse(uri)
+            lower.startsWith("tuic://") -> TuicParser.parse(uri)
+            lower.startsWith("wg://") || lower.startsWith("wireguard://") ||
+                lower.startsWith("awg://") || lower.startsWith("amneziawg://") || lower.startsWith("amnezia://") ->
+                WireGuardParser.parse(uri)
             else -> null
         }
     }

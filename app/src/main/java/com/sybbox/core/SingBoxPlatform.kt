@@ -108,6 +108,9 @@ class SingBoxPlatform(
     override fun interfaces(): String {
 
         val networks = describeNetworks()
+        val hasWlan = try {
+            NetworkInterface.getNetworkInterfaces().asSequence().any { it.name.startsWith("wlan") && it.isUp }
+        } catch (_: Exception) { false }
         val result = NetworkInterface.getNetworkInterfaces().asSequence().map { networkInterface ->
             val known = networks[networkInterface.name]
             InterfaceInfo(
@@ -123,6 +126,8 @@ class SingBoxPlatform(
                 dnsServers = known?.dnsServers.orEmpty(),
                 metered = known?.metered ?: false,
             )
+        }.filter { info ->
+            if (hasWlan && info.name.startsWith("rmnet")) false else true
         }.toList()
         return Gson().toJson(result)
     }
@@ -161,6 +166,9 @@ class SingBoxPlatform(
                 )
             }
         }
+        if (details.keys.any { it.startsWith("wlan") }) {
+            details.keys.filter { it.startsWith("rmnet") }.forEach { details.remove(it) }
+        }
         return details
     }
 
@@ -182,6 +190,13 @@ class SingBoxPlatform(
             private fun report(network: Network, capabilities: NetworkCapabilities? = null) {
                 val properties = manager.getLinkProperties(network) ?: return
                 val name = properties.interfaceName ?: return
+                if (name.startsWith("tun")) return
+                if (name.startsWith("rmnet")) {
+                    val hasWlan = try {
+                        NetworkInterface.getNetworkInterfaces().asSequence().any { it.name.startsWith("wlan") && it.isUp }
+                    } catch (_: Exception) { false }
+                    if (hasWlan) return
+                }
                 val index = runCatching { NetworkInterface.getByName(name)?.index }.getOrNull() ?: return
                 val actual = capabilities ?: manager.getNetworkCapabilities(network)
                 val expensive = actual?.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) == false
@@ -199,6 +214,7 @@ class SingBoxPlatform(
 
         manager.activeNetwork?.let { network ->
             val name = manager.getLinkProperties(network)?.interfaceName
+            if (name != null && name.startsWith("tun")) return@let
             val index = name?.let { runCatching { NetworkInterface.getByName(it)?.index }.getOrNull() }
             if (name != null && index != null) {
                 val capabilities = manager.getNetworkCapabilities(network)

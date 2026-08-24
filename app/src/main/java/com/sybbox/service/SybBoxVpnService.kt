@@ -146,7 +146,10 @@ class SybBoxVpnService : VpnService() {
                 }
                 connect(profileId, forceRestart)
             }
-            ACTION_DISCONNECT -> disconnect()
+            ACTION_DISCONNECT -> {
+                disconnect()
+                return START_NOT_STICKY
+            }
             else -> stopSelf()
         }
         return START_STICKY
@@ -348,20 +351,24 @@ class SybBoxVpnService : VpnService() {
 
     private fun disconnect() {
         monitorJob?.cancel()
+        connectionJob?.cancel()
         shutdownCore()
         activeProfileId = -1L
         appliedConfigSignature = ""
         _appState.value = AppState()
+        liveInstance = null
         CoreLog.info("Disconnected")
         stopSelfSafely()
-    }    private fun shutdownCore() {
+    }
+
+    private fun shutdownCore() {
         platform?.runCatching { closeInterfaceMonitor() }
         boxService?.runCatching { close() }
         boxService = null
         platform = null
         tunDescriptor?.runCatching { close() }
         tunDescriptor = null
-        if (_appState.value.connectionState != ConnectionState.CONNECTED) liveInstance = null
+        liveInstance = null
     }
 
     private fun stopSelfSafely() {

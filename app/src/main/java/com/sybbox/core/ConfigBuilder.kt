@@ -48,15 +48,63 @@ object ConfigBuilder {
         useRuleSets: Boolean = true,
     ): String {
         val ruleSets = if (useRuleSets) linkedMapOf<String, JsonObject>() else null
+        val isWireGuard = profile.protocol == ProtocolType.WIREGUARD
         val config = JsonObject().apply {
             add("log", buildLog(settings))
-            add("dns", buildDns(settings, ruleSets))
-            add("inbounds", buildInbounds(settings))
+            add("dns", buildDns(settings, ruleSets, profile))
+            add("inbounds", buildInbounds(settings, profile))
+            if (isWireGuard) {
+                add("endpoints", buildEndpoints(profile))
+            }
             add("outbounds", buildOutbounds(profile, settings))
-            add("route", buildRoute(settings, customRules, ruleSets))
+            add("route", buildRoute(settings, customRules, ruleSets, profile))
             add("experimental", buildExperimental())
         }
         return GSON.toJson(config)
+    }
+
+    private fun buildEndpoints(profile: ServerProfile): JsonArray {
+        val endpoints = JsonArray()
+        if (profile.protocol == ProtocolType.WIREGUARD) {
+            if (profile.wgPrivateKey.isBlank() || profile.wgPeerPublicKey.isBlank()) {
+                throw UnsupportedProtocolException(ProtocolType.WIREGUARD)
+            }
+            val peer = JsonObject().apply {
+                addProperty("address", profile.address)
+                addProperty("port", profile.port)
+                addProperty("public_key", profile.wgPeerPublicKey)
+                if (profile.wgPresharedKey.isNotBlank()) addProperty("pre_shared_key", profile.wgPresharedKey)
+                add("allowed_ips", jsonArrayOf("0.0.0.0/0", "::/0"))
+                if (profile.wgReserved.isNotEmpty()) {
+                    add("reserved", JsonArray().apply { profile.wgReserved.forEach { add(it) } })
+                }
+                val hasAmnezia = profile.wgJc.isNotBlank() || profile.wgJmin.isNotBlank() || profile.wgH1.isNotBlank()
+                if (hasAmnezia) {
+                    val am = JsonObject()
+                    if (profile.wgJc.isNotBlank()) am.addProperty("jc", profile.wgJc)
+                    if (profile.wgJmin.isNotBlank()) am.addProperty("jmin", profile.wgJmin)
+                    if (profile.wgJmax.isNotBlank()) am.addProperty("jmax", profile.wgJmax)
+                    if (profile.wgS1.isNotBlank()) am.addProperty("s1", profile.wgS1)
+                    if (profile.wgS2.isNotBlank()) am.addProperty("s2", profile.wgS2)
+                    if (profile.wgH1.isNotBlank()) am.addProperty("h1", profile.wgH1)
+                    if (profile.wgH2.isNotBlank()) am.addProperty("h2", profile.wgH2)
+                    if (profile.wgH3.isNotBlank()) am.addProperty("h3", profile.wgH3)
+                    if (profile.wgH4.isNotBlank()) am.addProperty("h4", profile.wgH4)
+                    add("amnezia_wg", am)
+                }
+            }
+            val ep = JsonObject().apply {
+                addProperty("type", "wireguard")
+                addProperty("tag", "wg-endpoint")
+                addProperty("private_key", profile.wgPrivateKey)
+                val localAddr = profile.wgLocalAddress.ifBlank { "10.0.0.2/32" }
+                add("address", jsonArrayOf(localAddr.split(',').map { it.trim() }.filter { it.isNotEmpty() }))
+                addProperty("mtu", profile.wgMTU.coerceIn(1280, 9000))
+                add("peers", JsonArray().apply { add(peer) })
+            }
+            endpoints.add(ep)
+        }
+        return endpoints
     }
 
     private fun buildLog(settings: SettingsState) = JsonObject().apply {
@@ -64,9 +112,16 @@ object ConfigBuilder {
         addProperty("timestamp", true)
     }
 
-    private fun buildDns(settings: SettingsState, ruleSets: MutableMap<String, JsonObject>?) = JsonObject().apply {
+    private fun buildDns(settings: SettingsState, ruleSets: MutableMap<String, JsonObject>?, profile: ServerProfile) = JsonObject().apply {
+        val isWg = profile.protocol == ProtocolType.WIREGUARD
         val servers = JsonArray()
-        servers.add(dnsServer(TAG_DNS_REMOTE, settings.remoteDns, detour = TAG_PROXY))
+        val remoteDns = when {
+            profile.protocol == ProtocolType.SHADOWSOCKS && settings.remoteDns.trim().lowercase().startsWith("udp://") -> settings.remoteDns.replaceFirst("udp://", "https://", ignoreCase = true).let { if (it.contains("/dns-query")) it else "$it/dns-query" }
+            profile.protocol == ProtocolType.SHADOWSOCKS && settings.remoteDns.trim().lowercase().startsWith("tls://") -> settings.remoteDns.replaceFirst("tls://", "https://", ignoreCase = true).let { if (it.contains("/dns-query")) it else "$it/dns-query" }
+            profile.protocol == ProtocolType.SHADOWSOCKS && !settings.remoteDns.contains("://") && settings.remoteDns.trim().matches(Regex("\\d+\\.\\d+\\.\\d+\\.\\d+")) -> "https://${settings.remoteDns.trim()}/dns-query"
+            else -> settings.remoteDns
+        }
+        servers.add(dnsServer(TAG_DNS_REMOTE, remoteDns, detour = if (isWg) "wg-endpoint" else TAG_PROXY))
         servers.add(dnsServer(TAG_DNS_DIRECT, settings.directDns))
         if (settings.enableFakeIp) {
             servers.add(JsonObject().apply {
@@ -80,8 +135,8 @@ object ConfigBuilder {
 
         val rules = JsonArray()
 
-        directDnsSuffixRule(settings)?.let { rules.add(it) }
-        addRuleSetDnsRules(settings, rules, ruleSets)
+        directDnsSuffixRule(settings, profile)?.let { rules.add(it) }
+        addRuleSetDnsRules(settings, rules, ruleSets, profile)
         if (settings.enableFakeIp) {
             rules.add(JsonObject().apply {
                 add("query_type", jsonArrayOf("A", "AAAA"))
@@ -136,8 +191,8 @@ object ConfigBuilder {
         return server
     }
 
-    private fun directDnsSuffixRule(settings: SettingsState): JsonObject? {
-        if (settings.routingMode == MODE_GLOBAL) return null
+    private fun directDnsSuffixRule(settings: SettingsState, profile: ServerProfile? = null): JsonObject? {
+        if (settings.routingMode == MODE_GLOBAL || profile?.protocol == ProtocolType.SHADOWSOCKS) return null
         val suffixes = buildList {
             if (settings.bypassRussia) addAll(RU_DIRECT_SUFFIXES)
             if (settings.bypassChina) addAll(CN_DIRECT_SUFFIXES)
@@ -153,9 +208,10 @@ object ConfigBuilder {
         settings: SettingsState,
         rules: JsonArray,
         ruleSets: MutableMap<String, JsonObject>?,
+        profile: ServerProfile? = null,
     ) {
         if (ruleSets == null) return
-        val global = settings.routingMode == MODE_GLOBAL
+        val global = settings.routingMode == MODE_GLOBAL || profile?.protocol == ProtocolType.SHADOWSOCKS
         val directSites = buildList<String> {
             if (global) return@buildList
             if (settings.bypassRussia) add(geositeSet(ruleSets, "category-ru"))
@@ -178,17 +234,17 @@ object ConfigBuilder {
         }
     }
 
-    private fun buildInbounds(settings: SettingsState) = JsonArray().apply {
+    private fun buildInbounds(settings: SettingsState, profile: ServerProfile? = null) = JsonArray().apply {
         add(JsonObject().apply {
             addProperty("type", "tun")
             addProperty("tag", TAG_TUN)
             add("address", jsonArrayOf(TUN_ADDRESS_V4, TUN_ADDRESS_V6))
-            addProperty("mtu", settings.tunMTU.coerceIn(1280, 9000))
-            addProperty("auto_route", settings.autoRoute)
-            addProperty("strict_route", settings.strictRoute)
+            addProperty("mtu", settings.tunMTU.coerceIn(1280, 1500))
+            addProperty("auto_route", if (profile?.protocol == ProtocolType.SHADOWSOCKS) true else settings.autoRoute)
+            addProperty("strict_route", if (profile?.protocol == ProtocolType.SHADOWSOCKS) true else settings.strictRoute)
             addProperty("stack", settings.tunStack.lowercase().ifBlank { "gvisor" })
 
-            if (settings.perAppProxy) {
+            if (profile?.protocol != ProtocolType.SHADOWSOCKS && settings.perAppProxy) {
                 if (settings.includedApps.isNotEmpty()) {
                     add("include_package", jsonArrayOf(settings.includedApps))
                 } else if (settings.excludedApps.isNotEmpty()) {
@@ -207,18 +263,23 @@ object ConfigBuilder {
     }
 
     private fun buildProxyOutbound(profile: ServerProfile, settings: SettingsState): JsonObject {
+        val isWg = profile.protocol == ProtocolType.WIREGUARD
         val outbound = JsonObject().apply {
             addProperty("tag", TAG_PROXY)
-            addProperty("server", profile.address)
-            addProperty("server_port", profile.port)
+            if (!isWg) {
+                addProperty("server", profile.address)
+                addProperty("server_port", profile.port)
+            }
         }
         if (settings.connectionTimeout > 0) {
             outbound.addProperty("connect_timeout", "${settings.connectionTimeout}s")
         }
 
-        outbound.add("domain_resolver", JsonObject().apply {
-            addProperty("server", TAG_DNS_DIRECT)
-        })
+        if (!isWg) {
+            outbound.add("domain_resolver", JsonObject().apply {
+                addProperty("server", TAG_DNS_DIRECT)
+            })
+        }
 
         when (profile.protocol) {
             ProtocolType.VLESS -> {
@@ -247,8 +308,12 @@ object ConfigBuilder {
             }
             ProtocolType.SHADOWSOCKS -> {
                 outbound.addProperty("type", "shadowsocks")
-                outbound.addProperty("method", profile.ssMethod)
+                outbound.addProperty("method", profile.ssMethod.ifBlank { "aes-256-gcm" })
                 outbound.addProperty("password", profile.ssPassword)
+                if (profile.ssPlugin.isNotBlank()) {
+                    outbound.addProperty("plugin", profile.ssPlugin)
+                    if (profile.ssPluginOpts.isNotBlank()) outbound.addProperty("plugin_opts", profile.ssPluginOpts)
+                }
                 addMultiplex(outbound, profile, settings)
             }
             ProtocolType.HYSTERIA2 -> {
@@ -287,20 +352,9 @@ object ConfigBuilder {
             }
             ProtocolType.WIREGUARD -> {
                 if (profile.wgPrivateKey.isBlank() || profile.wgPeerPublicKey.isBlank()) {
-                    throw IllegalStateException("WireGuard profile is missing its keys")
+                    throw UnsupportedProtocolException(ProtocolType.WIREGUARD)
                 }
-                outbound.addProperty("type", "wireguard")
-                outbound.addProperty("private_key", profile.wgPrivateKey)
-                outbound.addProperty("peer_public_key", profile.wgPeerPublicKey)
-                if (profile.wgPresharedKey.isNotBlank()) {
-                    outbound.addProperty("pre_shared_key", profile.wgPresharedKey)
-                }
-                val localAddress = profile.wgLocalAddress.ifBlank { "172.16.0.2/32" }
-                outbound.add("local_address", jsonArrayOf(localAddress))
-                if (profile.wgReserved.isNotEmpty()) {
-                    outbound.add("reserved", JsonArray().apply { profile.wgReserved.forEach { add(it) } })
-                }
-                outbound.addProperty("mtu", profile.wgMTU.coerceIn(1280, 9000))
+                outbound.addProperty("type", "direct")
             }
             else -> throw UnsupportedProtocolException(profile.protocol)
         }
@@ -394,11 +448,13 @@ object ConfigBuilder {
             }
 
             TransportType.XHTTP -> JsonObject().apply {
-                addProperty("type", "xhttp")
+                addProperty("type", "ws")
                 val path = profile.wsPath.ifBlank { profile.h2Path }
                 val host = profile.wsHost.ifBlank { profile.h2Host }
                 if (path.isNotBlank()) addProperty("path", path)
-                if (host.isNotBlank()) add("host", jsonArrayOf(host))
+                if (host.isNotBlank()) {
+                    add("headers", JsonObject().apply { addProperty("Host", host) })
+                }
                 if (profile.xhttpMode.isNotBlank()) addProperty("mode", profile.xhttpMode)
             }
             TransportType.TCP, TransportType.QUIC, TransportType.KCP -> null
@@ -422,12 +478,14 @@ object ConfigBuilder {
         settings: SettingsState,
         customRules: List<RoutingRule>,
         ruleSets: MutableMap<String, JsonObject>?,
+        profile: ServerProfile,
     ) = JsonObject().apply {
 
-        val global = settings.routingMode == MODE_GLOBAL
-        val bypassRussia = settings.bypassRussia && !global
-        val bypassChina = settings.bypassChina && !global
-        val bypassLocal = settings.bypassLocalNetwork && !global
+        val isSs = profile.protocol == ProtocolType.SHADOWSOCKS
+        val global = settings.routingMode == MODE_GLOBAL || isSs
+        val bypassRussia = settings.bypassRussia && !global && !isSs
+        val bypassChina = settings.bypassChina && !global && !isSs
+        val bypassLocal = settings.bypassLocalNetwork && !global && !isSs
         val rules = JsonArray()
 
         rules.add(JsonObject().apply { addProperty("action", "sniff") })
@@ -500,7 +558,12 @@ object ConfigBuilder {
         if (!ruleSets.isNullOrEmpty()) {
             add("rule_set", JsonArray().apply { ruleSets.values.forEach { add(it) } })
         }
-        addProperty("final", if (settings.routingMode == MODE_DIRECT_ONLY) TAG_DIRECT else TAG_PROXY)
+        val isWg = profile.protocol == ProtocolType.WIREGUARD
+        addProperty("final", when {
+            settings.routingMode == MODE_DIRECT_ONLY -> TAG_DIRECT
+            isWg -> "wg-endpoint"
+            else -> TAG_PROXY
+        })
         addProperty("auto_detect_interface", true)
     }
 

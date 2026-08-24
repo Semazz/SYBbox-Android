@@ -89,7 +89,7 @@ class HomeViewModel @Inject constructor(
                 com.sybbox.core.PingTool.UNREACHABLE
             } else {
                 withContext(Dispatchers.IO) {
-                    com.sybbox.core.PingTool.tcp(getApplication(), target.address, target.port)
+                    com.sybbox.core.PingTool.pingForProfile(getApplication(), target)
                 }
             }
             _latencies.update { it + (profileId to latency) }

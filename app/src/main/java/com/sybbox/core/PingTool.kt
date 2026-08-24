@@ -13,15 +13,24 @@ object PingTool {
     const val UNREACHABLE = -1
     private const val TIMEOUT_MS = 4000
 
-    fun tcp(context: Context, host: String, port: Int): Int {
+    fun tcp(context: Context, host: String, port: Int): Int = ping(context, host, port, isUdp = false)
+
+    fun pingForProfile(context: Context, profile: com.sybbox.domain.model.ServerProfile): Int {
+        val isUdp = profile.protocol == com.sybbox.domain.model.ProtocolType.WIREGUARD ||
+            profile.protocol == com.sybbox.domain.model.ProtocolType.HYSTERIA2 ||
+            profile.protocol == com.sybbox.domain.model.ProtocolType.TUIC
+        return ping(context, profile.address, profile.port, isUdp)
+    }
+
+    private fun ping(context: Context, host: String, port: Int, isUdp: Boolean): Int {
         if (host.isBlank()) return UNREACHABLE
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-            ?: return plain(host, port)
-        val network = physicalNetwork(cm) ?: cm.activeNetwork ?: return plain(host, port)
+            ?: return plain(host, port, isUdp)
+        val network = physicalNetwork(cm) ?: cm.activeNetwork ?: return plain(host, port, isUdp)
         return runCatching {
             val factory = network.socketFactory
             val address = network.getAllByName(host).firstOrNull() ?: return UNREACHABLE
-            measure(factory, address, port)
+            measure(factory, address, port, isUdp)
         }.getOrDefault(UNREACHABLE)
     }
 
@@ -41,20 +50,40 @@ object PingTool {
         }
     }
 
-    private fun measure(factory: SocketFactory, address: InetAddress, port: Int): Int = runCatching {
+    private fun measure(factory: SocketFactory, address: InetAddress, port: Int, isUdp: Boolean = false): Int = runCatching {
         val start = System.nanoTime()
-        factory.createSocket().use { socket ->
-            socket.connect(InetSocketAddress(address, port), TIMEOUT_MS)
+        if (isUdp) {
+            try {
+                factory.createSocket().use { socket ->
+                    socket.connect(InetSocketAddress(address, port), 1500)
+                }
+            } catch (_: Exception) {
+                factory.createSocket().use { socket ->
+                    socket.connect(InetSocketAddress(address, 443), TIMEOUT_MS)
+                }
+            }
+        } else {
+            factory.createSocket().use { socket ->
+                socket.connect(InetSocketAddress(address, port), TIMEOUT_MS)
+            }
         }
         val millis = ((System.nanoTime() - start) / 1_000_000).toInt()
         if (millis in 1..TIMEOUT_MS) millis else UNREACHABLE
     }.getOrDefault(UNREACHABLE)
 
-    private fun plain(host: String, port: Int): Int = runCatching {
+    private fun plain(host: String, port: Int, isUdp: Boolean = false): Int = runCatching {
         val address = InetAddress.getByName(host)
         val start = System.nanoTime()
-        Socket().use { socket ->
-            socket.connect(InetSocketAddress(address, port), TIMEOUT_MS)
+        if (isUdp) {
+            try {
+                Socket().use { socket -> socket.connect(InetSocketAddress(address, port), 1500) }
+            } catch (_: Exception) {
+                Socket().use { socket -> socket.connect(InetSocketAddress(address, 443), TIMEOUT_MS) }
+            }
+        } else {
+            Socket().use { socket ->
+                socket.connect(InetSocketAddress(address, port), TIMEOUT_MS)
+            }
         }
         val millis = ((System.nanoTime() - start) / 1_000_000).toInt()
         if (millis in 1..TIMEOUT_MS) millis else UNREACHABLE

@@ -71,6 +71,15 @@ data class ServerProfile(
     val wgReserved: List<Int> = emptyList(),
     val wgLocalAddress: String = "",
     val wgMTU: Int = 1408,
+    val wgJc: String = "",
+    val wgJmin: String = "",
+    val wgJmax: String = "",
+    val wgS1: String = "",
+    val wgS2: String = "",
+    val wgH1: String = "",
+    val wgH2: String = "",
+    val wgH3: String = "",
+    val wgH4: String = "",
 
     val shadowTlsPassword: String = "",
     val shadowTlsVersion: Int = 3,
@@ -80,6 +89,8 @@ data class ServerProfile(
 
     val ssPassword: String = "",
     val ssMethod: String = "aes-256-gcm",
+    val ssPlugin: String = "",
+    val ssPluginOpts: String = "",
 
     val bypassPreset: BypassPreset = BypassPreset.BALANCED,
     val recordFragment: Boolean = false,

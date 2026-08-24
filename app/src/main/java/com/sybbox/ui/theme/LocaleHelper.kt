@@ -18,7 +18,7 @@ object LocaleHelper {
         "EN" -> "en"
         "RU" -> "ru"
         "ES" -> "es"
-        // Region-qualified so values-zh-rCN resolves on every OEM ROM.
+
         "ZH" -> "zh-CN"
         else -> ""
     }

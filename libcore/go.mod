@@ -13,6 +13,8 @@ require github.com/justinwoo280/sing-xhttp v0.1.6 // indirect
 
 replace github.com/sagernet/sing-box => ./singbox-fork
 
+replace github.com/sagernet/sing-shadowsocks2 => ./shadowsocks2-patch-full
+
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/ajg/form v1.5.1 // indirect

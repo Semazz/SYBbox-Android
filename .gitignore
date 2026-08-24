@@ -62,3 +62,4 @@ google-services.json
 Thumbs.db
 *.swp
 *~
+libcore/shadowsocks2-patch/

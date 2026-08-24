@@ -191,15 +191,9 @@ class ServersViewModel @Inject constructor(
         _refreshing.update { it + subscriptionId }
         try {
             val primaryUa = com.sybbox.data.remote.SubscriptionUserAgent.value(settingsDataStore)
-            // Panels vary what they serve by User-Agent, so the list is tried in the order
-            // most likely to return a config array with its names and ordering intact.
-            val fallbackUas = listOf(
-                "Happ/1.0",
-                primaryUa,
-                "v2rayNG/1.8.5",
-                "ClashForAndroid/2.5.12 Meta/1.18.0",
-                "sing-box 1.13.4",
-            ).distinct()
+            // Panels can serve different content per User-Agent. Ours goes first; a plain
+            // browser string is the fallback for a panel that does not recognise it.
+            val fallbackUas = listOf(primaryUa, "Mozilla/5.0").distinct()
 
             var response: SubscriptionResponse? = null
             var trimmedBody = ""

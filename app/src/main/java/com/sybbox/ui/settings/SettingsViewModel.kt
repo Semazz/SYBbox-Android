@@ -63,8 +63,14 @@ class SettingsViewModel @Inject constructor(
         SubscriptionSlice(autoUpdate, interval, perApp, included, excluded)
     }
 
+    private val advanced = combine(
+        store.tcpFastOpen, store.tunnelCheck, store.muxProtocol, store.muxMaxStreams, store.muxPadding,
+    ) { tfo, check, muxProtocol, muxStreams, muxPadding ->
+        AdvancedSlice(tfo, check, muxProtocol, muxStreams, muxPadding)
+    }
+
     val state: StateFlow<SettingsState> = combine(
-        connection, routing, dns, tls, tunnel, appearance, subscriptions,
+        connection, routing, dns, tls, tunnel, appearance, subscriptions, advanced,
     ) { values ->
         val base = values[0] as SettingsState
         val routingSlice = values[1] as RoutingSlice
@@ -73,6 +79,7 @@ class SettingsViewModel @Inject constructor(
         val tunnelSlice = values[4] as TunnelSlice
         val appearanceSlice = values[5] as AppearanceSlice
         val subscriptionSlice = values[6] as SubscriptionSlice
+        val advancedSlice = values[7] as AdvancedSlice
         base.copy(
             routingMode = routingSlice.mode,
             blockAds = routingSlice.blockAds,
@@ -103,6 +110,11 @@ class SettingsViewModel @Inject constructor(
             perAppProxy = subscriptionSlice.perApp,
             includedApps = subscriptionSlice.included,
             excludedApps = subscriptionSlice.excluded,
+            tcpFastOpen = advancedSlice.tcpFastOpen,
+            tunnelCheck = advancedSlice.tunnelCheck,
+            muxProtocol = advancedSlice.muxProtocol,
+            muxMaxStreams = advancedSlice.muxMaxStreams,
+            muxPadding = advancedSlice.muxPadding,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsState())
 
@@ -132,6 +144,11 @@ class SettingsViewModel @Inject constructor(
     fun setFragmentSleep(value: String) = edit { setFragmentSleep(value) }
     fun setRecordFragment(value: Boolean) = edit { setEnableRecordRoute(value) }
     fun setEnableMux(value: Boolean) = edit { setEnableMux(value) }
+    fun setMuxProtocol(value: String) = edit { setMuxProtocol(value) }
+    fun setMuxMaxStreams(value: Int) = edit { setMuxMaxStreams(value) }
+    fun setMuxPadding(value: Boolean) = edit { setMuxPadding(value) }
+    fun setTcpFastOpen(value: Boolean) = edit { setTcpFastOpen(value) }
+    fun setTunnelCheck(value: Boolean) = edit { setTunnelCheck(value) }
 
     fun setTunStack(value: String) = edit { setTunStack(value) }
     fun setTunMTU(value: Int) = edit { setTunMTU(value) }
@@ -200,6 +217,14 @@ class SettingsViewModel @Inject constructor(
         val dynamicColor: Boolean,
         val language: String,
         val logLevel: String,
+    )
+
+    private data class AdvancedSlice(
+        val tcpFastOpen: Boolean,
+        val tunnelCheck: Boolean,
+        val muxProtocol: String,
+        val muxMaxStreams: Int,
+        val muxPadding: Boolean,
     )
 
     private data class SubscriptionSlice(

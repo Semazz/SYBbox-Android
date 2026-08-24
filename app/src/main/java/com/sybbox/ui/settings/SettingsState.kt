@@ -15,8 +15,8 @@ data class SettingsState(
     val includedApps: List<String> = emptyList(),
     val excludedApps: List<String> = emptyList(),
 
-    val remoteDns: String = "https://8.8.8.8/dns-query",
-    val directDns: String = "https://1.1.1.1/dns-query",
+    val remoteDns: String = "https://1.1.1.1/dns-query",
+    val directDns: String = "local",
     val dnsQueryStrategy: String = "ipv4_only",
     val enableFakeIp: Boolean = false,
     val fakeIpRange: String = "198.18.0.0/15",
@@ -28,16 +28,23 @@ data class SettingsState(
     val fragmentSleep: String = "10",
     val recordFragment: Boolean = false,
     val enableMux: Boolean = false,
+    val muxProtocol: String = "h2mux",
+    val muxMaxStreams: Int = 8,
+    val muxPadding: Boolean = false,
 
     val tunStack: String = "gvisor",
     val tunMTU: Int = 1500,
     val autoRoute: Boolean = true,
-    val strictRoute: Boolean = false,
+    val strictRoute: Boolean = true,
 
     val subAutoUpdate: Boolean = true,
     val defaultSubInterval: Int = 12,
 
     val autoFailover: Boolean = false,
+    val tcpFastOpen: Boolean = false,
+
+    /** Verify the tunnel actually carries traffic once it is up, not merely that it started. */
+    val tunnelCheck: Boolean = true,
 
     val themeMode: String = "SYSTEM",
     val dynamicColor: Boolean = true,

@@ -62,6 +62,7 @@ func parseConfig(ctx context.Context, configContent string) (option.Options, err
 	if err != nil {
 		return option.Options{}, E.Cause(err, "decode config")
 	}
+	ApplyDpiTuning(&options)
 	return options, nil
 }
 

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
+import com.sybbox.ui.settings.SettingsState
 import javax.inject.Singleton
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "sybbox_settings")
@@ -27,8 +28,8 @@ class SettingsDataStore @Inject constructor(
     val customSni: Flow<String> = dataStore.data.map { it[KEY_CUSTOM_SNI] ?: "" }
     val connectionTimeout: Flow<Int> = dataStore.data.map { it[KEY_CONNECTION_TIMEOUT] ?: 30 }
 
-    val remoteDns: Flow<String> = dataStore.data.map { it[KEY_REMOTE_DNS] ?: "https://8.8.8.8/dns-query" }
-    val directDns: Flow<String> = dataStore.data.map { it[KEY_DIRECT_DNS] ?: "https://1.1.1.1/dns-query" }
+    val remoteDns: Flow<String> = dataStore.data.map { it[KEY_REMOTE_DNS] ?: "https://1.1.1.1/dns-query" }
+    val directDns: Flow<String> = dataStore.data.map { it[KEY_DIRECT_DNS] ?: "local" }
     val dnsQueryStrategy: Flow<String> = dataStore.data.map { it[KEY_DNS_QUERY_STRATEGY] ?: "ipv4_only" }
     val enableFakeIp: Flow<Boolean> = dataStore.data.map { it[KEY_ENABLE_FAKE_IP] ?: false }
     val fakeIpRange: Flow<String> = dataStore.data.map { it[KEY_FAKE_IP_RANGE] ?: "198.18.0.0/15" }
@@ -58,9 +59,62 @@ class SettingsDataStore @Inject constructor(
     val fragmentSleep: Flow<String> = dataStore.data.map { it[KEY_FRAGMENT_SLEEP] ?: "10" }
     val enableRecordRoute: Flow<Boolean> = dataStore.data.map { it[KEY_ENABLE_RECORD_ROUTE] ?: false }
     val autoFailover: Flow<Boolean> = dataStore.data.map { it[KEY_AUTO_FAILOVER] ?: false }
+    val tcpFastOpen: Flow<Boolean> = dataStore.data.map { it[KEY_TCP_FAST_OPEN] ?: false }
+    val tunnelCheck: Flow<Boolean> = dataStore.data.map { it[KEY_TUNNEL_CHECK] ?: true }
+    val muxProtocol: Flow<String> = dataStore.data.map { it[KEY_MUX_PROTOCOL] ?: "h2mux" }
+    val muxMaxStreams: Flow<Int> = dataStore.data.map { it[KEY_MUX_MAX_STREAMS] ?: 8 }
+    val muxPadding: Flow<Boolean> = dataStore.data.map { it[KEY_MUX_PADDING] ?: false }
 
     val includedApps: Flow<List<String>> = dataStore.data.map { (it[KEY_INCLUDED_APPS] ?: emptySet()).toList() }
     val excludedApps: Flow<List<String>> = dataStore.data.map { (it[KEY_EXCLUDED_APPS] ?: emptySet()).toList() }
+
+    /**
+     * Every setting from one read of the preferences file. Building the tunnel used to pull
+     * these one at a time, which meant ~25 separate collections of the same flow before a
+     * connection could even start being assembled.
+     */
+    suspend fun snapshot(): SettingsState {
+        val p = dataStore.data.first()
+        return SettingsState(
+            autoConnectOnBoot = p[KEY_AUTO_CONNECT_BOOT] ?: false,
+            connectionTimeout = p[KEY_CONNECTION_TIMEOUT] ?: 30,
+            routingMode = p[KEY_ROUTING_MODE] ?: "GLOBAL",
+            blockAds = p[KEY_BLOCK_ADS] ?: false,
+            blockTrackers = p[KEY_BLOCK_TRACKERS] ?: false,
+            bypassRussia = p[KEY_BYPASS_RUSSIA] ?: false,
+            bypassChina = p[KEY_BYPASS_CHINA] ?: false,
+            bypassLocalNetwork = p[KEY_BYPASS_LOCAL_NETWORK] ?: false,
+            perAppProxy = p[KEY_PER_APP_PROXY] ?: false,
+            includedApps = (p[KEY_INCLUDED_APPS] ?: emptySet()).toList(),
+            excludedApps = (p[KEY_EXCLUDED_APPS] ?: emptySet()).toList(),
+            remoteDns = p[KEY_REMOTE_DNS] ?: "https://1.1.1.1/dns-query",
+            directDns = p[KEY_DIRECT_DNS] ?: "local",
+            dnsQueryStrategy = p[KEY_DNS_QUERY_STRATEGY] ?: "ipv4_only",
+            enableFakeIp = p[KEY_ENABLE_FAKE_IP] ?: false,
+            fakeIpRange = p[KEY_FAKE_IP_RANGE] ?: "198.18.0.0/15",
+            customSni = p[KEY_CUSTOM_SNI] ?: "",
+            fragmentEnabled = p[KEY_FRAGMENT_ENABLED] ?: true,
+            fragmentSleep = p[KEY_FRAGMENT_SLEEP] ?: "10",
+            recordFragment = p[KEY_ENABLE_RECORD_ROUTE] ?: false,
+            enableMux = p[KEY_ENABLE_MUX] ?: false,
+            tunStack = p[KEY_TUN_STACK] ?: "gvisor",
+            tunMTU = p[KEY_TUN_MTU] ?: 1500,
+            autoRoute = p[KEY_AUTO_ROUTE] ?: true,
+            strictRoute = p[KEY_STRICT_ROUTE] ?: true,
+            subAutoUpdate = p[KEY_SUB_AUTO_UPDATE] ?: true,
+            defaultSubInterval = p[KEY_DEFAULT_SUB_INTERVAL] ?: 12,
+            autoFailover = p[KEY_AUTO_FAILOVER] ?: false,
+            tcpFastOpen = p[KEY_TCP_FAST_OPEN] ?: false,
+            tunnelCheck = p[KEY_TUNNEL_CHECK] ?: true,
+            muxProtocol = p[KEY_MUX_PROTOCOL] ?: "h2mux",
+            muxMaxStreams = p[KEY_MUX_MAX_STREAMS] ?: 8,
+            muxPadding = p[KEY_MUX_PADDING] ?: false,
+            themeMode = p[KEY_THEME_MODE] ?: "SYSTEM",
+            dynamicColor = p[KEY_DYNAMIC_COLOR] ?: true,
+            language = p[KEY_LANGUAGE] ?: "SYSTEM",
+            logLevel = p[KEY_LOG_LEVEL] ?: "INFO",
+        )
+    }
 
     suspend fun getOrCreateClientId(): String {
         val existing = dataStore.data.first()[KEY_CLIENT_ID]
@@ -102,6 +156,11 @@ class SettingsDataStore @Inject constructor(
     suspend fun setFragmentSleep(value: String) = dataStore.edit { it[KEY_FRAGMENT_SLEEP] = value }
     suspend fun setEnableRecordRoute(value: Boolean) = dataStore.edit { it[KEY_ENABLE_RECORD_ROUTE] = value }
     suspend fun setAutoFailover(value: Boolean) = dataStore.edit { it[KEY_AUTO_FAILOVER] = value }
+    suspend fun setTcpFastOpen(value: Boolean) = dataStore.edit { it[KEY_TCP_FAST_OPEN] = value }
+    suspend fun setTunnelCheck(value: Boolean) = dataStore.edit { it[KEY_TUNNEL_CHECK] = value }
+    suspend fun setMuxProtocol(value: String) = dataStore.edit { it[KEY_MUX_PROTOCOL] = value }
+    suspend fun setMuxMaxStreams(value: Int) = dataStore.edit { it[KEY_MUX_MAX_STREAMS] = value }
+    suspend fun setMuxPadding(value: Boolean) = dataStore.edit { it[KEY_MUX_PADDING] = value }
     suspend fun setIncludedApps(value: List<String>) = dataStore.edit { it[KEY_INCLUDED_APPS] = value.toSet() }
     suspend fun setExcludedApps(value: List<String>) = dataStore.edit { it[KEY_EXCLUDED_APPS] = value.toSet() }
 
@@ -137,6 +196,11 @@ class SettingsDataStore @Inject constructor(
         private val KEY_FRAGMENT_SLEEP = stringPreferencesKey("fragment_sleep")
         private val KEY_ENABLE_RECORD_ROUTE = booleanPreferencesKey("enable_record_route")
         private val KEY_AUTO_FAILOVER = booleanPreferencesKey("auto_failover")
+        private val KEY_TCP_FAST_OPEN = booleanPreferencesKey("tcp_fast_open")
+        private val KEY_TUNNEL_CHECK = booleanPreferencesKey("tunnel_check")
+        private val KEY_MUX_PROTOCOL = stringPreferencesKey("mux_protocol")
+        private val KEY_MUX_MAX_STREAMS = intPreferencesKey("mux_max_streams")
+        private val KEY_MUX_PADDING = booleanPreferencesKey("mux_padding")
         private val KEY_INCLUDED_APPS = stringSetPreferencesKey("included_apps")
         private val KEY_EXCLUDED_APPS = stringSetPreferencesKey("excluded_apps")
         private val KEY_CLIENT_ID = stringPreferencesKey("client_id")

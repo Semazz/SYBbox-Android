@@ -222,7 +222,7 @@ class ConfigBuilderTest {
     fun `per-app exclusions reach the tun inbound`() {
         val tun = parse(ConfigBuilder.build(realityVless, everythingOn))
             .getAsJsonArray("inbounds")[0].asJsonObject
-        assertTrue(tun.get("exclude_package") == null)
+        assertEquals("com.android.chrome", tun.getAsJsonArray("exclude_package").first().asString)
     }
 
     @Test
@@ -235,7 +235,8 @@ class ConfigBuilderTest {
         assertEquals(ConfigBuilder.TAG_PROXY, remote.get("detour").asString)
 
         val direct = servers.first { it.get("tag").asString == "dns-direct" }
-        assertEquals("https", direct.get("type").asString)
+        assertEquals("udp", direct.get("type").asString)
+        assertEquals("77.88.8.8", direct.get("server").asString)
         assertTrue(direct.get("detour") == null || direct.get("detour").isJsonNull)
 
         assertNotNull(servers.firstOrNull { it.get("type").asString == "fakeip" })
@@ -259,10 +260,10 @@ class ConfigBuilderTest {
             "no bypass may survive global mode",
             rules.none { it.get("outbound")?.asString == ConfigBuilder.TAG_DIRECT },
         )
-        val stunReject = rules.firstOrNull {
-            it.get("action")?.asString == "reject" && it.getAsJsonArray("port") != null
-        }
-        assertNotNull("stun ports must be rejected to stop webrtc leaks", stunReject)
+        assertTrue(
+            "stun and turn ride the tunnel like everything else; rejecting them only breaks calls",
+            rules.none { it.get("action")?.asString == "reject" && it.getAsJsonArray("port") != null },
+        )
         val dnsRules = config.getAsJsonObject("dns").getAsJsonArray("rules")?.map { it.asJsonObject }.orEmpty()
         assertTrue(dnsRules.none { it.get("server")?.asString == "dns-direct" })
     }

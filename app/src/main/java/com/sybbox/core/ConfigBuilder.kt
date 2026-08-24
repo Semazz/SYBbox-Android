@@ -21,8 +21,11 @@ object ConfigBuilder {
     const val MODE_DIRECT_ONLY = "DIRECT_ONLY"
     const val MODE_CUSTOM = "CUSTOM"
     private const val TAG_TUN = "tun-in"
+    const val TAG_PROBE = "probe-in"
     private const val TAG_DNS_REMOTE = "dns-remote"
     private const val TAG_DNS_DIRECT = "dns-direct"
+    private const val TAG_DNS_LOCAL = "dns-local"
+    private const val FALLBACK_BOOTSTRAP_DNS = "8.8.8.8"
     private const val TAG_DNS_FAKE = "dns-fake"
 
     private const val TUN_ADDRESS_V4 = "172.19.0.1/30"
@@ -46,17 +49,20 @@ object ConfigBuilder {
         settings: SettingsState,
         customRules: List<RoutingRule> = emptyList(),
         useRuleSets: Boolean = true,
+        systemDnsServers: List<String> = emptyList(),
+        serverAddressOverride: String? = null,
+        probePort: Int = 0,
     ): String {
         val ruleSets = if (useRuleSets) linkedMapOf<String, JsonObject>() else null
         val isWireGuard = profile.protocol == ProtocolType.WIREGUARD
         val config = JsonObject().apply {
             add("log", buildLog(settings))
-            add("dns", buildDns(settings, ruleSets, profile))
-            add("inbounds", buildInbounds(settings, profile))
+            add("dns", buildDns(settings, ruleSets, profile, systemDnsServers))
+            add("inbounds", buildInbounds(settings, profile, probePort))
             if (isWireGuard) {
-                add("endpoints", buildEndpoints(profile))
+                add("endpoints", buildEndpoints(profile, serverAddressOverride))
             }
-            add("outbounds", buildOutbounds(profile, settings))
+            add("outbounds", buildOutbounds(profile, settings, serverAddressOverride))
             add("route", buildRoute(settings, customRules, ruleSets, profile))
             add("experimental", buildExperimental())
         }
@@ -79,7 +85,7 @@ object ConfigBuilder {
         return java.util.Base64.getEncoder().encodeToString(bytes)
     }
 
-    private fun buildEndpoints(profile: ServerProfile): JsonArray {
+    private fun buildEndpoints(profile: ServerProfile, serverAddressOverride: String? = null): JsonArray {
         val endpoints = JsonArray()
         if (profile.protocol == ProtocolType.WIREGUARD) {
             if (profile.wgPrivateKey.isBlank() || profile.wgPeerPublicKey.isBlank()) {
@@ -89,7 +95,7 @@ object ConfigBuilder {
             val publicKey = normalizeWgKey(profile.wgPeerPublicKey, "peer public_key")
             val presharedKey = profile.wgPresharedKey.takeIf { it.isNotBlank() }?.let { normalizeWgKey(it, "pre_shared_key") }
             val peer = JsonObject().apply {
-                addProperty("address", profile.address)
+                addProperty("address", serverAddressOverride?.takeIf { it.isNotBlank() } ?: profile.address)
                 addProperty("port", profile.port)
                 addProperty("public_key", publicKey)
                 if (presharedKey != null) addProperty("pre_shared_key", presharedKey)
@@ -131,11 +137,29 @@ object ConfigBuilder {
         addProperty("timestamp", true)
     }
 
-    private fun buildDns(settings: SettingsState, ruleSets: MutableMap<String, JsonObject>?, profile: ServerProfile) = JsonObject().apply {
+    private fun buildDns(
+        settings: SettingsState,
+        ruleSets: MutableMap<String, JsonObject>?,
+        profile: ServerProfile,
+        systemDnsServers: List<String>,
+    ) = JsonObject().apply {
         val isWg = profile.protocol == ProtocolType.WIREGUARD
         val servers = JsonArray()
-        servers.add(dnsServer(TAG_DNS_REMOTE, normalizeHttpsDns(settings.remoteDns), detour = if (isWg) "wg-endpoint" else TAG_PROXY))
-        servers.add(dnsServer(TAG_DNS_DIRECT, normalizeHttpsDns(settings.directDns)))
+
+        // Queries for everything the tunnel carries. Sent through the proxy, so a plain
+        // transport is already private and avoids the certificate problems that DoH hits
+        // when the handshake itself is what censorship is inspecting.
+        servers.add(dnsServer(TAG_DNS_REMOTE, settings.remoteDns, detour = if (isWg) "wg-endpoint" else TAG_PROXY))
+
+        // Queries for whatever is routed around the tunnel.
+        servers.add(dnsServer(TAG_DNS_DIRECT, settings.directDns, resolver = TAG_DNS_LOCAL, systemDnsServers = systemDnsServers))
+
+        // Bootstraps the proxy server's hostname, which cannot be resolved through the
+        // proxy itself. This has to be the resolver the device is actually using: the
+        // core's own `type: "local"` reads /etc/resolv.conf, which Android does not have,
+        // and falls back to 127.0.0.1:53 where nothing is listening.
+        servers.add(localDnsServer(TAG_DNS_LOCAL, systemDnsServers))
+
         if (settings.enableFakeIp) {
             servers.add(JsonObject().apply {
                 addProperty("tag", TAG_DNS_FAKE)
@@ -148,6 +172,15 @@ object ConfigBuilder {
 
         val rules = JsonArray()
 
+        // Break the bootstrap loop before any other rule can claim the server's hostname.
+        val serverHost = profile.address.trim().trim('[', ']')
+        if (serverHost.isNotBlank() && !isIpLiteral(serverHost)) {
+            rules.add(JsonObject().apply {
+                add("domain", jsonArrayOf(serverHost))
+                addProperty("server", TAG_DNS_LOCAL)
+            })
+        }
+
         directDnsSuffixRule(settings, profile)?.let { rules.add(it) }
         addRuleSetDnsRules(settings, rules, ruleSets, profile)
         if (settings.enableFakeIp) {
@@ -158,65 +191,101 @@ object ConfigBuilder {
         }
         if (rules.size() > 0) add("rules", rules)
 
+        // Everything not matched above resolves through the tunnel. Resolving it directly
+        // instead would leak every lookup to the local network and, where the resolver is
+        // blocked, leave the tunnel up but unable to resolve a single name.
         addProperty("final", TAG_DNS_REMOTE)
         addProperty("strategy", domainStrategy(settings.dnsQueryStrategy))
         if (settings.enableFakeIp) addProperty("independent_cache", true)
     }
 
-    private fun normalizeHttpsDns(value: String): String {
-        val t = value.trim()
-        if (t.isEmpty()) return "https://1.1.1.1/dns-query"
-        val lower = t.lowercase()
-        return when {
-            lower.startsWith("https://") -> t
-            lower.startsWith("h3://") -> t
-            lower.startsWith("tls://") -> t.replaceFirst("tls://", "https://", ignoreCase = true).let { if (it.contains("/dns-query")) it else "$it/dns-query" }
-            lower.startsWith("quic://") -> t.replaceFirst("quic://", "h3://", ignoreCase = true).let { if (it.contains("/dns-query")) it else "$it/dns-query" }
-            lower.startsWith("udp://") || lower.startsWith("tcp://") -> t.substringAfter("://").let { host -> if (host.contains("/dns-query")) "https://$host" else "https://$host/dns-query" }
-            t.matches(Regex("[0-9a-fA-F:.]+")) -> "https://$t/dns-query"
-            else -> t
-        }
-    }
+    private fun isIpLiteral(host: String): Boolean =
+        host.count { it == ':' } > 1 || host.matches(Regex("""\d{1,3}(\.\d{1,3}){3}"""))
 
-    private fun dnsServer(tag: String, address: String, detour: String? = null): JsonObject {
+    /**
+     * Resolver addresses are taken at face value. An earlier version rewrote every scheme
+     * to https:// , which meant a user asking for plain UDP silently got DoH instead —
+     * and where DoH is blocked that turns into a tunnel that connects but resolves nothing.
+     */
+    private fun dnsServer(
+        tag: String,
+        address: String,
+        detour: String? = null,
+        resolver: String? = null,
+        systemDnsServers: List<String> = emptyList(),
+    ): JsonObject {
         val server = JsonObject().apply {
             addProperty("tag", tag)
             if (detour != null) addProperty("detour", detour)
         }
-        val value = address.trim().ifBlank { "1.1.1.1" }
+        val value = address.trim()
+
+        if (value.isBlank() || value.equals("local", ignoreCase = true) || value.equals("system", ignoreCase = true)) {
+            return localDnsServer(tag, systemDnsServers, detour)
+        }
+
         val separator = value.indexOf("://")
         if (separator < 0) {
+            // Bare host or IP means plain UDP, the same reading every other client gives it.
             server.addProperty("type", "udp")
-            server.addProperty("server", value)
+            server.addProperty("server", value.substringBefore(':'))
+            value.substringAfter(':', "").toIntOrNull()?.let { server.addProperty("server_port", it) }
+            if (resolver != null) addDomainResolver(server, value.substringBefore(':'), resolver)
             return server
         }
         val scheme = value.substring(0, separator).lowercase()
         val rest = value.substring(separator + 3)
         val host = rest.substringBefore('/')
         val path = rest.substringAfter('/', "")
+        val bareHost = host.substringBefore(':')
         when (scheme) {
             "https", "h3" -> {
-                server.addProperty("type", if (scheme == "h3") "h3" else "https")
-                server.addProperty("server", host.substringBefore(':'))
+                server.addProperty("type", scheme)
+                server.addProperty("server", bareHost)
                 host.substringAfter(':', "").toIntOrNull()?.let { server.addProperty("server_port", it) }
                 if (path.isNotEmpty() && path != "dns-query") server.addProperty("path", "/$path")
             }
-            "tls", "quic" -> {
+            "tls", "quic", "tcp", "udp" -> {
                 server.addProperty("type", scheme)
-                server.addProperty("server", host.substringBefore(':'))
+                server.addProperty("server", bareHost)
                 host.substringAfter(':', "").toIntOrNull()?.let { server.addProperty("server_port", it) }
             }
-            "tcp", "udp" -> {
-                server.addProperty("type", scheme)
-                server.addProperty("server", host.substringBefore(':'))
-                host.substringAfter(':', "").toIntOrNull()?.let { server.addProperty("server_port", it) }
-            }
+            "local", "system" -> return localDnsServer(tag, systemDnsServers, detour)
             else -> {
                 server.addProperty("type", "udp")
-                server.addProperty("server", host.substringBefore(':'))
+                server.addProperty("server", bareHost)
             }
         }
+        if (resolver != null) addDomainResolver(server, bareHost, resolver)
         return server
+    }
+
+    /**
+     * The resolver the device itself uses, queried over the direct outbound so it stays on
+     * the underlying network. Android hands these to us through ConnectivityManager; when
+     * that comes back empty we fall back to a public resolver rather than to localhost.
+     */
+    private fun localDnsServer(tag: String, systemDnsServers: List<String>, detour: String? = null): JsonObject {
+        val preferred = systemDnsServers
+            .map { it.trim().substringBefore('%') }
+            .filter { it.isNotBlank() && !it.startsWith("127.") && it != "::1" }
+            .sortedBy { if (it.contains(':')) 1 else 0 }
+            .firstOrNull()
+        return JsonObject().apply {
+            addProperty("tag", tag)
+            addProperty("type", "udp")
+            addProperty("server", preferred ?: FALLBACK_BOOTSTRAP_DNS)
+            // No detour: without one the transport uses the default dialer, which already
+            // goes out the underlying network. Naming the bare `direct` outbound here is
+            // rejected outright — "detour to an empty direct outbound makes no sense".
+            if (detour != null && detour != TAG_DIRECT) addProperty("detour", detour)
+        }
+    }
+
+    /** A resolver named by hostname needs something to resolve it that is not itself. */
+    private fun addDomainResolver(server: JsonObject, host: String, resolver: String) {
+        if (host.isBlank() || isIpLiteral(host)) return
+        server.add("domain_resolver", JsonObject().apply { addProperty("server", resolver) })
     }
 
     private fun directDnsSuffixRule(settings: SettingsState, profile: ServerProfile? = null): JsonObject? {
@@ -230,11 +299,12 @@ object ConfigBuilder {
         profile: ServerProfile? = null,
     ) {
         if (ruleSets == null) return
-        val global = true
+        val isGlobal = settings.routingMode == MODE_GLOBAL
         val directSites = buildList<String> {
-            if (global) return@buildList
-            if (settings.bypassRussia) add(geositeSet(ruleSets, "category-ru"))
-            if (settings.bypassChina) add(geositeSet(ruleSets, "cn"))
+            if (!isGlobal) {
+                if (settings.bypassRussia) add(geositeSet(ruleSets, "category-ru"))
+                if (settings.bypassChina) add(geositeSet(ruleSets, "cn"))
+            }
         }
         if (directSites.isNotEmpty()) {
             rules.add(JsonObject().apply {
@@ -267,17 +337,21 @@ object ConfigBuilder {
         return listOf(v4, v6)
     }
 
-    private fun buildInbounds(settings: SettingsState, profile: ServerProfile? = null) = JsonArray().apply {
+    private fun buildInbounds(
+        settings: SettingsState,
+        profile: ServerProfile? = null,
+        probePort: Int = 0,
+    ) = JsonArray().apply {
         add(JsonObject().apply {
             addProperty("type", "tun")
             addProperty("tag", TAG_TUN)
             add("address", jsonArrayOf(randomTunAddresses()))
             addProperty("mtu", settings.tunMTU.coerceIn(1280, 1500))
-            addProperty("auto_route", true)
-            addProperty("strict_route", true)
+            addProperty("auto_route", settings.autoRoute)
+            addProperty("strict_route", settings.strictRoute)
             addProperty("stack", settings.tunStack.lowercase().ifBlank { "gvisor" })
 
-            if (false && settings.perAppProxy) {
+            if (settings.perAppProxy) {
                 if (settings.includedApps.isNotEmpty()) {
                     add("include_package", jsonArrayOf(settings.includedApps))
                 } else if (settings.excludedApps.isNotEmpty()) {
@@ -285,32 +359,61 @@ object ConfigBuilder {
                 }
             }
         })
+
+        // A loopback entrance the app itself can send a request through, to find out
+        // whether the tunnel actually carries traffic. The app is excluded from the tun,
+        // so without this there is no way for it to test its own tunnel.
+        if (probePort in 1..65535) {
+            add(JsonObject().apply {
+                addProperty("type", "mixed")
+                addProperty("tag", TAG_PROBE)
+                addProperty("listen", "127.0.0.1")
+                addProperty("listen_port", probePort)
+            })
+        }
     }
 
-    private fun buildOutbounds(profile: ServerProfile, settings: SettingsState) = JsonArray().apply {
-        add(buildProxyOutbound(profile, settings))
+    private fun buildOutbounds(
+        profile: ServerProfile,
+        settings: SettingsState,
+        serverAddressOverride: String? = null,
+    ) = JsonArray().apply {
+        add(buildProxyOutbound(profile, settings, serverAddressOverride))
         add(JsonObject().apply {
             addProperty("type", "direct")
             addProperty("tag", TAG_DIRECT)
         })
     }
 
-    private fun buildProxyOutbound(profile: ServerProfile, settings: SettingsState): JsonObject {
+    private fun buildProxyOutbound(
+        profile: ServerProfile,
+        settings: SettingsState,
+        serverAddressOverride: String? = null,
+    ): JsonObject {
         val isWg = profile.protocol == ProtocolType.WIREGUARD
+        // Resolved on the underlying network before the tunnel exists. Dialing by name here
+        // makes every connection wait on the core's bootstrap resolver, and when that
+        // resolver is unreachable the tunnel comes up but carries nothing.
+        // profile.address is deliberately left alone: it still supplies the SNI fallback.
+        val dialAddress = serverAddressOverride?.takeIf { it.isNotBlank() } ?: profile.address
         val outbound = JsonObject().apply {
             addProperty("tag", TAG_PROXY)
             if (!isWg) {
-                addProperty("server", profile.address)
+                addProperty("server", dialAddress)
                 addProperty("server_port", profile.port)
             }
         }
         if (settings.connectionTimeout > 0) {
             outbound.addProperty("connect_timeout", "${settings.connectionTimeout}s")
         }
+        // Saves a round trip where the path supports it. Off by default: some middleboxes
+        // drop a SYN that carries data, which would look like a dead server.
+        if (settings.tcpFastOpen && !isWg) outbound.addProperty("tcp_fast_open", true)
 
-        if (!isWg) {
+        if (!isWg && !isIpLiteral(dialAddress.trim().trim('[', ']'))) {
+            // Only reached when pre-resolution failed and a name is still being dialed.
             outbound.add("domain_resolver", JsonObject().apply {
-                addProperty("server", TAG_DNS_DIRECT)
+                addProperty("server", TAG_DNS_LOCAL)
             })
         }
 
@@ -418,17 +521,20 @@ object ConfigBuilder {
         if (profile.security == SecurityType.REALITY && profile.realityPublicKey.isNotBlank()) {
             tls.add("reality", JsonObject().apply {
                 addProperty("enabled", true)
-                addProperty("public_key", profile.realityPublicKey)
+                addProperty("public_key", profile.realityPublicKey.trim())
                 if (profile.realityShortId.isNotBlank()) addProperty("short_id", profile.realityShortId)
             })
+            // Temporary: allow insecure to bypass x509 fallback mismatch for testing (Happ works without this, but helps diagnose)
+            // Comment out after Reality is verified
+            // tls.addProperty("insecure", true)
         }
 
-        val fingerprint = profile.realityFingerprint.ifBlank { profile.fingerprint }
+        val effectiveFingerprint = DpiBypass.fingerprintFor(profile)
         val quicBased = profile.protocol == ProtocolType.HYSTERIA2 || profile.protocol == ProtocolType.TUIC
-        if (!quicBased && (fingerprint.isNotBlank() || profile.security == SecurityType.REALITY)) {
+        if (!quicBased && (effectiveFingerprint.isNotBlank() || profile.security == SecurityType.REALITY)) {
             tls.add("utls", JsonObject().apply {
                 addProperty("enabled", true)
-                addProperty("fingerprint", fingerprint.ifBlank { "chrome" })
+                addProperty("fingerprint", effectiveFingerprint)
             })
         }
         if (profile.echEnabled) {
@@ -436,14 +542,13 @@ object ConfigBuilder {
         }
 
         val fragmentable = profile.protocol != ProtocolType.HYSTERIA2 && profile.protocol != ProtocolType.TUIC
+        val fragSpec = DpiBypass.fragmentSpec(profile, settings)
         if (fragmentable) {
-            if (settings.fragmentEnabled) {
+            if (fragSpec.enabled) {
                 tls.addProperty("fragment", true)
-                fragmentDelayMillis(settings.fragmentSleep)?.let {
-                    tls.addProperty("fragment_fallback_delay", "${it}ms")
-                }
+                tls.addProperty("fragment_fallback_delay", "${fragSpec.fallbackDelayMs}ms")
             }
-            if (settings.recordFragment || profile.recordFragment) {
+            if (fragSpec.recordFragment) {
                 tls.addProperty("record_fragment", true)
             }
         }
@@ -486,19 +591,30 @@ object ConfigBuilder {
                 val host = profile.wsHost.ifBlank { profile.h2Host }
                 if (path.isNotBlank()) addProperty("path", path)
                 if (host.isNotBlank()) addProperty("host", host)
-                if (profile.xhttpMode.isNotBlank()) addProperty("mode", profile.xhttpMode)
+                // The core accepts only path/host/headers/mode/extra here, and rejects the
+                // whole config on any unknown key. A subscription's xhttpSettings block is
+                // v2ray-shaped, so lift the keys that map across and hand the rest over as
+                // the opaque `extra` string the core expects.
+                var mode = profile.xhttpMode
                 if (profile.xhttpExtra.isNotBlank()) {
-                    try {
-                        val extra = com.google.gson.JsonParser.parseString(profile.xhttpExtra)
-                        if (extra.isJsonObject) {
-                            for ((k, v) in extra.asJsonObject.entrySet()) add(k, v)
-                        } else {
-                            addProperty("extra", profile.xhttpExtra)
+                    val extra = runCatching {
+                        com.google.gson.JsonParser.parseString(profile.xhttpExtra)
+                    }.getOrNull()
+                    if (extra != null && extra.isJsonObject) {
+                        val obj = extra.asJsonObject
+                        if (mode.isBlank()) {
+                            obj.get("mode")?.takeIf { it.isJsonPrimitive }?.let { mode = it.asString }
                         }
-                    } catch (_: Exception) {
+                        if (!has("path")) {
+                            obj.get("path")?.takeIf { it.isJsonPrimitive }?.asString
+                                ?.takeIf { it.isNotBlank() }?.let { addProperty("path", it) }
+                        }
+                        addProperty("extra", obj.toString())
+                    } else {
                         addProperty("extra", profile.xhttpExtra)
                     }
                 }
+                if (mode.isNotBlank()) addProperty("mode", mode)
                 if (host.isNotBlank()) {
                     add("headers", com.google.gson.JsonObject().apply { addProperty("Host", host) })
                 }
@@ -511,12 +627,21 @@ object ConfigBuilder {
     private fun addMultiplex(outbound: JsonObject, profile: ServerProfile, settings: SettingsState) {
         if (!settings.enableMux && !profile.multiplexEnabled) return
 
+        // Vision carries its own framing; multiplexing on top of it is rejected.
         if (profile.flow.isNotBlank()) return
+
+        // A profile only overrides the global settings when it opted into multiplex itself.
+        // Its fields carry non-empty defaults, so reading them unconditionally would mean the
+        // settings screen could never change anything.
+        val fromProfile = profile.multiplexEnabled
+        val protocol = (if (fromProfile) profile.multiplexProtocol else settings.muxProtocol)
+            .ifBlank { "h2mux" }
+        val maxStreams = if (fromProfile) profile.multiplexMaxStreams else settings.muxMaxStreams
         outbound.add("multiplex", JsonObject().apply {
             addProperty("enabled", true)
-            addProperty("protocol", profile.multiplexProtocol.ifBlank { "h2mux" })
-            addProperty("max_streams", profile.multiplexMaxStreams.coerceIn(1, 64))
-            if (profile.multiplexPadding) addProperty("padding", true)
+            addProperty("protocol", protocol)
+            addProperty("max_streams", maxStreams.coerceIn(1, 64))
+            if (profile.multiplexPadding || settings.muxPadding) addProperty("padding", true)
         })
     }
 
@@ -527,26 +652,16 @@ object ConfigBuilder {
         profile: ServerProfile,
     ) = JsonObject().apply {
 
-        val global = settings.routingMode == MODE_GLOBAL || settings.routingMode == MODE_BALANCED
-        val bypassRussia = false
-        val bypassChina = false
-        val bypassLocal = false
+        val isGlobal = settings.routingMode == MODE_GLOBAL
+        val bypassRussia = settings.bypassRussia && !isGlobal
+        val bypassChina = settings.bypassChina && !isGlobal
+        val bypassLocal = settings.bypassLocalNetwork && !isGlobal
         val rules = JsonArray()
 
         rules.add(JsonObject().apply { addProperty("action", "sniff") })
         rules.add(JsonObject().apply {
             add("protocol", jsonArrayOf("dns"))
             addProperty("action", "hijack-dns")
-        })
-
-        rules.add(JsonObject().apply {
-            add("port", JsonArray().apply { listOf(3478, 3479, 5348, 5349).forEach { add(it) } })
-            add("network", jsonArrayOf("udp", "tcp"))
-            addProperty("action", "reject")
-        })
-        rules.add(JsonObject().apply {
-            add("domain_keyword", jsonArrayOf("stun", "stun1", "stun2", "stun3", "stun4", "turn", "turn1", "turn2"))
-            addProperty("action", "reject")
         })
 
         if (bypassLocal) {
@@ -620,6 +735,13 @@ object ConfigBuilder {
             else -> TAG_PROXY
         })
         addProperty("auto_detect_interface", true)
+
+        // Anything dialing by name without its own resolver uses the device's, which is
+        // what the direct outbound wants. Leaving it unset is deprecated since 1.12 and
+        // becomes an error in 1.14.
+        add("default_domain_resolver", JsonObject().apply {
+            addProperty("server", TAG_DNS_LOCAL)
+        })
     }
 
     private fun customRule(rule: RoutingRule, ruleSets: MutableMap<String, JsonObject>?): JsonObject? {
@@ -671,6 +793,8 @@ object ConfigBuilder {
                 addProperty("tag", tag)
                 addProperty("format", "binary")
                 addProperty("url", url)
+                // Rule sets live on GitHub, which is exactly the kind of host the tunnel
+                // exists to reach. Fetching them directly fails wherever it is blocked.
                 addProperty("download_detour", TAG_PROXY)
                 addProperty("update_interval", "7d")
             }

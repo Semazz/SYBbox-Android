@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.util.Locale
 import javax.inject.Inject
 
@@ -121,6 +122,10 @@ class SybBoxVpnService : VpnService() {
         prefs[androidx.datastore.preferences.core.stringPreferencesKey("fragment_sleep")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("enable_record_route")],
         prefs[androidx.datastore.preferences.core.stringPreferencesKey("log_level")],
+        prefs[androidx.datastore.preferences.core.booleanPreferencesKey("tcp_fast_open")],
+        prefs[androidx.datastore.preferences.core.stringPreferencesKey("mux_protocol")],
+        prefs[androidx.datastore.preferences.core.intPreferencesKey("mux_max_streams")],
+        prefs[androidx.datastore.preferences.core.booleanPreferencesKey("mux_padding")],
     ).joinToString("\u0001")
 
     private fun restartTunnel(profileId: Long) {
@@ -199,6 +204,26 @@ class SybBoxVpnService : VpnService() {
                 startMonitor()
                 updateNotification()
                 CoreLog.info("Connected")
+
+                if (settings.tunnelCheck && !tunnelCarriesTraffic()) {
+                    CoreLog.error(
+                        "Connected, but no traffic is getting through this server. " +
+                            "Latency only proves the server answered a TCP handshake, not that it accepted us.",
+                    )
+                    val nextId = if (autoFailover) findNextProfileId(currentProfileId) else null
+                    if (nextId != null && nextId != currentProfileId && attempts < maxAttempts) {
+                        CoreLog.warn("Trying the next server in the subscription")
+                        shutdownCore()
+                        currentProfileId = nextId
+                        continue
+                    }
+                    _appState.value = _appState.value.copy(
+                        lastError = "Connected, but this server is not passing traffic",
+                    )
+                    updateNotification()
+                } else if (settings.tunnelCheck) {
+                    CoreLog.info("Tunnel check passed: traffic is flowing")
+                }
                 return
             } catch (error: Throwable) {
                 CoreLog.error(describe(error))
@@ -252,7 +277,10 @@ class SybBoxVpnService : VpnService() {
                 tunDescriptor = descriptor
             }
             try {
-                val config = ConfigBuilder.build(profile, settings, rules, useRuleSets)
+                val config = ConfigBuilder.build(
+                    profile, settings, rules, useRuleSets,
+                    systemDnsServers(), resolveServerAddress(profile.address), probePort,
+                )
                 val service = Core.newService(config, platform)
                 platform.boxService = service
                 service.start()
@@ -272,6 +300,108 @@ class SybBoxVpnService : VpnService() {
         throw lastError ?: IllegalStateException("Core failed to start")
     }
 
+    /**
+     * A loopback port the core listens on so the app can put a request through its own
+     * tunnel. Chosen once per process; the core binds it, the app connects to it.
+     */
+    private val probePort: Int by lazy {
+        runCatching { java.net.ServerSocket(0, 1, java.net.InetAddress.getByName("127.0.0.1")).use { it.localPort } }
+            .getOrDefault(0)
+    }
+
+    /**
+     * Answers the question the latency number cannot: does this server actually carry
+     * traffic? A TCP handshake succeeds against a REALITY server whether or not it will
+     * accept us, which is why a server can show a healthy latency and pass nothing.
+     */
+    private suspend fun tunnelCarriesTraffic(): Boolean {
+        if (probePort == 0) return true
+        val client = okhttp3.OkHttpClient.Builder()
+            .proxy(java.net.Proxy(java.net.Proxy.Type.SOCKS, java.net.InetSocketAddress("127.0.0.1", probePort)))
+            .connectTimeout(PROBE_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
+            .callTimeout(PROBE_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
+            .retryOnConnectionFailure(false)
+            .build()
+        return withContext(Dispatchers.IO) {
+            // More than one operator: a server that happens to block one of them is still a
+            // working server, and calling it dead would send the user hunting for a fault
+            // that is not there.
+            for (url in PROBE_URLS) {
+                val request = okhttp3.Request.Builder().url(url).header("User-Agent", "SYBbox").build()
+                val reached = runCatching {
+                    client.newCall(request).execute().use { it.code in 200..399 }
+                }.onFailure {
+                    CoreLog.warn("Tunnel check via ${url.toHttpUrl().host} failed: ${it.message ?: it.javaClass.simpleName}")
+                }.getOrDefault(false)
+                if (reached) return@withContext true
+            }
+            false
+        }
+    }
+
+    /**
+     * Resolves the server's hostname on the physical network, before the tunnel exists.
+     *
+     * This is the same path the latency check uses, which is why latency was reported on
+     * servers that could not actually carry traffic: the core's own bootstrap resolver was
+     * unreachable, so every connection sat waiting on `lookup <server>` until it timed out.
+     * Returns null when the address is already a literal or cannot be resolved, in which
+     * case the core falls back to resolving the name itself.
+     */
+    private fun resolveServerAddress(address: String): String? {
+        val host = address.trim().trim('[', ']')
+        if (host.isBlank()) return null
+        if (host.count { it == ':' } > 1 || host.matches(Regex("""\d{1,3}(\.\d{1,3}){3}"""))) return null
+
+        val manager = getSystemService(android.net.ConnectivityManager::class.java) ?: return null
+        val network = runCatching {
+            manager.allNetworks.firstOrNull {
+                val caps = manager.getNetworkCapabilities(it) ?: return@firstOrNull false
+                caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+                    !caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN)
+            }
+        }.getOrNull() ?: return null
+
+        val resolved = runCatching {
+            network.getAllByName(host)
+                .sortedBy { if (it is java.net.Inet6Address) 1 else 0 }
+                .firstOrNull()
+                ?.hostAddress
+                ?.substringBefore('%')
+        }.getOrNull()
+
+        if (resolved.isNullOrBlank()) {
+            CoreLog.warn("Could not resolve $host up front; the core will have to resolve it")
+            return null
+        }
+        CoreLog.info("Server $host resolved to $resolved")
+        return resolved
+    }
+
+    /**
+     * The resolvers of the real network, not the tunnel. The core cannot discover these
+     * itself on Android: it reads /etc/resolv.conf, which does not exist here, and falls
+     * back to 127.0.0.1:53 where nothing answers.
+     */
+    private fun systemDnsServers(): List<String> {
+        val manager = getSystemService(android.net.ConnectivityManager::class.java) ?: return emptyList()
+        return runCatching {
+            val candidates = manager.allNetworks.filter { network ->
+                val caps = manager.getNetworkCapabilities(network) ?: return@filter false
+                caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+                    !caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN)
+            }
+            candidates
+                .flatMap { manager.getLinkProperties(it)?.dnsServers.orEmpty() }
+                .mapNotNull { it.hostAddress?.substringBefore('%') }
+                .filter { it.isNotBlank() }
+                .distinct()
+        }.getOrDefault(emptyList()).also {
+            if (it.isEmpty()) CoreLog.warn("No system resolver found; falling back to a public one for bootstrap")
+            else CoreLog.info("Bootstrap resolver: ${it.first()}")
+        }
+    }
+
     private fun isRuleSetFailure(error: Throwable): Boolean =
         error.message?.contains("rule-set", ignoreCase = true) == true
 
@@ -280,33 +410,7 @@ class SybBoxVpnService : VpnService() {
         else -> error.message?.takeIf { it.isNotBlank() } ?: error.javaClass.simpleName
     }
 
-    private suspend fun readSettings() = SettingsState(
-        bypassLocalNetwork = settingsDataStore.bypassLocalNetwork.first(),
-        customSni = settingsDataStore.customSni.first(),
-        connectionTimeout = settingsDataStore.connectionTimeout.first(),
-        remoteDns = settingsDataStore.remoteDns.first(),
-        directDns = settingsDataStore.directDns.first(),
-        dnsQueryStrategy = settingsDataStore.dnsQueryStrategy.first(),
-        enableFakeIp = settingsDataStore.enableFakeIp.first(),
-        fakeIpRange = settingsDataStore.fakeIpRange.first(),
-        tunStack = settingsDataStore.tunStack.first(),
-        tunMTU = settingsDataStore.tunMTU.first(),
-        autoRoute = settingsDataStore.autoRoute.first(),
-        strictRoute = settingsDataStore.strictRoute.first(),
-        logLevel = settingsDataStore.logLevel.first(),
-        routingMode = settingsDataStore.routingMode.first(),
-        blockAds = settingsDataStore.blockAds.first(),
-        blockTrackers = settingsDataStore.blockTrackers.first(),
-        bypassChina = settingsDataStore.bypassChina.first(),
-        bypassRussia = settingsDataStore.bypassRussia.first(),
-        perAppProxy = settingsDataStore.perAppProxy.first(),
-        includedApps = settingsDataStore.includedApps.first(),
-        excludedApps = settingsDataStore.excludedApps.first(),
-        enableMux = settingsDataStore.enableMux.first(),
-        fragmentEnabled = settingsDataStore.fragmentEnabled.first(),
-        fragmentSleep = settingsDataStore.fragmentSleep.first(),
-        recordFragment = settingsDataStore.enableRecordRoute.first(),
-    )
+    private suspend fun readSettings(): SettingsState = settingsDataStore.snapshot()
 
     private var baselineTx = 0L
     private var baselineRx = 0L
@@ -481,6 +585,11 @@ class SybBoxVpnService : VpnService() {
         const val DEFAULT_TEST_URL = "https://www.gstatic.com/generate_204"
 
         private const val FAILURE_LINGER_MILLIS = 6000L
+        private val PROBE_URLS = listOf(
+            DEFAULT_TEST_URL,
+            "http://cp.cloudflare.com/generate_204",
+        )
+        private const val PROBE_TIMEOUT_SECONDS = 7L
 
         @Volatile
         private var liveInstance: SybBoxVpnService? = null

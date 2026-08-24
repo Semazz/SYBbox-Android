@@ -24,7 +24,11 @@ data class ServerProfile(
     val protocol: ProtocolType = ProtocolType.VLESS,
     val uuid: String = "",
     val alterId: Int = 0,
-    val flow: String = "xtls-rprx-vision",
+    // Empty by default. Flow is a VLESS concept, and only the VLESS parser sets it; when
+    // this defaulted to vision every trojan, vmess, shadowsocks, hysteria2 and tuic profile
+    // silently claimed it, which switched off multiplex and ClientHello fragmentation for
+    // all of them without saying so.
+    val flow: String = "",
     val security: SecurityType = SecurityType.REALITY,
     val encryption: String = "auto",
     val transport: TransportType = TransportType.TCP,

@@ -232,5 +232,11 @@
     <string name="mux_max_streams">Максимум потоков</string>
     <string name="mux_padding">Набивка мультиплекса</string>
     <string name="mux_padding_summary">Дополняет кадры, скрывая их размеры</string>
+    <string name="auto_failover">Автопереключение</string>
+    <string name="auto_failover_summary">Перейти к следующему серверу, если подключиться не удалось</string>
+    <string name="msg_foreign_vpn">Активно другое VPN-приложение — разрешите SYBbox доступ к VPN, чтобы отключать его на время проверки</string>
+    <string name="rename">Переименовать</string>
+    <string name="rename_subscription">Переименовать подписку</string>
+    <string name="subscription_name">Название подписки</string>
 </resources>
 

@@ -241,5 +241,6 @@
     <string name="mux_max_streams">Flujos máximos</string>
     <string name="mux_padding">Relleno de multiplexación</string>
     <string name="mux_padding_summary">Rellena las tramas para ocultar su tamaño</string>
+    <string name="msg_foreign_vpn">Otra app VPN está activa: concede el permiso de VPN a SYBbox para que pueda desactivarla durante la comprobación</string>
 </resources>
 

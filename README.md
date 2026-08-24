@@ -9,9 +9,11 @@
 
 | ABI | Ссылка |
 | --- | --- |
-| arm64-v8a | [SYBbox-2.0.0-arm64-v8a.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.0/SYBbox-2.0.0-arm64-v8a.apk) |
-| armeabi-v7a | [SYBbox-2.0.0-armeabi-v7a.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.0/SYBbox-2.0.0-armeabi-v7a.apk) |
-| x86_64 | [SYBbox-2.0.0-x86_64.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.0/SYBbox-2.0.0-x86_64.apk) |
+| arm64-v8a | [SYBbox-2.0.1-arm64-v8a.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.1/SYBbox-2.0.1-arm64-v8a.apk) |
+| armeabi-v7a | [SYBbox-2.0.1-armeabi-v7a.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.1/SYBbox-2.0.1-armeabi-v7a.apk) |
+| x86_64 | [SYBbox-2.0.1-x86_64.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.1/SYBbox-2.0.1-x86_64.apk) |
+
+Не знаете, какой ABI — берите **arm64-v8a**, он подходит почти всем современным телефонам.
 
 Android VPN клиент на базе [sing-box](https://github.com/SagerNet/sing-box).
 
@@ -25,14 +27,16 @@ TCP, WebSocket, HTTP/2, gRPC, HTTP Upgrade, QUIC, KCP, XHTTP
 
 ## Возможности
 
+- Подписки: ссылка со списком, base64, sing-box JSON, v2ray JSON, Clash YAML — с автообновлением
+- Проверка туннеля после подключения: приложение само загружает страницу через туннель и сообщает, если трафик не идёт
+- Измерение задержки по физической сети, лучшее из нескольких замеров
+- Обход DPI: фрагментация ClientHello, uTLS, REALITY
+- DNS: удалённый через туннель, прямой и системный — по отдельности
+- Прокси для отдельных приложений: только выбранные или все, кроме выбранных
+- Свои правила маршрутизации, обход для РФ и КНР, блокировка рекламы и трекеров
+- Логи в реальном времени с пояснениями к типовым отказам
 - Material 3 с динамическими цветами
-- Управление подписками с автообновлением
-- Измерение задержки (TCP handshake + proxy URLTest)
-- Обход DPI (фрагментация ClientHello)
-- DNS: локальный / удалённый / обход
-- Прокси для отдельных приложений
-- Логи в реальном времени
-- Языки: English, Русский, Español
+- Языки: English, Русский, Español, 简体中文
 
 ## Сборка
 
@@ -48,6 +52,23 @@ cd libcore && ./build.sh
 
 ```bash
 ./gradlew assembleRelease
+```
+
+APK появятся в `app/build/outputs/apk/release/`, по одному на каждый ABI.
+
+### Тесты
+
+```bash
+./gradlew test
+```
+
+Конфигурации проверяются не только разбором, но и запуском настоящего ядра — часть ошибок
+возникает при старте транспортов, и `sing-box check` их не ловит:
+
+```bash
+cd libcore/singbox-fork && go build -tags "with_gvisor,with_quic,with_utls,with_clash_api,with_wireguard" -o /tmp/sing-box ./cmd/sing-box
+cd ../.. && ./gradlew :app:testDebugUnitTest --tests '*ConfigMatrixDumpTest*'
+tools/validate-configs.sh /tmp/sing-box
 ```
 
 ## Лицензия

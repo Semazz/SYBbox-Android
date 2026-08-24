@@ -224,4 +224,5 @@
     <string name="mux_max_streams">最大流数</string>
     <string name="mux_padding">多路复用填充</string>
     <string name="mux_padding_summary">填充帧以隐藏其大小</string>
+    <string name="msg_foreign_vpn">另一个 VPN 应用正在运行 — 请授予 SYBbox VPN 权限，以便在检查期间将其关闭</string>
 </resources>

@@ -116,7 +116,7 @@ class ServersViewModel @Inject constructor(
                     return@launch
                 }
             }
-            val direct = SubscriptionParser.parse(trimmed, SubType.STANDARD)
+            val direct = SubscriptionParser.parseAny(trimmed)
             if (direct.isNotEmpty()) {
                 val existing = profileRepository.getAllProfilesOnce().filter { it.subscriptionId == 0L }
                 for (newProfile in direct) {
@@ -174,7 +174,11 @@ class ServersViewModel @Inject constructor(
     }
 
     fun refreshAll() {
-        viewModelScope.launch { subscriptions.value.forEach { refresh(it.id, it.url) } }
+        viewModelScope.launch {
+            subscriptions.value
+                .map { sub -> async { refresh(sub.id, sub.url) } }
+                .awaitAll()
+        }
     }
 
     private suspend fun refresh(subscriptionId: Long, url: String): Int {
@@ -186,22 +190,45 @@ class ServersViewModel @Inject constructor(
         lastRefreshAt[subscriptionId] = now
         _refreshing.update { it + subscriptionId }
         try {
-            val userAgent = com.sybbox.data.remote.SubscriptionUserAgent.value(settingsDataStore)
-            val response = withContext(Dispatchers.IO) { fetch(url, userAgent) }
-            if (response.body.isBlank()) {
+            val primaryUa = com.sybbox.data.remote.SubscriptionUserAgent.value(settingsDataStore)
+            // Panels vary what they serve by User-Agent. Happ first, because it is what
+            // yields the LiteVPN array with its names and ordering intact.
+            val fallbackUas = listOf(
+                "Happ/1.0",
+                primaryUa,
+                "v2rayNG/1.8.5",
+                "ClashForAndroid/2.5.12 Meta/1.18.0",
+                "sing-box 1.13.4",
+            ).distinct()
+
+            var response: SubscriptionResponse? = null
+            var trimmedBody = ""
+            var parsed: List<ServerProfile> = emptyList()
+            for ((index, ua) in fallbackUas.withIndex()) {
+                val resp = withContext(Dispatchers.IO) { runCatching { fetch(url, ua) }.getOrNull() }
+                if (resp == null) {
+                    // A transport failure will repeat for every other User-Agent too;
+                    // retrying it five more times only makes the user wait.
+                    if (index == 0) continue else break
+                }
+                if (resp.body.isBlank()) continue
+                val body = resp.body.trim()
+                val attempt = SubscriptionParser.parseAny(body)
+                if (attempt.isNotEmpty()) {
+                    response = resp
+                    trimmedBody = body
+                    parsed = attempt
+                    break
+                }
+                if (response == null) {
+                    response = resp
+                    trimmedBody = body
+                    parsed = attempt
+                }
+            }
+            if (response == null || trimmedBody.isBlank()) {
                 emit(UiMessage(R.string.msg_subscription_empty))
                 return 0
-            }
-            val trimmedBody = response.body.trim()
-            val parsed = when {
-                trimmedBody.startsWith("[") ->
-                    SubscriptionParser.parse(trimmedBody, SubType.SING_BOX)
-                trimmedBody.startsWith("{") -> {
-                    val clash = SubscriptionParser.parse(trimmedBody, SubType.CLASH_META)
-                    if (clash.isNotEmpty()) clash
-                    else SubscriptionParser.parse(trimmedBody, SubType.SING_BOX)
-                }
-                else -> SubscriptionParser.parse(trimmedBody, SubType.STANDARD)
             }
             if (parsed.isEmpty()) {
                 val debugSnippet = trimmedBody.take(200).replace("\n", "\\n").replace("\r", "\\r")
@@ -210,15 +237,16 @@ class ServersViewModel @Inject constructor(
             }
 
             val stored = parsed
-                .distinctBy { "${it.protocol}|${it.address}|${it.port}" }
+                .distinctBy { "${it.protocol}|${it.address}|${it.port}|${it.transport}|${it.name}" }
                 .map { profile -> profile.copy(subscriptionId = subscriptionId) }
             val ids = profileRepository.mergeSubscriptionProfiles(subscriptionId, stored)
+            val finalResponse = response!!
             subscriptionRepository.updateStats(
                 subscriptionId, ids.size,
-                response.upload, response.download, response.total, response.expire,
+                finalResponse.upload, finalResponse.download, finalResponse.total, finalResponse.expire,
             )
 
-            response.profileTitle?.let { title ->
+            finalResponse.profileTitle?.let { title ->
                 val sub = subscriptionRepository.getSubscriptionById(subscriptionId)
                 if (sub != null && sub.name != title) {
                     subscriptionRepository.updateSubscription(sub.copy(name = title))
@@ -247,15 +275,12 @@ class ServersViewModel @Inject constructor(
     }
 
     private fun fetch(url: String, userAgent: String): SubscriptionResponse {
-        val client = OkHttpClient.Builder()
-            .connectTimeout(20, TimeUnit.SECONDS)
-            .readTimeout(20, TimeUnit.SECONDS)
-            .followRedirects(true)
-            .build()
+        val client = httpClient
         val request = Request.Builder()
             .url(url)
             .header("User-Agent", userAgent)
-            .header("Accept", "text/plain")
+            .header("Accept", "application/json, text/plain, */*")
+            .header("Cache-Control", "no-cache")
             .build()
         client.newCall(request).execute().use { response ->
             val body = response.body?.string().orEmpty()
@@ -396,6 +421,19 @@ class ServersViewModel @Inject constructor(
 
     private companion object {
         const val REFRESH_COOLDOWN_MS = 30_000L
+
+        // Shared so the user-agent fallback list reuses one connection pool rather than
+        // standing up a new client, pool and dispatcher per attempt.
+        val httpClient: OkHttpClient by lazy {
+            OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(15, TimeUnit.SECONDS)
+                .callTimeout(25, TimeUnit.SECONDS)
+                .followRedirects(true)
+                .followSslRedirects(true)
+                .retryOnConnectionFailure(true)
+                .build()
+        }
     }
 }
 

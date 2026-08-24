@@ -1,45 +1,50 @@
 package com.sybbox.data.parser
 
 import com.sybbox.domain.model.*
-import java.net.URLDecoder
 
 object VlessParser {
-    fun parse(uri: String): ServerProfile {
-        val withoutProtocol = uri.removePrefix("vless://")
-        val fragment = withoutProtocol.indexOf('#')
-        val name = if (fragment > 0) URLDecoder.decode(withoutProtocol.substring(fragment + 1), "UTF-8") else ""
-        val main = if (fragment > 0) withoutProtocol.substring(0, fragment) else withoutProtocol
+    fun parse(uri: String): ServerProfile? {
+        val (main, name) = SubscriptionParser.splitFragment(uri.removePrefix("vless://"))
 
-        val atIndex = main.indexOf('@')
-        val uuid = main.substring(0, atIndex)
+        val atIndex = main.lastIndexOf('@')
+        if (atIndex <= 0) return null
+        val uuid = SubscriptionParser.safeDecode(main.substring(0, atIndex))
+        if (uuid.isBlank()) return null
+
         val hostPort = main.substring(atIndex + 1)
         val qIndex = hostPort.indexOf('?')
-        val server = if (qIndex > 0) hostPort.substring(0, qIndex) else hostPort
-        val params = if (qIndex > 0) SubscriptionParser.parseParams(hostPort.substring(qIndex + 1)) else emptyMap()
+        val server = if (qIndex >= 0) hostPort.substring(0, qIndex) else hostPort
+        val params = if (qIndex >= 0) SubscriptionParser.parseParams(hostPort.substring(qIndex + 1)) else emptyMap()
 
-        val addrSplit = server.indexOf(':')
-        val address = server.substring(0, addrSplit)
-        val port = server.substring(addrSplit + 1).toIntOrNull() ?: 443
+        val (address, port) = SubscriptionParser.parseHostPort(server) ?: return null
         val transport = SubscriptionParser.parseTransport(params["type"] ?: "tcp")
 
+        val security = when (params["security"]?.lowercase()) {
+            "reality" -> SecurityType.REALITY
+            "tls", "xtls" -> SecurityType.TLS
+            else -> SecurityType.NONE
+        }
+        val allowInsecure = params["allowInsecure"] == "1" || params["allowinsecure"] == "1" ||
+            params["insecure"] == "1" || params["skip-cert-verify"] == "1"
+
         return ServerProfile(
-            name = name, address = address, port = port,
-            protocol = ProtocolType.VLESS, uuid = uuid,
+            name = name.ifBlank { "$address:$port" },
+            address = address,
+            port = port,
+            protocol = ProtocolType.VLESS,
+            uuid = uuid,
             flow = params["flow"] ?: "",
-            security = when {
-                params["security"] == "reality" -> SecurityType.REALITY
-                params["security"] == "tls" || params["security"] == "xtls" -> SecurityType.TLS
-                params["security"] == "none" || params["security"].isNullOrEmpty() -> SecurityType.NONE
-                else -> SecurityType.NONE
-            },
+            security = security,
             transport = transport,
             serverName = params["sni"] ?: params["host"] ?: "",
             fingerprint = params["fp"] ?: "chrome",
+            allowInsecure = allowInsecure,
+            alpn = params["alpn"]?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList(),
             realityPublicKey = params["pbk"] ?: "",
             realityShortId = params["sid"] ?: "",
             wsPath = params["path"] ?: "",
             wsHost = params["host"] ?: "",
-            grpcServiceName = params["serviceName"] ?: "",
+            grpcServiceName = params["serviceName"] ?: params["servicename"] ?: "",
             xhttpMode = params["mode"] ?: "",
             xhttpExtra = params["extra"] ?: "",
         )

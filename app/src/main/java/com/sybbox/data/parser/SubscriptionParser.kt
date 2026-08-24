@@ -7,7 +7,62 @@ import java.net.URLDecoder
 
 object SubscriptionParser {
 
+    /**
+     * Format detection for a subscription body of unknown shape. Providers serve plain
+     * link lists, base64 of the same, sing-box JSON, v2ray JSON, Clash YAML and the
+     * LiteVPN/Happ array, sometimes varying by the User-Agent they were asked with.
+     * Every shape is tried rather than guessed at from the first character.
+     */
+    fun parseAny(content: String): List<ServerProfile> = parseAny(content, depth = 0)
+
+    private fun parseAny(content: String, depth: Int): List<ServerProfile> {
+        val body = content.trim().removePrefix("﻿")
+        if (body.isEmpty()) return emptyList()
+
+        parseLiteVpnArray(body)?.takeIf { it.isNotEmpty() }?.let { return it }
+
+        if (body.startsWith("{") || body.startsWith("[")) {
+            parseSingBox(body).takeIf { it.isNotEmpty() }?.let { return it }
+            parseClashMeta(body).takeIf { it.isNotEmpty() }?.let { return it }
+        }
+
+        if (body.contains("proxies:")) {
+            parseClashMeta(body).takeIf { it.isNotEmpty() }?.let { return it }
+        }
+
+        parseStandard(body).takeIf { it.isNotEmpty() }?.let { return it }
+
+        // The whole body may be base64 wrapping any of the above.
+        if (depth == 0) {
+            val decoded = decodeBase64Payload(body)
+            if (decoded != null && decoded.trim() != body) {
+                return parseAny(decoded, depth + 1)
+            }
+        }
+        return emptyList()
+    }
+
+    /** Like tryDecodeBase64 but accepts JSON and YAML payloads, not only link lists. */
+    private fun decodeBase64Payload(raw: String): String? {
+        tryDecodeBase64(raw)?.let { return it }
+        val compact = raw.filter { it.isLetterOrDigit() || it == '+' || it == '/' || it == '=' || it == '-' || it == '_' }
+        if (compact.length < 8) return null
+        val padded = compact + "=".repeat((4 - compact.length % 4) % 4)
+        val flags = listOf(Base64.DEFAULT, Base64.NO_WRAP, Base64.URL_SAFE or Base64.NO_WRAP)
+        for (candidate in listOf(compact, padded)) {
+            for (flag in flags) {
+                val text = runCatching { String(Base64.decode(candidate, flag)) }.getOrNull() ?: continue
+                val t = text.trim()
+                if (t.startsWith("{") || t.startsWith("[") || t.contains("proxies:") || t.contains("://")) return text
+            }
+        }
+        return null
+    }
+
     fun parse(content: String, type: SubType): List<ServerProfile> {
+        // LiteVPN / Happ style: JSON array where each element has "remarks" + "outbounds" (V2Ray format)
+        // Must be detected before generic handlers to preserve names/flags in order
+        parseLiteVpnArray(content)?.let { if (it.isNotEmpty()) return it }
         return when (type) {
             SubType.STANDARD -> parseStandard(content)
             SubType.CLASH_META -> parseClashMeta(content)
@@ -15,6 +70,189 @@ object SubscriptionParser {
             SubType.SHADOWSOCKS -> parseStandard(content)
             SubType.V2RAY_JSON -> parseV2RayJson(content)
         }
+    }
+
+    /** LiteVPN / Happ V2Ray full-config array — each JSON object has remarks + outbounds.
+     *  Returns exactly one ServerProfile per config object preserving order and flags. */
+    fun parseLiteVpnArray(content: String): List<ServerProfile>? {
+        val trimmed = content.trim()
+        if (trimmed.isEmpty()) return null
+        // Heuristic: must contain remarks and outbounds and protocol fields
+        if (!trimmed.contains("\"remarks\"") || !trimmed.contains("\"outbounds\"")) return null
+        return try {
+            val root = JsonParser.parseString(trimmed)
+            val elements = when {
+                root.isJsonArray -> root.asJsonArray.toList()
+                root.isJsonObject && root.asJsonObject.has("remarks") -> listOf(root)
+                else -> return null
+            }
+            val out = mutableListOf<ServerProfile>()
+            for (el in elements) {
+                val obj = runCatching { el.asJsonObject }.getOrNull() ?: continue
+                if (!obj.has("remarks") || !obj.has("outbounds")) continue
+                val profile = runCatching { parseLiteVpnObject(obj) }.getOrNull() ?: continue
+                if (profile.address.isBlank()) continue
+                out.add(profile)
+            }
+            if (out.isNotEmpty()) out else null
+        } catch (_: Exception) { null }
+    }
+
+    private fun parseLiteVpnObject(root: com.google.gson.JsonObject): ServerProfile? {
+        val remarks = root.get("remarks")?.takeIf { it.isJsonPrimitive }?.asString?.trim().orEmpty()
+        if (remarks.isEmpty()) return null
+        val outbounds = root.getAsJsonArray("outbounds") ?: return null
+        // Find primary outbound: first non-direct/block and not fallback unless all are fallback
+        var primary: com.google.gson.JsonObject? = null
+        var fallback: com.google.gson.JsonObject? = null
+        for (e in outbounds) {
+            val ob = runCatching { e.asJsonObject }.getOrNull() ?: continue
+            val tag = ob.get("tag")?.asString ?: continue
+            if (tag == "direct" || tag == "block" || tag == "dns" || tag == "api") continue
+            if (tag.startsWith("fallback")) {
+                if (fallback == null) fallback = ob
+                continue
+            }
+            primary = ob
+            break
+        }
+        if (primary == null) primary = fallback
+        if (primary == null) return null
+
+        // For "Автоматический выбор" that has many primaries, we keep single primary (first)
+        // but preserve the remarks name which already contains flags.
+        val tag = primary.get("tag")?.asString ?: remarks
+        val protocolRaw = primary.get("protocol")?.asString?.lowercase() ?: return null
+        val settings = primary.getAsJsonObject("settings")
+        val stream = primary.getAsJsonObject("streamSettings")
+
+        val network = stream?.get("network")?.asString ?: "tcp"
+        val securityRaw = stream?.get("security")?.asString ?: "none"
+        val tlsSettings = stream?.getAsJsonObject("tlsSettings")
+        val realitySettings = stream?.getAsJsonObject("realitySettings")
+
+        // Determine address/port/users based on protocol
+        var address = ""
+        var port = 443
+        var uuid = ""
+        var flow = ""
+        var hy2Auth = ""
+        var ssMethod = "aes-256-gcm"
+        var ssPassword = ""
+
+        when (protocolRaw) {
+            "vless" -> {
+                val vnext = settings?.getAsJsonArray("vnext")?.firstOrNull()?.asJsonObject
+                address = vnext?.get("address")?.asString ?: primary.get("address")?.asString ?: return null
+                port = vnext?.get("port")?.asInt ?: primary.get("port")?.asInt ?: 443
+                val user = vnext?.getAsJsonArray("users")?.firstOrNull()?.asJsonObject
+                uuid = user?.get("id")?.asString ?: ""
+                flow = user?.get("flow")?.asString ?: ""
+            }
+            "vmess" -> {
+                val vnext = settings?.getAsJsonArray("vnext")?.firstOrNull()?.asJsonObject
+                address = vnext?.get("address")?.asString ?: return null
+                port = vnext?.get("port")?.asInt ?: 443
+                val user = vnext?.getAsJsonArray("users")?.firstOrNull()?.asJsonObject
+                uuid = user?.get("id")?.asString ?: ""
+            }
+            "trojan" -> {
+                val servers = settings?.getAsJsonArray("servers")?.firstOrNull()?.asJsonObject
+                address = servers?.get("address")?.asString ?: settings?.get("address")?.asString ?: return null
+                port = servers?.get("port")?.asInt ?: settings?.get("port")?.asInt ?: 443
+                uuid = servers?.get("password")?.asString ?: settings?.get("password")?.asString ?: ""
+            }
+            "shadowsocks", "ss" -> {
+                val servers = settings?.getAsJsonArray("servers")?.firstOrNull()?.asJsonObject
+                address = servers?.get("address")?.asString ?: return null
+                port = servers?.get("port")?.asInt ?: 443
+                ssMethod = servers?.get("method")?.asString ?: "aes-256-gcm"
+                ssPassword = servers?.get("password")?.asString ?: ""
+            }
+            "hysteria", "hysteria2" -> {
+                // V2Ray hysteria2 uses settings { address, port } and hysteriaSettings { auth }
+                address = settings?.get("address")?.asString ?: primary.get("address")?.asString ?: ""
+                if (address.isEmpty()) {
+                    // fallback: try servers array
+                    address = settings?.getAsJsonArray("servers")?.firstOrNull()?.asJsonObject?.get("address")?.asString ?: ""
+                }
+                port = settings?.get("port")?.asInt ?: primary.get("port")?.asInt ?: 443
+                val hys = stream?.getAsJsonObject("hysteriaSettings") ?: primary.getAsJsonObject("hysteriaSettings")
+                hy2Auth = hys?.get("auth")?.asString ?: settings?.get("password")?.asString ?: settings?.get("auth")?.asString ?: ""
+                if (hy2Auth.isEmpty()) hy2Auth = primary.get("password")?.asString ?: ""
+            }
+            else -> return null
+        }
+
+        if (address.isBlank()) return null
+
+        val transport = parseTransport(
+            when (network.lowercase()) {
+                "h2" -> "http"
+                "splithttp", "xhttp" -> "xhttp"
+                else -> network
+            }
+        )
+
+        val security = when (securityRaw.lowercase()) {
+            "reality" -> SecurityType.REALITY
+            "tls", "xtls" -> SecurityType.TLS
+            else -> if (protocolRaw.contains("hysteria")) SecurityType.TLS else SecurityType.NONE
+        }
+
+        val serverName = tlsSettings?.get("serverName")?.asString
+            ?: realitySettings?.get("serverName")?.asString
+            ?: stream?.getAsJsonObject("tlsSettings")?.get("serverName")?.asString ?: ""
+        val fingerprint = tlsSettings?.get("fingerprint")?.asString
+            ?: realitySettings?.get("fingerprint")?.asString ?: "chrome"
+        val publicKey = realitySettings?.get("publicKey")?.asString ?: ""
+        val shortId = realitySettings?.get("shortId")?.asString ?: ""
+
+        val wsPath = stream?.getAsJsonObject("wsSettings")?.get("path")?.asString
+            ?: stream?.getAsJsonObject("httpSettings")?.get("path")?.asString ?: ""
+        val wsHost = stream?.getAsJsonObject("wsSettings")?.getAsJsonObject("headers")?.get("Host")?.asString
+            ?: stream?.getAsJsonObject("httpSettings")?.getAsJsonArray("host")?.firstOrNull()?.asString ?: ""
+        val grpcService = stream?.getAsJsonObject("grpcSettings")?.get("serviceName")?.asString ?: ""
+        val xhttpMode = stream?.getAsJsonObject("xhttpSettings")?.get("mode")?.asString
+            ?: stream?.getAsJsonObject("splithttpSettings")?.get("mode")?.asString ?: ""
+        val xhttpExtra = stream?.getAsJsonObject("xhttpSettings")?.toString()
+            ?: stream?.getAsJsonObject("splithttpSettings")?.toString() ?: ""
+
+        val alpn = tlsSettings?.getAsJsonArray("alpn")?.mapNotNull { it.asString } ?: emptyList()
+
+        val protocol = when (protocolRaw) {
+            "vless" -> ProtocolType.VLESS
+            "vmess" -> ProtocolType.VMESS
+            "trojan" -> ProtocolType.TROJAN
+            "shadowsocks", "ss" -> ProtocolType.SHADOWSOCKS
+            "hysteria", "hysteria2" -> ProtocolType.HYSTERIA2
+            else -> ProtocolType.VLESS
+        }
+
+        // HYSTERIA often uses port 1443 with quic/h3; keep as is
+        return ServerProfile(
+            name = remarks,
+            address = address,
+            port = port,
+            protocol = protocol,
+            uuid = uuid.ifBlank { hy2Auth },
+            flow = flow,
+            security = security,
+            transport = transport,
+            serverName = serverName,
+            fingerprint = fingerprint,
+            realityPublicKey = publicKey,
+            realityShortId = shortId,
+            wsPath = wsPath,
+            wsHost = wsHost,
+            grpcServiceName = grpcService,
+            xhttpMode = xhttpMode,
+            xhttpExtra = if (xhttpExtra == "null") "" else xhttpExtra,
+            hy2Password = hy2Auth,
+            ssMethod = ssMethod,
+            ssPassword = ssPassword,
+            alpn = alpn,
+        )
     }
 
     private fun parseStandard(content: String): List<ServerProfile> {
@@ -105,7 +343,15 @@ object SubscriptionParser {
         return null
     }
 
-    fun parseUri(uri: String): ServerProfile? {
+    /**
+     * Never throws. A subscription is a list of links written by other people's tooling,
+     * and a single malformed entry used to abort the parse of every server after it.
+     */
+    fun parseUri(uri: String): ServerProfile? = runCatching { parseUriInternal(uri) }
+        .getOrNull()
+        ?.takeIf { it.address.isNotBlank() }
+
+    private fun parseUriInternal(uri: String): ServerProfile? {
         val lower = uri.lowercase()
         return when {
             lower.startsWith("vless://") -> VlessParser.parse(uri)
@@ -122,29 +368,48 @@ object SubscriptionParser {
     }
 
     private fun parseClashMeta(content: String): List<ServerProfile> {
+        val root = clashRoot(content) ?: return emptyList()
+        val proxies = root.getAsJsonArray("proxies") ?: return emptyList()
         val profiles = mutableListOf<ServerProfile>()
-        try {
-            val json = JsonParser.parseString(content).asJsonObject
-            val proxies = json.getAsJsonArray("proxies") ?: return emptyList()
-            for (element in proxies) {
+        for (element in proxies) {
+            // Per proxy, so one entry using a protocol or shape we do not model
+            // does not discard the rest of the subscription.
+            val profile = runCatching {
                 val proxy = element.asJsonObject
-                val type = proxy.get("type")?.asString ?: continue
+                val type = proxy.get("type")?.asString?.lowercase() ?: return@runCatching null
                 val name = proxy.get("name")?.asString ?: "Server"
-                val server = proxy.get("server")?.asString ?: continue
+                val server = proxy.get("server")?.asString ?: return@runCatching null
                 val port = proxy.get("port")?.asInt ?: 443
-
-                val profile = when (type) {
+                when (type) {
                     "vless" -> parseClashVless(proxy, name, server, port)
                     "vmess" -> parseClashVmess(proxy, name, server, port)
                     "trojan" -> parseClashTrojan(proxy, name, server, port)
-                    "ss" -> parseClashSs(proxy, name, server, port)
-                    "hysteria2" -> parseClashHysteria2(proxy, name, server, port)
+                    "ss", "shadowsocks" -> parseClashSs(proxy, name, server, port)
+                    "hysteria2", "hy2" -> parseClashHysteria2(proxy, name, server, port)
                     else -> null
                 }
-                profile?.let { profiles.add(it) }
-            }
-        } catch (_: Exception) {}
+            }.getOrNull()
+            if (profile != null && profile.address.isNotBlank()) profiles.add(profile)
+        }
         return profiles
+    }
+
+    /** Clash configs are YAML; a few panels serve the same shape as JSON. Accept both. */
+    private fun clashRoot(content: String): com.google.gson.JsonObject? {
+        runCatching {
+            val parsed = JsonParser.parseString(content)
+            if (parsed.isJsonObject && parsed.asJsonObject.has("proxies")) return parsed.asJsonObject
+        }
+        return runCatching {
+            val options = org.yaml.snakeyaml.LoaderOptions().apply {
+                isAllowDuplicateKeys = true
+                codePointLimit = 32 * 1024 * 1024
+            }
+            val yaml = org.yaml.snakeyaml.Yaml(org.yaml.snakeyaml.constructor.SafeConstructor(options))
+            val loaded = yaml.load<Any>(content) ?: return null
+            val json = com.google.gson.Gson().toJsonTree(loaded)
+            json.takeIf { it.isJsonObject }?.asJsonObject
+        }.getOrNull()
     }
 
     private fun parseClashVless(p: com.google.gson.JsonObject, name: String, server: String, port: Int): ServerProfile {
@@ -244,12 +509,14 @@ object SubscriptionParser {
         val profiles = mutableListOf<ServerProfile>()
         for (element in outbounds) {
             val ob = runCatching { element.asJsonObject }.getOrNull() ?: continue
-            val profile = when {
-                ob.has("type") -> parseSingBoxOutbound(ob)
-                ob.has("protocol") -> parseV2RayOutbound(ob)
-                else -> null
-            }
-            if (profile != null) profiles.add(profile)
+            val profile = runCatching {
+                when {
+                    ob.has("type") -> parseSingBoxOutbound(ob)
+                    ob.has("protocol") -> parseV2RayOutbound(ob)
+                    else -> null
+                }
+            }.getOrNull()
+            if (profile != null && profile.address.isNotBlank()) profiles.add(profile)
         }
         return profiles
     }
@@ -419,12 +686,51 @@ object SubscriptionParser {
     }
 
     fun parseParams(query: String): Map<String, String> {
-        return query.split("&").associate {
-            val idx = it.indexOf('=')
-            if (idx > 0) {
-                URLDecoder.decode(it.substring(0, idx), "UTF-8") to
-                    URLDecoder.decode(it.substring(idx + 1), "UTF-8")
-            } else "" to ""
+        val out = LinkedHashMap<String, String>()
+        for (pair in query.split("&")) {
+            if (pair.isEmpty()) continue
+            val idx = pair.indexOf('=')
+            if (idx <= 0) continue
+            val key = safeDecode(pair.substring(0, idx))
+            if (key.isEmpty()) continue
+            out[key] = safeDecode(pair.substring(idx + 1))
         }
+        return out
+    }
+
+    /** URLDecoder throws on a stray '%', which links in the wild contain often enough. */
+    fun safeDecode(raw: String): String =
+        runCatching { URLDecoder.decode(raw, "UTF-8") }.getOrDefault(raw)
+
+    /**
+     * Splits `host:port`, `[v6::addr]:port` and bare hosts. The previous per-protocol
+     * versions of this used indexOf(':'), which cut IPv6 literals in half and threw
+     * outright when a link carried no port.
+     */
+    fun parseHostPort(raw: String, defaultPort: Int = 443): Pair<String, Int>? {
+        val s = raw.trim().substringBefore('?').substringBefore('#').removeSuffix("/")
+        if (s.isEmpty()) return null
+        if (s.startsWith("[")) {
+            val end = s.indexOf(']')
+            if (end < 0) return null
+            val host = s.substring(1, end)
+            if (host.isEmpty()) return null
+            val port = s.substring(end + 1).removePrefix(":").substringBefore('/').toIntOrNull()
+            return host to (port ?: defaultPort)
+        }
+        val clean = s.substringBefore('/')
+        val lastColon = clean.lastIndexOf(':')
+        if (lastColon < 0) return clean.takeIf { it.isNotEmpty() }?.let { it to defaultPort }
+        val host = clean.substring(0, lastColon)
+        if (host.isEmpty()) return null
+        val port = clean.substring(lastColon + 1).toIntOrNull() ?: defaultPort
+        return host to port
+    }
+
+    /** Splits a link into `#fragment` name and the part before it. */
+    fun splitFragment(body: String): Pair<String, String> {
+        val idx = body.indexOf('#')
+        if (idx < 0) return body to ""
+        return body.substring(0, idx) to safeDecode(body.substring(idx + 1))
     }
 }

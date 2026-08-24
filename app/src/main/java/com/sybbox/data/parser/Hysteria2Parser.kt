@@ -1,38 +1,37 @@
 package com.sybbox.data.parser
 
 import com.sybbox.domain.model.*
-import java.net.URLDecoder
 
 object Hysteria2Parser {
-    fun parse(uri: String): ServerProfile {
-        val prefix = if (uri.startsWith("hy2://")) "hy2://" else "hysteria2://"
-        val withoutProtocol = uri.removePrefix(prefix)
-        val fragment = withoutProtocol.indexOf('#')
+    fun parse(uri: String): ServerProfile? {
+        val body = uri.removePrefix("hysteria2://").removePrefix("hy2://")
+        val (main, name) = SubscriptionParser.splitFragment(body)
 
-        val name = if (fragment > 0) URLDecoder.decode(withoutProtocol.substring(fragment + 1), "UTF-8") else ""
-        val main = if (fragment > 0) withoutProtocol.substring(0, fragment) else withoutProtocol
+        val atIndex = main.lastIndexOf('@')
+        if (atIndex < 0) return null
+        val password = SubscriptionParser.safeDecode(main.substring(0, atIndex))
 
-        val atIndex = main.indexOf('@')
-        val password = main.substring(0, atIndex)
         val hostPort = main.substring(atIndex + 1)
         val qIndex = hostPort.indexOf('?')
-        val server = if (qIndex > 0) hostPort.substring(0, qIndex) else hostPort
-        val params = if (qIndex > 0) SubscriptionParser.parseParams(hostPort.substring(qIndex + 1)) else emptyMap()
+        val server = if (qIndex >= 0) hostPort.substring(0, qIndex) else hostPort
+        val params = if (qIndex >= 0) SubscriptionParser.parseParams(hostPort.substring(qIndex + 1)) else emptyMap()
 
-        val addrSplit = server.indexOf(':')
-        val address = server.substring(0, addrSplit)
-        val port = server.substring(addrSplit + 1).toIntOrNull() ?: 443
+        val (address, port) = SubscriptionParser.parseHostPort(server) ?: return null
 
-        val insecure = (params["insecure"] ?: params["allowInsecure"]) in listOf("1", "true")
+        val insecure = (params["insecure"] ?: params["allowInsecure"] ?: params["allowinsecure"])
+            ?.lowercase() in listOf("1", "true")
 
         return ServerProfile(
-            name = name, address = address, port = port,
+            name = name.ifBlank { "$address:$port" },
+            address = address,
+            port = port,
             protocol = ProtocolType.HYSTERIA2,
             hy2Password = password,
             hy2ObfsType = params["obfs"] ?: "",
-            hy2ObfsPassword = params["obfs-password"] ?: "",
+            hy2ObfsPassword = params["obfs-password"] ?: params["obfs_password"] ?: "",
             security = SecurityType.TLS,
-            serverName = params["sni"] ?: params["host"] ?: "",
+            serverName = params["sni"] ?: params["peer"] ?: params["host"] ?: "",
+            alpn = params["alpn"]?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList(),
             allowInsecure = insecure,
         )
     }

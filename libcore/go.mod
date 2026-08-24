@@ -9,7 +9,12 @@ require (
 	golang.org/x/sys v0.47.0
 )
 
-require github.com/justinwoo280/sing-xhttp v0.1.6 // indirect
+require (
+	github.com/justinwoo280/sing-xhttp v0.1.6 // indirect
+	github.com/sagernet/sing-shadowsocks2 v0.2.1
+	golang.org/x/crypto v0.55.0
+	lukechampine.com/blake3 v1.3.0
+)
 
 replace github.com/sagernet/sing-box => ./singbox-fork
 
@@ -114,7 +119,6 @@ require (
 	github.com/sagernet/sing-mux v0.3.4 // indirect
 	github.com/sagernet/sing-quic v0.6.0 // indirect
 	github.com/sagernet/sing-shadowsocks v0.2.8 // indirect
-	github.com/sagernet/sing-shadowsocks2 v0.2.1 // indirect
 	github.com/sagernet/sing-shadowtls v0.2.1-0.20250503051639-fcd445d33c11 // indirect
 	github.com/sagernet/sing-vmess v0.2.8-0.20250909125414-3aed155119a1 // indirect
 	github.com/sagernet/smux v1.5.50-sing-box-mod.1 // indirect
@@ -141,7 +145,6 @@ require (
 	go.uber.org/zap/exp v0.3.0 // indirect
 	go4.org/mem v0.0.0-20240501181205-ae6ca9944745 // indirect
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba // indirect
-	golang.org/x/crypto v0.55.0 // indirect
 	golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93 // indirect
 	golang.org/x/mobile v0.0.0-20260821190718-4776eadac327 // indirect
 	golang.org/x/mod v0.39.0 // indirect
@@ -157,7 +160,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	google.golang.org/grpc v1.79.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
-	lukechampine.com/blake3 v1.3.0 // indirect
 )
 
 tool golang.org/x/mobile/cmd/gobind

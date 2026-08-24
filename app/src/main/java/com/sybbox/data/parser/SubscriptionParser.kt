@@ -155,6 +155,8 @@ object SubscriptionParser {
         val fp = p.get("client-fingerprint")?.asString ?: "chrome"
         val reality = p.get("reality-opts")?.asJsonObject
         val transport = p.get("network")?.asString ?: "tcp"
+        val xhttpOpts = p.getAsJsonObject("xhttp-opts")
+        val wsOpts = p.getAsJsonObject("ws-opts")
         return ServerProfile(
             name = name, address = server, port = port,
             protocol = ProtocolType.VLESS, uuid = uuid, flow = flow,
@@ -163,6 +165,10 @@ object SubscriptionParser {
             fingerprint = fp,
             realityPublicKey = reality?.get("public-key")?.asString ?: "",
             realityShortId = reality?.get("short-id")?.asString ?: "",
+            wsPath = xhttpOpts?.get("path")?.asString ?: wsOpts?.get("path")?.asString ?: "",
+            wsHost = xhttpOpts?.get("host")?.asString ?: wsOpts?.get("headers")?.asJsonObject?.get("Host")?.asString ?: "",
+            xhttpMode = xhttpOpts?.get("mode")?.asString ?: "",
+            xhttpExtra = xhttpOpts?.toString() ?: "",
         )
     }
 
@@ -171,11 +177,17 @@ object SubscriptionParser {
         val aid = p.get("alterId")?.asInt ?: 0
         val cipher = p.get("cipher")?.asString ?: "auto"
         val transport = p.get("network")?.asString ?: "tcp"
+        val xhttpOpts = p.getAsJsonObject("xhttp-opts")
+        val wsOpts = p.getAsJsonObject("ws-opts")
         return ServerProfile(
             name = name, address = server, port = port,
             protocol = ProtocolType.VMESS, uuid = uuid, alterId = aid,
             encryption = cipher, transport = parseTransport(transport),
             security = SecurityType.TLS,
+            wsPath = xhttpOpts?.get("path")?.asString ?: wsOpts?.get("path")?.asString ?: "",
+            wsHost = xhttpOpts?.get("host")?.asString ?: wsOpts?.get("headers")?.asJsonObject?.get("Host")?.asString ?: "",
+            xhttpMode = xhttpOpts?.get("mode")?.asString ?: "",
+            xhttpExtra = xhttpOpts?.toString() ?: "",
         )
     }
 
@@ -212,34 +224,181 @@ object SubscriptionParser {
     }
 
     private fun parseSingBox(content: String): List<ServerProfile> {
-        val profiles = mutableListOf<ServerProfile>()
-        try {
-            val json = JsonParser.parseString(content).asJsonObject
-            val outbounds = json.getAsJsonArray("outbounds") ?: return emptyList()
-            for (element in outbounds) {
-                val ob = element.asJsonObject
-                val type = ob.get("type")?.asString ?: continue
-                if (type == "direct" || type == "block" || type == "dns") continue
-                val tag = ob.get("tag")?.asString ?: "Server"
-                val server = ob.get("server")?.asString ?: continue
-                val port = ob.get("server_port")?.asInt ?: 443
-                profiles.add(ServerProfile(
-                    name = tag, address = server, port = port,
-                    protocol = when (type) {
-                        "vless" -> ProtocolType.VLESS
-                        "vmess" -> ProtocolType.VMESS
-                        "trojan" -> ProtocolType.TROJAN
-                        "shadowsocks" -> ProtocolType.SHADOWSOCKS
-                        "hysteria2" -> ProtocolType.HYSTERIA2
-                        "tuic" -> ProtocolType.TUIC
-                        else -> ProtocolType.VLESS
-                    },
-                    uuid = ob.get("uuid")?.asString ?: ob.get("password")?.asString ?: "",
-                    security = SecurityType.TLS,
-                ))
+        val trimmed = content.trim()
+        return try {
+            val root = JsonParser.parseString(trimmed)
+            when {
+                root.isJsonArray -> root.asJsonArray.flatMap { el ->
+                    runCatching { parseSingleNode(el.asJsonObject) }.getOrDefault(emptyList())
+                }
+                root.isJsonObject -> parseSingleNode(root.asJsonObject)
+                else -> emptyList()
             }
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun parseSingleNode(root: com.google.gson.JsonObject): List<ServerProfile> {
+        val outbounds = root.getAsJsonArray("outbounds") ?: return emptyList()
+        val profiles = mutableListOf<ServerProfile>()
+        for (element in outbounds) {
+            val ob = runCatching { element.asJsonObject }.getOrNull() ?: continue
+            val profile = when {
+                ob.has("type") -> parseSingBoxOutbound(ob)
+                ob.has("protocol") -> parseV2RayOutbound(ob)
+                else -> null
+            }
+            if (profile != null) profiles.add(profile)
+        }
         return profiles
+    }
+
+    private fun parseSingBoxOutbound(ob: com.google.gson.JsonObject): ServerProfile? {
+        val type = ob.get("type")?.asString ?: return null
+        if (type == "direct" || type == "block" || type == "dns" || type == "selector" || type == "urltest") return null
+        val tag = ob.get("tag")?.asString ?: "Server"
+        val server = ob.get("server")?.asString ?: return null
+        val port = ob.get("server_port")?.asInt ?: 443
+        val transportObj = ob.getAsJsonObject("transport")
+        val tType = transportObj?.get("type")?.asString ?: "tcp"
+        val tlsObj = ob.getAsJsonObject("tls")
+        val tlsEnabled = tlsObj?.get("enabled")?.asBoolean ?: false
+        val realityObj = tlsObj?.getAsJsonObject("reality")
+        val realityEnabled = realityObj?.get("enabled")?.asBoolean ?: false
+        val utlsObj = tlsObj?.getAsJsonObject("utls")
+        val protocol = when (type) {
+            "vless" -> ProtocolType.VLESS
+            "vmess" -> ProtocolType.VMESS
+            "trojan" -> ProtocolType.TROJAN
+            "shadowsocks" -> ProtocolType.SHADOWSOCKS
+            "hysteria2" -> ProtocolType.HYSTERIA2
+            "tuic" -> ProtocolType.TUIC
+            "anytls" -> ProtocolType.ANYTLS
+            "shadowtls" -> ProtocolType.SHADOWTLS
+            "wireguard" -> ProtocolType.WIREGUARD
+            else -> return null
+        }
+        return ServerProfile(
+            name = tag,
+            address = server,
+            port = port,
+            protocol = protocol,
+            uuid = ob.get("uuid")?.asString ?: "",
+            flow = ob.get("flow")?.asString ?: "",
+            alterId = ob.get("alter_id")?.asInt ?: 0,
+            encryption = ob.get("security")?.asString ?: "auto",
+            ssMethod = ob.get("method")?.asString ?: "aes-256-gcm",
+            ssPassword = ob.get("password")?.asString ?: "",
+            hy2Password = ob.get("password")?.asString ?: "",
+            tuicPassword = ob.get("password")?.asString ?: "",
+            anytlsPassword = ob.get("password")?.asString ?: "",
+            shadowTlsPassword = ob.get("password")?.asString ?: "",
+            security = when {
+                realityEnabled -> SecurityType.REALITY
+                tlsEnabled || protocol == ProtocolType.HYSTERIA2 || protocol == ProtocolType.TUIC -> SecurityType.TLS
+                else -> SecurityType.NONE
+            },
+            transport = parseTransport(tType),
+            serverName = tlsObj?.get("server_name")?.asString ?: "",
+            fingerprint = utlsObj?.get("fingerprint")?.asString ?: tlsObj?.get("fingerprint")?.asString ?: "chrome",
+            realityPublicKey = realityObj?.get("public_key")?.asString ?: "",
+            realityShortId = realityObj?.get("short_id")?.asString ?: "",
+            wsPath = transportObj?.get("path")?.asString ?: "",
+            wsHost = transportObj?.get("host")?.asString
+                ?: transportObj?.getAsJsonObject("headers")?.get("Host")?.takeIf { it.isJsonPrimitive }?.asString
+                ?: "",
+            xhttpMode = transportObj?.get("mode")?.asString ?: "",
+            grpcServiceName = transportObj?.get("service_name")?.asString ?: "",
+        )
+    }
+
+    private fun parseV2RayOutbound(ob: com.google.gson.JsonObject): ServerProfile? {
+        val protocol = ob.get("protocol")?.asString?.lowercase() ?: return null
+        if (protocol == "freedom" || protocol == "blackhole" || protocol == "dns" || protocol == "socks" || protocol == "http") return null
+        val settings = ob.getAsJsonObject("settings")
+        val stream = ob.getAsJsonObject("streamSettings")
+        val tag = ob.get("tag")?.asString ?: "Server"
+
+        val network = stream?.get("network")?.asString ?: "tcp"
+        val security = stream?.get("security")?.asString ?: "none"
+        val tlsSettings = stream?.getAsJsonObject(if (security == "reality") "realitySettings" else "tlsSettings")
+
+        val isHysteria2 = protocol == "hysteria" && (settings?.get("version")?.asInt ?: 1) == 2
+        if (protocol == "hysteria" && !isHysteria2) return null
+
+        val peer = if (isHysteria2) {
+            settings
+        } else {
+            settings?.getAsJsonArray("vnext")?.firstOrNull()?.asJsonObject
+                ?: settings?.getAsJsonArray("servers")?.firstOrNull()?.asJsonObject
+        } ?: return null
+        val server = peer.get("address")?.asString ?: return null
+        val port = peer.get("port")?.asInt ?: 443
+        val user = peer.getAsJsonArray("users")?.firstOrNull()?.asJsonObject
+
+        val wsSettings = stream?.getAsJsonObject("wsSettings")
+        val httpSettings = stream?.getAsJsonObject("httpSettings")
+        val grpcSettings = stream?.getAsJsonObject("grpcSettings")
+        val xhttpSettings = stream?.getAsJsonObject("xhttpSettings")
+            ?: stream?.getAsJsonObject("splithttpSettings")
+        val hysteriaSettings = stream?.getAsJsonObject("hysteriaSettings")
+
+        val transportType = when (network.lowercase()) {
+            "h2" -> "http"
+            "splithttp", "xhttp" -> "xhttp"
+            "hysteria" -> "udp"
+            else -> network
+        }
+
+        val password = when {
+            protocol == "trojan" || protocol == "shadowsocks" -> peer.get("password")?.asString
+                ?: user?.get("password")?.asString ?: ""
+            isHysteria2 -> hysteriaSettings?.get("auth")?.asString ?: settings?.get("password")?.asString ?: ""
+            else -> user?.get("id")?.asString ?: ""
+        }
+
+        val mappedProtocol = when {
+            protocol == "vless" -> ProtocolType.VLESS
+            protocol == "vmess" -> ProtocolType.VMESS
+            protocol == "trojan" -> ProtocolType.TROJAN
+            protocol == "shadowsocks" -> ProtocolType.SHADOWSOCKS
+            isHysteria2 -> ProtocolType.HYSTERIA2
+            else -> return null
+        }
+
+        val tlsSec = security.lowercase()
+        return ServerProfile(
+            name = tag.ifBlank { "$server:$port" },
+            address = server,
+            port = port,
+            protocol = mappedProtocol,
+            uuid = password.takeIf { mappedProtocol in listOf(ProtocolType.VLESS, ProtocolType.VMESS) } ?: "",
+            ssPassword = password.takeIf { mappedProtocol == ProtocolType.SHADOWSOCKS } ?: "",
+            ssMethod = if (mappedProtocol == ProtocolType.SHADOWSOCKS) user?.get("method")?.asString ?: "aes-256-gcm" else "aes-256-gcm",
+            hy2Password = password.takeIf { mappedProtocol == ProtocolType.HYSTERIA2 } ?: "",
+            tuicPassword = "",
+            encryption = user?.get("encryption")?.asString ?: "auto",
+            flow = user?.get("flow")?.asString ?: "",
+            security = when (tlsSec) {
+                "reality" -> SecurityType.REALITY
+                "tls" -> SecurityType.TLS
+                else -> if (isHysteria2) SecurityType.TLS else SecurityType.NONE
+            },
+            transport = parseTransport(transportType),
+            serverName = tlsSettings?.get("serverName")?.asString ?: "",
+            fingerprint = tlsSettings?.get("fingerprint")?.asString ?: "chrome",
+            realityPublicKey = tlsSettings?.get("publicKey")?.asString ?: "",
+            realityShortId = tlsSettings?.get("shortId")?.asString ?: "",
+            wsPath = wsSettings?.get("path")?.asString
+                ?: httpSettings?.get("path")?.asString
+                ?: xhttpSettings?.get("path")?.asString ?: "",
+            wsHost = wsSettings?.getAsJsonObject("headers")?.get("Host")?.takeIf { it.isJsonPrimitive }?.asString
+                ?: httpSettings?.getAsJsonArray("host")?.firstOrNull()?.asString
+                ?: xhttpSettings?.get("host")?.asString ?: "",
+            grpcServiceName = grpcSettings?.get("serviceName")?.asString ?: "",
+            xhttpMode = xhttpSettings?.get("mode")?.asString ?: "",
+        )
     }
 
     private fun parseV2RayJson(content: String): List<ServerProfile> {

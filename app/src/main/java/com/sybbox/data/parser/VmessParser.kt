@@ -24,7 +24,11 @@ object VmessParser {
             grpcServiceName = json.get("path")?.asString?.removePrefix("/") ?: "",
             xhttpMode = json.get("mode")?.asString ?: "",
             xhttpExtra = json.get("extra")?.asString ?: "",
-            security = SecurityType.TLS,
+            security = when (json.get("tls")?.asString) {
+                "tls", "xtls" -> SecurityType.TLS
+                "reality" -> SecurityType.REALITY
+                else -> SecurityType.NONE
+            },
         )
     }
 }

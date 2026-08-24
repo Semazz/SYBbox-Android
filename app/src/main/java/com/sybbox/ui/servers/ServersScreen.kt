@@ -118,11 +118,12 @@ fun ServersScreen(
     val pingVisibleUntil by viewModel.pingVisibleUntil.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var nowTick by remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        while (true) {
+    androidx.compose.runtime.LaunchedEffect(pingVisibleUntil.isNotEmpty()) {
+        while (pingVisibleUntil.isNotEmpty()) {
             kotlinx.coroutines.delay(1000)
             nowTick = System.currentTimeMillis()
         }
+        nowTick = System.currentTimeMillis()
     }
 
     var showAddMenu by remember { mutableStateOf(false) }
@@ -205,15 +206,7 @@ fun ServersScreen(
 
         if (manual.isNotEmpty()) {
             item(key = "manual-group") {
-                Column(
-                    modifier = Modifier.animateContentSize(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioLowBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        ),
-                    ).padding(bottom = 8.dp),
-                ) {
-                    SybCard(modifier = Modifier.fillMaxWidth(), onClick = { expandedManual = !expandedManual }) {
+                SybCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), onClick = { expandedManual = !expandedManual }) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 14.dp, bottom = 14.dp, end = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -278,64 +271,30 @@ fun ServersScreen(
                             }
                         }
                     }
-                    val manualHasSelected = manual.any { it.id == selectedId }
-                    val manualVisible = when {
-                        expandedManual -> manual
-                        manualHasSelected -> manual.filter { it.id == selectedId }
-                        else -> emptyList()
-                    }
-                    AnimatedVisibility(
-                        visible = manualVisible.isNotEmpty(),
-                        enter = fadeIn(animationSpec = tween(220)) +
-                            expandVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioLowBouncy,
-                                    stiffness = Spring.StiffnessMedium,
-                                ),
-                            ),
-                        exit = fadeOut(animationSpec = tween(180)) +
-                            shrinkVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioNoBouncy,
-                                    stiffness = Spring.StiffnessMedium,
-                                ),
-                            ),
-                    ) {
-                        Column {
-                            Spacer(Modifier.height(8.dp))
-                            manualVisible.forEachIndexed { index, profile ->
-                                val showLatency = nowTick < (pingVisibleUntil[profile.id] ?: 0L)
-                                AnimatedVisibility(
-                                    visible = true,
-                                    enter = fadeIn(animationSpec = tween(220, delayMillis = (index * 28).coerceAtMost(180))) +
-                                        expandVertically(
-                                            animationSpec = spring(
-                                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                                stiffness = Spring.StiffnessMedium,
-                                            ),
-                                        ),
-                                    exit = fadeOut() + shrinkVertically(),
-                                ) {
-                                    Box(modifier = Modifier.padding(bottom = 6.dp)) {
-                                        ServerRow(
-                                            profile = profile,
-                                            selected = profile.id == selectedId,
-                                            latency = if (showLatency) latencies[profile.id] ?: profile.lastLatency else 0,
-                                            testing = profile.id in testing,
-                                            onSelect = { viewModel.select(profile.id) },
-                                            onPing = {
-                                                expandedManual = true
-                                                viewModel.measureLatency(profile)
-                                            },
-                                            onDelete = { viewModel.deleteProfile(profile) },
-                                            onCopied = { viewModel.notifyCopied() },
-                                            onShareQr = { qrDialogProfile = profile; showQrDialog = true },
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
+            }
+            val manualHasSelected = manual.any { it.id == selectedId }
+            val manualVisible = when {
+                expandedManual -> manual
+                manualHasSelected -> manual.filter { it.id == selectedId }
+                else -> emptyList()
+            }
+            items(manualVisible, key = { "m-${it.id}" }) { profile ->
+                val showLatency = nowTick < (pingVisibleUntil[profile.id] ?: 0L)
+                Box(modifier = Modifier.padding(bottom = 6.dp)) {
+                    ServerRow(
+                        profile = profile,
+                        selected = profile.id == selectedId,
+                        latency = if (showLatency) latencies[profile.id] ?: profile.lastLatency else 0,
+                        testing = profile.id in testing,
+                        onSelect = { viewModel.select(profile.id) },
+                        onPing = {
+                            expandedManual = true
+                            viewModel.measureLatency(profile)
+                        },
+                        onDelete = { viewModel.deleteProfile(profile) },
+                        onCopied = { viewModel.notifyCopied() },
+                        onShareQr = { qrDialogProfile = profile; showQrDialog = true },
+                    )
                 }
             }
         }
@@ -350,93 +309,51 @@ fun ServersScreen(
                 else -> emptyList()
             }
             item(key = "sub-${subscription.id}") {
-                Column(
-                    modifier = Modifier.animateContentSize(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioLowBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        ),
-                    ).padding(bottom = 8.dp),
-                ) {
-                    SubscriptionHeader(
-                        subscription = subscription,
-                        count = members.size,
-                        expanded = isExpanded,
-                        refreshing = subscription.id in refreshing,
-                        showPing = true,
-                        onToggle = {
-                            expandedSubscription =
-                                if (expandedSubscription == subscription.id) null else subscription.id
-                        },
-                        onRefresh = { viewModel.refreshSubscription(subscription) },
-                        onPingAll = {
+                SubscriptionHeader(
+                    subscription = subscription,
+                    count = members.size,
+                    expanded = isExpanded,
+                    refreshing = subscription.id in refreshing,
+                    showPing = true,
+                    onToggle = {
+                        expandedSubscription =
+                            if (expandedSubscription == subscription.id) null else subscription.id
+                    },
+                    onRefresh = { viewModel.refreshSubscription(subscription) },
+                    onPingAll = {
+                        expandedSubscription = subscription.id
+                        viewModel.measureAll(members)
+                    },
+                    onCopyLink = {
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                        clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("subscription", subscription.url))
+                        viewModel.notifyCopied()
+                    },
+                    onOpenLink = {
+                        try {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(subscription.url)))
+                        } catch (_: Exception) {}
+                    },
+                    onDelete = { viewModel.deleteSubscription(subscription) },
+                )
+            }
+            items(visibleMembers, key = { "s${subscription.id}-${it.id}" }) { profile ->
+                val showLatency = nowTick < (pingVisibleUntil[profile.id] ?: 0L)
+                Box(modifier = Modifier.padding(bottom = 6.dp)) {
+                    ServerRow(
+                        profile = profile,
+                        selected = profile.id == selectedId,
+                        latency = if (showLatency) latencies[profile.id] ?: profile.lastLatency else 0,
+                        testing = profile.id in testing,
+                        onSelect = { viewModel.select(profile.id) },
+                        onPing = {
                             expandedSubscription = subscription.id
-                            viewModel.measureAll(members)
+                            viewModel.measureLatency(profile)
                         },
-                        onCopyLink = {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                            clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("subscription", subscription.url))
-                            viewModel.notifyCopied()
-                        },
-                        onOpenLink = {
-                            try {
-                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(subscription.url)))
-                            } catch (_: Exception) {}
-                        },
-                        onDelete = { viewModel.deleteSubscription(subscription) },
+                        onDelete = { viewModel.deleteProfile(profile) },
+                        onCopied = { viewModel.notifyCopied() },
+                        onShareQr = { qrDialogProfile = profile; showQrDialog = true },
                     )
-                    AnimatedVisibility(
-                        visible = visibleMembers.isNotEmpty(),
-                        enter = fadeIn(animationSpec = tween(220)) +
-                            expandVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioLowBouncy,
-                                    stiffness = Spring.StiffnessMedium,
-                                ),
-                            ),
-                        exit = fadeOut(animationSpec = tween(180)) +
-                            shrinkVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioNoBouncy,
-                                    stiffness = Spring.StiffnessMedium,
-                                ),
-                            ),
-                    ) {
-                        Column {
-                            Spacer(Modifier.height(8.dp))
-                            visibleMembers.forEachIndexed { index, profile ->
-                                val showLatency = nowTick < (pingVisibleUntil[profile.id] ?: 0L)
-                                AnimatedVisibility(
-                                    visible = true,
-                                    enter = fadeIn(animationSpec = tween(220, delayMillis = (index * 28).coerceAtMost(180))) +
-                                        expandVertically(
-                                            animationSpec = spring(
-                                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                                stiffness = Spring.StiffnessMedium,
-                                            ),
-                                        ),
-                                    exit = fadeOut() + shrinkVertically(),
-                                ) {
-                                    Box(modifier = Modifier.padding(bottom = 6.dp)) {
-                                        ServerRow(
-                                            profile = profile,
-                                            selected = profile.id == selectedId,
-                                            latency = if (showLatency) latencies[profile.id] ?: profile.lastLatency else 0,
-                                            testing = profile.id in testing,
-                                            onSelect = { viewModel.select(profile.id) },
-                                            onPing = {
-                                                expandedSubscription = subscription.id
-                                                viewModel.measureLatency(profile)
-                                            },
-                                            onDelete = { viewModel.deleteProfile(profile) },
-                                            onCopied = { viewModel.notifyCopied() },
-                                            onShareQr = { qrDialogProfile = profile; showQrDialog = true },
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -528,15 +445,41 @@ private fun ServerRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val pColor = protocolColor(profile.protocol)
-            IconTile(
-                Icons.Rounded.Shield,
-                tint = pColor,
-                container = pColor.copy(alpha = 0.14f),
-            )
+            val cleanName = remember(profile.name) { com.sybbox.ui.components.stripFlagEmoji(profile.displayName()) }
+            val code = remember(cleanName) { com.sybbox.ui.components.countryCodeFromName(cleanName) }
+            val ctx = LocalContext.current
+            val flagRes = remember(code, ctx) {
+                if (code == null) 0 else ctx.resources.getIdentifier("flag_$code", "drawable", ctx.packageName)
+            }
+            when {
+                flagRes != 0 -> Image(
+                    painter = androidx.compose.ui.res.painterResource(flagRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                )
+                code != null -> Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(pColor.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        com.sybbox.ui.components.flagEmojiIn(profile.displayName()) ?: "",
+                        fontSize = 20.sp,
+                    )
+                }
+                else -> IconTile(
+                    Icons.Rounded.Shield,
+                    tint = pColor,
+                    container = pColor.copy(alpha = 0.14f),
+                )
+            }
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    profile.displayName(),
+                    cleanName,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,

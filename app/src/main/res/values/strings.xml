@@ -236,5 +236,6 @@
     <string name="cd_refresh">Refresh</string>
     <string name="check_ping">Ping</string>
     <string name="msg_ping_failed">Server unreachable</string>
+    <string name="msg_foreign_vpn">Another VPN app is active — allow SYBbox VPN permission so it can switch it off automatically during the check</string>
 </resources>
 

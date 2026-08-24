@@ -6,6 +6,17 @@ import java.net.URLDecoder
 import java.net.URI
 
 object WireGuardParser {
+
+    fun cleanKey(raw: String): String {
+        val cleaned = raw.replace(Regex("\\s+"), "")
+        val isHex = cleaned.length == 64 && cleaned.all { it.isDigit() || it.lowercaseChar() in 'a'..'f' }
+        if (!isHex) return cleaned
+        return runCatching {
+            val bytes = cleaned.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+            java.util.Base64.getEncoder().encodeToString(bytes)
+        }.getOrDefault(cleaned)
+    }
+
     fun parse(uri: String): ServerProfile? {
         val trimmed = uri.trim()
         if (trimmed.contains("[Interface]") && trimmed.contains("PrivateKey")) {
@@ -63,9 +74,9 @@ object WireGuardParser {
             address = address,
             port = port,
             protocol = ProtocolType.WIREGUARD,
-            wgPrivateKey = privateKey,
-            wgPeerPublicKey = publicKey,
-            wgPresharedKey = preShared,
+            wgPrivateKey = cleanKey(privateKey),
+            wgPeerPublicKey = cleanKey(publicKey),
+            wgPresharedKey = preShared.takeIf { it.isBlank() } ?: cleanKey(preShared),
             wgLocalAddress = addressParam.ifBlank { allowedIps },
             wgMTU = mtu.coerceIn(1280, 9000),
             wgReserved = reserved,
@@ -130,9 +141,9 @@ object WireGuardParser {
                 address = addrPort.first,
                 port = addrPort.second,
                 protocol = ProtocolType.WIREGUARD,
-                wgPrivateKey = privateKey,
-                wgPeerPublicKey = publicKey,
-                wgPresharedKey = preShared,
+                wgPrivateKey = cleanKey(privateKey),
+                wgPeerPublicKey = cleanKey(publicKey),
+                wgPresharedKey = preShared.takeIf { it.isBlank() } ?: cleanKey(preShared),
                 wgLocalAddress = address,
                 wgMTU = mtu.coerceIn(1280, 9000),
                 wgJc = jc, wgJmin = jmin, wgJmax = jmax, wgS1 = s1, wgS2 = s2,

@@ -30,6 +30,7 @@ class SingBoxPlatform(
     override fun openTun(optionsJSON: String): Int {
         val options = Gson().fromJson(optionsJSON, TunOptions::class.java)
         val builder = service.Builder().setSession(SESSION_NAME).setMtu(options.mtu)
+        runCatching { builder.javaClass.getMethod("setAllowBypass", Boolean::class.javaPrimitiveType).invoke(builder, false) }
 
         options.inet4().forEach { prefix ->
             val (address, bits) = splitPrefix(prefix) ?: return@forEach
@@ -87,6 +88,7 @@ class SingBoxPlatform(
     }
 
     private fun applyPackageFilter(builder: VpnService.Builder, options: TunOptions) {
+        runCatching { builder.addDisallowedApplication(service.packageName) }
         val includes = options.includePkgs()
         val excludes = options.excludePkgs()
         if (includes.isNotEmpty()) {
@@ -94,10 +96,10 @@ class SingBoxPlatform(
                 runCatching { builder.addAllowedApplication(packageName) }
                     .onFailure { CoreLog.warn("Cannot include $packageName: ${it.message}") }
             }
-            runCatching { builder.addAllowedApplication(context.packageName) }
             return
         }
         excludes.forEach { packageName ->
+            if (packageName == service.packageName) return@forEach
             runCatching { builder.addDisallowedApplication(packageName) }
                 .onFailure { CoreLog.warn("Cannot exclude $packageName: ${it.message}") }
         }

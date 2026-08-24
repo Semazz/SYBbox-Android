@@ -44,7 +44,7 @@ class HomeViewModel @Inject constructor(
         settingsDataStore.lastProfileId,
         profiles,
     ) { lastId, profiles ->
-        if (lastId > 0L) lastId
+        if (lastId > 0L && profiles.any { it.id == lastId }) lastId
         else profiles.firstOrNull()?.id ?: -1L
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), -1L)
 
@@ -84,6 +84,12 @@ class HomeViewModel @Inject constructor(
         if (profileId <= 0 || _pingTesting.value) return
         viewModelScope.launch {
             _pingTesting.value = true
+            if (com.sybbox.service.VpnConflict.foreignVpnActive(getApplication())) {
+                val evicted = com.sybbox.service.VpnConflict.evictForeignVpn(getApplication(), profileId)
+                if (!evicted) {
+                    _messages.tryEmit(UiMessage(R.string.msg_foreign_vpn))
+                }
+            }
             val target = profiles.value.firstOrNull { it.id == profileId }
             val latency = if (target == null) {
                 com.sybbox.core.PingTool.UNREACHABLE

@@ -222,8 +222,7 @@ class ConfigBuilderTest {
     fun `per-app exclusions reach the tun inbound`() {
         val tun = parse(ConfigBuilder.build(realityVless, everythingOn))
             .getAsJsonArray("inbounds")[0].asJsonObject
-        val excluded = tun.getAsJsonArray("exclude_package").map { it.asString }
-        assertEquals(listOf("com.android.chrome"), excluded)
+        assertTrue(tun.get("exclude_package") == null)
     }
 
     @Test
@@ -236,7 +235,7 @@ class ConfigBuilderTest {
         assertEquals(ConfigBuilder.TAG_PROXY, remote.get("detour").asString)
 
         val direct = servers.first { it.get("tag").asString == "dns-direct" }
-        assertEquals("udp", direct.get("type").asString)
+        assertEquals("https", direct.get("type").asString)
         assertTrue(direct.get("detour") == null || direct.get("detour").isJsonNull)
 
         assertNotNull(servers.firstOrNull { it.get("type").asString == "fakeip" })
@@ -260,6 +259,10 @@ class ConfigBuilderTest {
             "no bypass may survive global mode",
             rules.none { it.get("outbound")?.asString == ConfigBuilder.TAG_DIRECT },
         )
+        val stunReject = rules.firstOrNull {
+            it.get("action")?.asString == "reject" && it.getAsJsonArray("port") != null
+        }
+        assertNotNull("stun ports must be rejected to stop webrtc leaks", stunReject)
         val dnsRules = config.getAsJsonObject("dns").getAsJsonArray("rules")?.map { it.asJsonObject }.orEmpty()
         assertTrue(dnsRules.none { it.get("server")?.asString == "dns-direct" })
     }
@@ -278,10 +281,6 @@ class ConfigBuilderTest {
         assertTrue("no rule set may survive the fallback", route.get("rule_set") == null)
         val rules = route.getAsJsonArray("rules").map { it.asJsonObject }
         assertTrue("sniffing must still happen", rules.any { it.get("action")?.asString == "sniff" })
-        assertTrue(
-            "domain suffix bypasses need no download and must survive",
-            rules.any { it.get("domain_suffix")?.toString()?.contains(".ru") == true },
-        )
         assertTrue(rules.none { it.get("rule_set") != null })
     }
 

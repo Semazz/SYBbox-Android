@@ -313,9 +313,32 @@ class SybBoxVpnService : VpnService() {
     private var lastTx = 0L
     private var lastRx = 0L
 
-    private fun trafficTx(): Long = TrafficStats.getUidTxBytes(Process.myUid()).coerceAtLeast(0)
+    private fun tunTraffic(): Pair<Long, Long> {
+        var tx = 0L
+        var rx = 0L
+        runCatching {
+            java.io.File("/sys/class/net").listFiles()
+                ?.filter { it.name.startsWith("tun") }
+                ?.forEach { iface ->
+                    runCatching {
+                        rx += java.io.File(iface, "statistics/rx_bytes").readText().trim().toLongOrNull() ?: 0L
+                        tx += java.io.File(iface, "statistics/tx_bytes").readText().trim().toLongOrNull() ?: 0L
+                    }
+                }
+        }
+        if (tx == 0L && rx == 0L) {
+            return trafficTxLegacy() to trafficRxLegacy()
+        }
+        return tx to rx
+    }
 
-    private fun trafficRx(): Long = TrafficStats.getUidRxBytes(Process.myUid()).coerceAtLeast(0)
+    private fun trafficTx(): Long = tunTraffic().first
+
+    private fun trafficRx(): Long = tunTraffic().second
+
+    private fun trafficTxLegacy(): Long = TrafficStats.getUidTxBytes(Process.myUid()).coerceAtLeast(0)
+
+    private fun trafficRxLegacy(): Long = TrafficStats.getUidRxBytes(Process.myUid()).coerceAtLeast(0)
 
     private fun startMonitor() {
         monitorJob?.cancel()

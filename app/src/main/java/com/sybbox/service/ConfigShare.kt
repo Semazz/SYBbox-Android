@@ -37,20 +37,44 @@ object ConfigShare {
         params.add("encryption=${p.encryption}")
         params.add("security=${p.security.name.lowercase()}")
         if (p.flow.isNotEmpty()) params.add("flow=${p.flow}")
-        if (p.transport == TransportType.WS) {
-            params.add("type=ws")
-            if (p.wsHost.isNotEmpty()) params.add("host=${Uri.encode(p.wsHost)}")
-            if (p.wsPath.isNotEmpty()) params.add("path=${Uri.encode(p.wsPath)}")
-        } else if (p.transport == TransportType.GRPC) {
-            params.add("type=grpc")
-            params.add("serviceName=${Uri.encode(p.grpcServiceName)}")
-        } else {
-            params.add("type=tcp")
+        when (p.transport) {
+            TransportType.WS -> {
+                params.add("type=ws")
+                if (p.wsHost.isNotEmpty()) params.add("host=${Uri.encode(p.wsHost)}")
+                if (p.wsPath.isNotEmpty()) params.add("path=${Uri.encode(p.wsPath)}")
+                if (p.maxEarlyData > 0) {
+                    params.add("ed=${p.maxEarlyData}")
+                    params.add("eh=Sec-WebSocket-Protocol")
+                }
+            }
+            TransportType.HTTP -> {
+                params.add("type=http")
+                if (p.wsHost.isNotEmpty() || p.h2Host.isNotEmpty()) params.add("host=${Uri.encode(p.wsHost.ifEmpty { p.h2Host })}")
+                if (p.wsPath.isNotEmpty() || p.h2Path.isNotEmpty()) params.add("path=${Uri.encode(p.wsPath.ifEmpty { p.h2Path })}")
+            }
+            TransportType.GRPC -> {
+                params.add("type=grpc")
+                params.add("serviceName=${Uri.encode(p.grpcServiceName)}")
+            }
+            TransportType.HTTPUPGRADE -> {
+                params.add("type=httpupgrade")
+                if (p.wsHost.isNotEmpty()) params.add("host=${Uri.encode(p.wsHost)}")
+                if (p.wsPath.isNotEmpty()) params.add("path=${Uri.encode(p.wsPath)}")
+            }
+            TransportType.XHTTP -> {
+                params.add("type=xhttp")
+                if (p.wsHost.isNotEmpty() || p.h2Host.isNotEmpty()) params.add("host=${Uri.encode(p.wsHost.ifEmpty { p.h2Host })}")
+                if (p.wsPath.isNotEmpty() || p.h2Path.isNotEmpty()) params.add("path=${Uri.encode(p.wsPath.ifEmpty { p.h2Path })}")
+                if (p.xhttpMode.isNotEmpty()) params.add("mode=${Uri.encode(p.xhttpMode)}")
+                else params.add("mode=auto")
+            }
+            else -> params.add("type=tcp")
         }
         if (p.security == SecurityType.REALITY) {
             params.add("fp=${p.realityFingerprint}")
             params.add("pbk=${Uri.encode(p.realityPublicKey)}")
             if (p.realityShortId.isNotEmpty()) params.add("sid=${Uri.encode(p.realityShortId)}")
+            if (p.serverName.isNotEmpty()) params.add("sni=${Uri.encode(p.serverName)}")
         }
         if (p.security == SecurityType.TLS) {
             params.add("fp=${p.fingerprint}")
@@ -70,13 +94,21 @@ object ConfigShare {
         json.put("id", p.uuid)
         json.put("aid", p.alterId)
         json.put("scy", p.encryption)
-        json.put("net", p.transport.name.lowercase())
-        if (p.transport == TransportType.WS) {
-            json.put("host", p.wsHost)
-            json.put("path", p.wsPath)
+        json.put("net", when (p.transport) {
+            TransportType.HTTP -> "h2"
+            TransportType.XHTTP -> "xhttp"
+            else -> p.transport.name.lowercase()
+        })
+        if (p.transport == TransportType.WS || p.transport == TransportType.HTTPUPGRADE ||
+            p.transport == TransportType.XHTTP || p.transport == TransportType.HTTP
+        ) {
+            json.put("host", p.wsHost.ifEmpty { p.h2Host })
+            json.put("path", p.wsPath.ifEmpty { p.h2Path })
         }
-        json.put("tls", if (p.security == SecurityType.TLS) "tls" else "")
-        if (p.security == SecurityType.TLS && p.serverName.isNotEmpty()) json.put("sni", p.serverName)
+        if (p.transport == TransportType.GRPC) json.put("path", p.grpcServiceName)
+        if (p.transport == TransportType.XHTTP && p.xhttpMode.isNotEmpty()) json.put("mode", p.xhttpMode)
+        json.put("tls", if (p.security != SecurityType.NONE) "tls" else "")
+        if (p.security != SecurityType.NONE && p.serverName.isNotEmpty()) json.put("sni", p.serverName)
         return "vmess://${android.util.Base64.encodeToString(json.toString().toByteArray(), android.util.Base64.NO_WRAP)}"
     }
 

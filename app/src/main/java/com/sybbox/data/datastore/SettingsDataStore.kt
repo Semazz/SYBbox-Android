@@ -36,7 +36,7 @@ class SettingsDataStore @Inject constructor(
     val tunStack: Flow<String> = dataStore.data.map { it[KEY_TUN_STACK] ?: "gvisor" }
     val tunMTU: Flow<Int> = dataStore.data.map { it[KEY_TUN_MTU] ?: 1500 }
     val autoRoute: Flow<Boolean> = dataStore.data.map { it[KEY_AUTO_ROUTE] ?: true }
-    val strictRoute: Flow<Boolean> = dataStore.data.map { it[KEY_STRICT_ROUTE] ?: false }
+    val strictRoute: Flow<Boolean> = dataStore.data.map { it[KEY_STRICT_ROUTE] ?: true }
 
     val themeMode: Flow<String> = dataStore.data.map { it[KEY_THEME_MODE] ?: "SYSTEM" }
     val dynamicColor: Flow<Boolean> = dataStore.data.map { it[KEY_DYNAMIC_COLOR] ?: true }
@@ -47,7 +47,7 @@ class SettingsDataStore @Inject constructor(
     val defaultSubInterval: Flow<Int> = dataStore.data.map { it[KEY_DEFAULT_SUB_INTERVAL] ?: 12 }
     val enableSubAutoUpdate: Flow<Boolean> = dataStore.data.map { it[KEY_SUB_AUTO_UPDATE] ?: true }
 
-    val routingMode: Flow<String> = dataStore.data.map { it[KEY_ROUTING_MODE] ?: "BALANCED" }
+    val routingMode: Flow<String> = dataStore.data.map { it[KEY_ROUTING_MODE] ?: "GLOBAL" }
     val blockAds: Flow<Boolean> = dataStore.data.map { it[KEY_BLOCK_ADS] ?: false }
     val blockTrackers: Flow<Boolean> = dataStore.data.map { it[KEY_BLOCK_TRACKERS] ?: false }
     val bypassChina: Flow<Boolean> = dataStore.data.map { it[KEY_BYPASS_CHINA] ?: false }

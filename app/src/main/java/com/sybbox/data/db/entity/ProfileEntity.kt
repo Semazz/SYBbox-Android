@@ -30,6 +30,8 @@ data class ProfileEntity(
     val h2Host: String = "",
     val h2Path: String = "",
     val grpcServiceName: String = "",
+    val xhttpMode: String = "packet-up",
+    val xhttpExtra: String = "",
     val multiplexEnabled: Boolean = false,
     val multiplexProtocol: String = "h2mux",
     val multiplexMaxStreams: Int = 4,

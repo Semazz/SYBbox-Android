@@ -29,7 +29,8 @@ object VlessParser {
             security = when {
                 params["security"] == "reality" -> SecurityType.REALITY
                 params["security"] == "tls" || params["security"] == "xtls" -> SecurityType.TLS
-                else -> SecurityType.TLS
+                params["security"] == "none" || params["security"].isNullOrEmpty() -> SecurityType.NONE
+                else -> SecurityType.NONE
             },
             transport = transport,
             serverName = params["sni"] ?: params["host"] ?: "",

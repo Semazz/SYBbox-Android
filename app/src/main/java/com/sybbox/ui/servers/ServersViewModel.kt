@@ -20,6 +20,9 @@ import com.sybbox.service.SybBoxVpnService
 import com.sybbox.ui.UiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -29,6 +32,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -189,8 +194,9 @@ class ServersViewModel @Inject constructor(
             }
             val trimmedBody = response.body.trim()
             val parsed = when {
+                trimmedBody.startsWith("[") ->
+                    SubscriptionParser.parse(trimmedBody, SubType.SING_BOX)
                 trimmedBody.startsWith("{") -> {
-
                     val clash = SubscriptionParser.parse(trimmedBody, SubType.CLASH_META)
                     if (clash.isNotEmpty()) clash
                     else SubscriptionParser.parse(trimmedBody, SubType.SING_BOX)
@@ -203,7 +209,9 @@ class ServersViewModel @Inject constructor(
                 return 0
             }
 
-            val stored = parsed.map { profile -> profile.copy(subscriptionId = subscriptionId) }
+            val stored = parsed
+                .distinctBy { "${it.protocol}|${it.address}|${it.port}" }
+                .map { profile -> profile.copy(subscriptionId = subscriptionId) }
             val ids = profileRepository.mergeSubscriptionProfiles(subscriptionId, stored)
             subscriptionRepository.updateStats(
                 subscriptionId, ids.size,
@@ -222,13 +230,12 @@ class ServersViewModel @Inject constructor(
                 return ids.size
             }
             val key = "${previousSelected.protocol}|${previousSelected.address}|${previousSelected.port}"
-            ids.forEachIndexed { index, profileId ->
+            ids.forEach { profileId ->
                 val fresh = profileRepository.getProfileById(profileId)
                 if (fresh != null && "${fresh.protocol}|${fresh.address}|${fresh.port}" == key) {
                     settingsDataStore.setLastProfileId(profileId)
                     return ids.size
                 }
-                if (index == ids.lastIndex) settingsDataStore.setLastProfileId(ids.first())
             }
             return ids.size
         } catch (error: Exception) {
@@ -310,6 +317,13 @@ class ServersViewModel @Inject constructor(
     fun measureLatency(profile: ServerProfile) {
         viewModelScope.launch {
             _testing.update { it + profile.id }
+            if (com.sybbox.service.VpnConflict.foreignVpnActive(getApplication())) {
+                val evicted = com.sybbox.service.VpnConflict.evictForeignVpn(
+                    getApplication(),
+                    selectedProfileId.value.takeIf { it > 0 } ?: profile.id,
+                )
+                if (!evicted) emit(UiMessage(R.string.msg_foreign_vpn))
+            }
             val latency = withContext(Dispatchers.IO) {
                 com.sybbox.core.PingTool.pingForProfile(getApplication(), profile)
             }
@@ -323,9 +337,23 @@ class ServersViewModel @Inject constructor(
     fun measureAll(targets: List<ServerProfile>) {
         viewModelScope.launch {
             _testing.update { it + targets.map(ServerProfile::id) }
+            if (targets.isNotEmpty() && com.sybbox.service.VpnConflict.foreignVpnActive(getApplication())) {
+                val evicted = com.sybbox.service.VpnConflict.evictForeignVpn(
+                    getApplication(),
+                    selectedProfileId.value.takeIf { it > 0 } ?: targets.first().id,
+                )
+                if (!evicted) emit(UiMessage(R.string.msg_foreign_vpn))
+            }
             val results = withContext(Dispatchers.IO) {
-                targets.associate { target ->
-                    target.id to com.sybbox.core.PingTool.pingForProfile(getApplication(), target)
+                coroutineScope {
+                    val semaphore = Semaphore(16)
+                    targets.map { target ->
+                        async {
+                            semaphore.withPermit {
+                                target.id to com.sybbox.core.PingTool.pingForProfile(getApplication(), target)
+                            }
+                        }
+                    }.awaitAll().toMap()
                 }
             }
             _latencies.update { it + results }
@@ -340,15 +368,20 @@ class ServersViewModel @Inject constructor(
 
     fun deleteProfile(profile: ServerProfile) {
         viewModelScope.launch {
+            val wasActive = SybBoxVpnService.appState.value.activeProfile?.id == profile.id
             profileRepository.deleteProfile(profile)
+            if (wasActive) SybBoxVpnService.disconnect(getApplication())
             emit(UiMessage(R.string.msg_server_deleted))
         }
     }
 
     fun deleteSubscription(subscription: Subscription) {
         viewModelScope.launch {
+            val activeId = SybBoxVpnService.appState.value.activeProfile?.id
+            val shouldDisconnect = activeId != null && runCatching { profileRepository.getProfileById(activeId)?.subscriptionId == subscription.id }.getOrDefault(false)
             profileRepository.deleteProfilesBySubscription(subscription.id)
             subscriptionRepository.deleteSubscription(subscription)
+            if (shouldDisconnect) SybBoxVpnService.disconnect(getApplication())
             emit(UiMessage(R.string.msg_subscription_deleted))
         }
     }
@@ -366,7 +399,7 @@ class ServersViewModel @Inject constructor(
     }
 }
 
-fun ServerProfile.displayName(): String = name.ifBlank { address }
+fun ServerProfile.displayName(): String = name.ifBlank { "$address:$port" }
 
 fun ServerProfile.subInfoLine(): String = buildList {
     add(

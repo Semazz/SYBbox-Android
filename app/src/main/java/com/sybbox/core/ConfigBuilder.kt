@@ -63,17 +63,36 @@ object ConfigBuilder {
         return GSON.toJson(config)
     }
 
+    private fun normalizeWgKey(raw: String, what: String): String {
+        val cleaned = raw.replace(Regex("\\s+"), "")
+        require(cleaned.isNotEmpty()) { "WireGuard $what is empty" }
+        val bytes = if (cleaned.length == 64 && cleaned.all { it.isDigit() || it.lowercaseChar() in 'a'..'f' }) {
+            cleaned.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+        } else {
+            try {
+                java.util.Base64.getMimeDecoder().decode(cleaned)
+            } catch (_: IllegalArgumentException) {
+                throw IllegalArgumentException("WireGuard $what is not a valid 32-byte key")
+            }
+        }
+        require(bytes.size == 32) { "WireGuard $what must decode to 32 bytes, got ${bytes.size}" }
+        return java.util.Base64.getEncoder().encodeToString(bytes)
+    }
+
     private fun buildEndpoints(profile: ServerProfile): JsonArray {
         val endpoints = JsonArray()
         if (profile.protocol == ProtocolType.WIREGUARD) {
             if (profile.wgPrivateKey.isBlank() || profile.wgPeerPublicKey.isBlank()) {
                 throw UnsupportedProtocolException(ProtocolType.WIREGUARD)
             }
+            val privateKey = normalizeWgKey(profile.wgPrivateKey, "private_key")
+            val publicKey = normalizeWgKey(profile.wgPeerPublicKey, "peer public_key")
+            val presharedKey = profile.wgPresharedKey.takeIf { it.isNotBlank() }?.let { normalizeWgKey(it, "pre_shared_key") }
             val peer = JsonObject().apply {
                 addProperty("address", profile.address)
                 addProperty("port", profile.port)
-                addProperty("public_key", profile.wgPeerPublicKey)
-                if (profile.wgPresharedKey.isNotBlank()) addProperty("pre_shared_key", profile.wgPresharedKey)
+                addProperty("public_key", publicKey)
+                if (presharedKey != null) addProperty("pre_shared_key", presharedKey)
                 add("allowed_ips", jsonArrayOf("0.0.0.0/0", "::/0"))
                 if (profile.wgReserved.isNotEmpty()) {
                     add("reserved", JsonArray().apply { profile.wgReserved.forEach { add(it) } })
@@ -96,7 +115,7 @@ object ConfigBuilder {
             val ep = JsonObject().apply {
                 addProperty("type", "wireguard")
                 addProperty("tag", "wg-endpoint")
-                addProperty("private_key", profile.wgPrivateKey)
+                addProperty("private_key", privateKey)
                 val localAddr = profile.wgLocalAddress.ifBlank { "10.0.0.2/32" }
                 add("address", jsonArrayOf(localAddr.split(',').map { it.trim() }.filter { it.isNotEmpty() }))
                 addProperty("mtu", profile.wgMTU.coerceIn(1280, 9000))
@@ -115,14 +134,8 @@ object ConfigBuilder {
     private fun buildDns(settings: SettingsState, ruleSets: MutableMap<String, JsonObject>?, profile: ServerProfile) = JsonObject().apply {
         val isWg = profile.protocol == ProtocolType.WIREGUARD
         val servers = JsonArray()
-        val remoteDns = when {
-            profile.protocol == ProtocolType.SHADOWSOCKS && settings.remoteDns.trim().lowercase().startsWith("udp://") -> settings.remoteDns.replaceFirst("udp://", "https://", ignoreCase = true).let { if (it.contains("/dns-query")) it else "$it/dns-query" }
-            profile.protocol == ProtocolType.SHADOWSOCKS && settings.remoteDns.trim().lowercase().startsWith("tls://") -> settings.remoteDns.replaceFirst("tls://", "https://", ignoreCase = true).let { if (it.contains("/dns-query")) it else "$it/dns-query" }
-            profile.protocol == ProtocolType.SHADOWSOCKS && !settings.remoteDns.contains("://") && settings.remoteDns.trim().matches(Regex("\\d+\\.\\d+\\.\\d+\\.\\d+")) -> "https://${settings.remoteDns.trim()}/dns-query"
-            else -> settings.remoteDns
-        }
-        servers.add(dnsServer(TAG_DNS_REMOTE, remoteDns, detour = if (isWg) "wg-endpoint" else TAG_PROXY))
-        servers.add(dnsServer(TAG_DNS_DIRECT, settings.directDns))
+        servers.add(dnsServer(TAG_DNS_REMOTE, normalizeHttpsDns(settings.remoteDns), detour = if (isWg) "wg-endpoint" else TAG_PROXY))
+        servers.add(dnsServer(TAG_DNS_DIRECT, normalizeHttpsDns(settings.directDns)))
         if (settings.enableFakeIp) {
             servers.add(JsonObject().apply {
                 addProperty("tag", TAG_DNS_FAKE)
@@ -148,6 +161,21 @@ object ConfigBuilder {
         addProperty("final", TAG_DNS_REMOTE)
         addProperty("strategy", domainStrategy(settings.dnsQueryStrategy))
         if (settings.enableFakeIp) addProperty("independent_cache", true)
+    }
+
+    private fun normalizeHttpsDns(value: String): String {
+        val t = value.trim()
+        if (t.isEmpty()) return "https://1.1.1.1/dns-query"
+        val lower = t.lowercase()
+        return when {
+            lower.startsWith("https://") -> t
+            lower.startsWith("h3://") -> t
+            lower.startsWith("tls://") -> t.replaceFirst("tls://", "https://", ignoreCase = true).let { if (it.contains("/dns-query")) it else "$it/dns-query" }
+            lower.startsWith("quic://") -> t.replaceFirst("quic://", "h3://", ignoreCase = true).let { if (it.contains("/dns-query")) it else "$it/dns-query" }
+            lower.startsWith("udp://") || lower.startsWith("tcp://") -> t.substringAfter("://").let { host -> if (host.contains("/dns-query")) "https://$host" else "https://$host/dns-query" }
+            t.matches(Regex("[0-9a-fA-F:.]+")) -> "https://$t/dns-query"
+            else -> t
+        }
     }
 
     private fun dnsServer(tag: String, address: String, detour: String? = null): JsonObject {
@@ -192,16 +220,7 @@ object ConfigBuilder {
     }
 
     private fun directDnsSuffixRule(settings: SettingsState, profile: ServerProfile? = null): JsonObject? {
-        if (settings.routingMode == MODE_GLOBAL || profile?.protocol == ProtocolType.SHADOWSOCKS) return null
-        val suffixes = buildList {
-            if (settings.bypassRussia) addAll(RU_DIRECT_SUFFIXES)
-            if (settings.bypassChina) addAll(CN_DIRECT_SUFFIXES)
-        }
-        if (suffixes.isEmpty()) return null
-        return JsonObject().apply {
-            add("domain_suffix", jsonArrayOf(suffixes))
-            addProperty("server", TAG_DNS_DIRECT)
-        }
+        return null
     }
 
     private fun addRuleSetDnsRules(
@@ -211,7 +230,7 @@ object ConfigBuilder {
         profile: ServerProfile? = null,
     ) {
         if (ruleSets == null) return
-        val global = settings.routingMode == MODE_GLOBAL || profile?.protocol == ProtocolType.SHADOWSOCKS
+        val global = true
         val directSites = buildList<String> {
             if (global) return@buildList
             if (settings.bypassRussia) add(geositeSet(ruleSets, "category-ru"))
@@ -234,17 +253,31 @@ object ConfigBuilder {
         }
     }
 
+    private val tunRandom = java.security.SecureRandom()
+
+    private fun randomTunAddresses(): List<String> {
+        val second = 16 + tunRandom.nextInt(16)
+        val third = tunRandom.nextInt(256)
+        val base = tunRandom.nextInt(64) * 4
+        val v4 = "172.$second.$third.${base + 1}/30"
+        val v6 = "fd%02x:%04x:%04x:%04x::1/126".format(
+            tunRandom.nextInt(0x100), tunRandom.nextInt(0x10000),
+            tunRandom.nextInt(0x10000), tunRandom.nextInt(0x10000),
+        )
+        return listOf(v4, v6)
+    }
+
     private fun buildInbounds(settings: SettingsState, profile: ServerProfile? = null) = JsonArray().apply {
         add(JsonObject().apply {
             addProperty("type", "tun")
             addProperty("tag", TAG_TUN)
-            add("address", jsonArrayOf(TUN_ADDRESS_V4, TUN_ADDRESS_V6))
+            add("address", jsonArrayOf(randomTunAddresses()))
             addProperty("mtu", settings.tunMTU.coerceIn(1280, 1500))
-            addProperty("auto_route", if (profile?.protocol == ProtocolType.SHADOWSOCKS) true else settings.autoRoute)
-            addProperty("strict_route", if (profile?.protocol == ProtocolType.SHADOWSOCKS) true else settings.strictRoute)
+            addProperty("auto_route", true)
+            addProperty("strict_route", true)
             addProperty("stack", settings.tunStack.lowercase().ifBlank { "gvisor" })
 
-            if (profile?.protocol != ProtocolType.SHADOWSOCKS && settings.perAppProxy) {
+            if (false && settings.perAppProxy) {
                 if (settings.includedApps.isNotEmpty()) {
                     add("include_package", jsonArrayOf(settings.includedApps))
                 } else if (settings.excludedApps.isNotEmpty()) {
@@ -448,14 +481,27 @@ object ConfigBuilder {
             }
 
             TransportType.XHTTP -> JsonObject().apply {
-                addProperty("type", "ws")
+                addProperty("type", "xhttp")
                 val path = profile.wsPath.ifBlank { profile.h2Path }
                 val host = profile.wsHost.ifBlank { profile.h2Host }
                 if (path.isNotBlank()) addProperty("path", path)
-                if (host.isNotBlank()) {
-                    add("headers", JsonObject().apply { addProperty("Host", host) })
-                }
+                if (host.isNotBlank()) addProperty("host", host)
                 if (profile.xhttpMode.isNotBlank()) addProperty("mode", profile.xhttpMode)
+                if (profile.xhttpExtra.isNotBlank()) {
+                    try {
+                        val extra = com.google.gson.JsonParser.parseString(profile.xhttpExtra)
+                        if (extra.isJsonObject) {
+                            for ((k, v) in extra.asJsonObject.entrySet()) add(k, v)
+                        } else {
+                            addProperty("extra", profile.xhttpExtra)
+                        }
+                    } catch (_: Exception) {
+                        addProperty("extra", profile.xhttpExtra)
+                    }
+                }
+                if (host.isNotBlank()) {
+                    add("headers", com.google.gson.JsonObject().apply { addProperty("Host", host) })
+                }
             }
             TransportType.TCP, TransportType.QUIC, TransportType.KCP -> null
         } ?: return
@@ -481,17 +527,26 @@ object ConfigBuilder {
         profile: ServerProfile,
     ) = JsonObject().apply {
 
-        val isSs = profile.protocol == ProtocolType.SHADOWSOCKS
-        val global = settings.routingMode == MODE_GLOBAL || isSs
-        val bypassRussia = settings.bypassRussia && !global && !isSs
-        val bypassChina = settings.bypassChina && !global && !isSs
-        val bypassLocal = settings.bypassLocalNetwork && !global && !isSs
+        val global = settings.routingMode == MODE_GLOBAL || settings.routingMode == MODE_BALANCED
+        val bypassRussia = false
+        val bypassChina = false
+        val bypassLocal = false
         val rules = JsonArray()
 
         rules.add(JsonObject().apply { addProperty("action", "sniff") })
         rules.add(JsonObject().apply {
             add("protocol", jsonArrayOf("dns"))
             addProperty("action", "hijack-dns")
+        })
+
+        rules.add(JsonObject().apply {
+            add("port", JsonArray().apply { listOf(3478, 3479, 5348, 5349).forEach { add(it) } })
+            add("network", jsonArrayOf("udp", "tcp"))
+            addProperty("action", "reject")
+        })
+        rules.add(JsonObject().apply {
+            add("domain_keyword", jsonArrayOf("stun", "stun1", "stun2", "stun3", "stun4", "turn", "turn1", "turn2"))
+            addProperty("action", "reject")
         })
 
         if (bypassLocal) {

@@ -1,5 +1,7 @@
 package com.sybbox.ui.routing
 
+import com.sybbox.ui.components.SybSegmented
+import com.sybbox.ui.theme.SybSpacing
 import android.widget.ImageView
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
@@ -81,9 +83,13 @@ fun PerAppScreen(
 
     LaunchedEffect(Unit) { viewModel.loadApps() }
 
-    val visible = apps.filter { app ->
-        (showSystem || !app.system) &&
-            (query.isBlank() || app.label.contains(query, true) || app.packageName.contains(query, true))
+    // Keyed on what the result depends on. Without this the whole list was filtered again
+    // on every recomposition, including each time a single checkbox was ticked.
+    val visible = remember(apps, query, showSystem) {
+        apps.filter { app ->
+            (showSystem || !app.system) &&
+                (query.isBlank() || app.label.contains(query, true) || app.packageName.contains(query, true))
+        }
     }
 
     val selectedCount = perApp.selected.size
@@ -123,7 +129,7 @@ fun PerAppScreen(
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            contentPadding = PaddingValues(horizontal = SybSpacing.screen, vertical = SybSpacing.rowV),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "header") {
@@ -229,7 +235,7 @@ fun PerAppScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                    .padding(horizontal = SybSpacing.cardH, vertical = SybSpacing.rowV),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Box(
@@ -273,7 +279,7 @@ fun PerAppScreen(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(50))
                                         .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                                        .padding(horizontal = SybSpacing.chipH, vertical = SybSpacing.chipV),
                                 )
                             }
                         }
@@ -336,93 +342,19 @@ private fun ExpressiveSegment(
     includeMode: Boolean,
     onModeChange: (Boolean) -> Unit,
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            .padding(3.dp),
-    ) {
-        Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            val leftSelected = includeMode
-            val rightSelected = !includeMode
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(42.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(
-                        if (leftSelected) MaterialTheme.colorScheme.primary
-                        else Color.Transparent,
-                    )
-                    .clickable { onModeChange(true) },
-                contentAlignment = Alignment.Center,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 4.dp),
-                ) {
-                    if (leftSelected) {
-                        Icon(
-                            Icons.Rounded.Check,
-                            null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(14.dp),
-                        )
-                        Spacer(Modifier.width(4.dp))
-                    }
-                    Text(
-                        stringResource(R.string.mode_include),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = if (leftSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (leftSelected) MaterialTheme.colorScheme.onPrimary
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        fontSize = 11.sp,
-                    )
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(42.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(
-                        if (rightSelected) MaterialTheme.colorScheme.primary
-                        else Color.Transparent,
-                    )
-                    .clickable { onModeChange(false) },
-                contentAlignment = Alignment.Center,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                ) {
-                    if (rightSelected) {
-                        Icon(
-                            Icons.Rounded.Check,
-                            null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(Modifier.width(6.dp))
-                    }
-                    Text(
-                        stringResource(R.string.mode_exclude),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = if (rightSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (rightSelected) MaterialTheme.colorScheme.onPrimary
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        fontSize = 11.sp,
-                    )
-                }
-            }
-        }
-    }
+    // Both halves come from one component now. Hand-built, they had drifted: different icon
+    // sizes, different padding and a hard-coded font size on each side.
+    SybSegmented(
+        options = listOf(true, false),
+        labels = listOf(
+            stringResource(R.string.mode_include),
+            stringResource(R.string.mode_exclude),
+        ),
+        selected = includeMode,
+        onSelect = onModeChange,
+        minHeight = 44.dp,
+        maxLines = 2,
+    )
 }
 
 @Composable
@@ -432,6 +364,7 @@ private fun AppRowExpressive(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val icon by rememberAppIcon(app.packageName)
     val checkScale by animateFloatAsState(
         targetValue = if (checked) 1f else 0.88f,
         animationSpec = spring(
@@ -458,7 +391,7 @@ private fun AppRowExpressive(
             ) {
                 AndroidView(
                     factory = { context -> ImageView(context).apply { scaleType = ImageView.ScaleType.FIT_CENTER } },
-                    update = { view -> view.setImageDrawable(app.icon) },
+                    update = { view -> view.setImageDrawable(icon) },
                     modifier = Modifier
                         .size(42.dp)
                         .clip(RoundedCornerShape(12.dp)),

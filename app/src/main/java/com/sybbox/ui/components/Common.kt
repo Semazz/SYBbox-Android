@@ -32,8 +32,6 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -60,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sybbox.R
 import com.sybbox.domain.model.ProtocolType
+import com.sybbox.ui.theme.SybSpacing
 import com.sybbox.ui.theme.LatencyFast
 import com.sybbox.ui.theme.LatencyMedium
 import com.sybbox.ui.theme.LatencySlow
@@ -194,7 +193,7 @@ fun ProtocolChip(protocol: ProtocolType, modifier: Modifier = Modifier) {
         modifier = modifier
             .clip(PillShape)
             .background(color.copy(alpha = 0.16f))
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .padding(horizontal = SybSpacing.chipH, vertical = SybSpacing.chipV),
     ) {
         Text(
             text = protocol.name,
@@ -232,7 +231,7 @@ fun LatencyBadge(latency: Int?, testing: Boolean = false, modifier: Modifier = M
             modifier = modifier
                 .clip(PillShape)
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
-                .padding(horizontal = 10.dp, vertical = 5.dp),
+                .padding(horizontal = SybSpacing.chipH, vertical = SybSpacing.chipV),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -250,7 +249,7 @@ fun LatencyBadge(latency: Int?, testing: Boolean = false, modifier: Modifier = M
                 modifier = modifier
                     .clip(PillShape)
                     .background(LatencySlow.copy(alpha = 0.14f))
-                    .padding(horizontal = 10.dp, vertical = 5.dp),
+                    .padding(horizontal = SybSpacing.chipH, vertical = SybSpacing.chipV),
             ) {
                 Text(
                     text = label,
@@ -265,7 +264,7 @@ fun LatencyBadge(latency: Int?, testing: Boolean = false, modifier: Modifier = M
                 modifier = modifier
                     .clip(PillShape)
                     .background(color.copy(alpha = 0.14f))
-                    .padding(horizontal = 10.dp, vertical = 5.dp),
+                    .padding(horizontal = SybSpacing.chipH, vertical = SybSpacing.chipV),
             ) {
                 Text(
                     text = label,
@@ -316,7 +315,7 @@ fun SettingsToggle(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = enabled) { onCheckedChange(!checked) }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = SybSpacing.rowH, vertical = SybSpacing.rowV),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
@@ -338,7 +337,7 @@ fun SettingsAction(
     icon: ImageVector? = null,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = SybSpacing.rowH, vertical = SybSpacing.rowV),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
@@ -368,63 +367,6 @@ fun SettingsAction(
 }
 
 @Composable
-fun <T> SettingsChoice(
-    title: String,
-    options: List<T>,
-    selected: T,
-    onSelect: (T) -> Unit,
-    label: @Composable (T) -> String,
-    summary: String? = null,
-    icon: ImageVector? = null,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = true }
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (icon != null) {
-                IconTile(icon)
-                Spacer(Modifier.width(14.dp))
-            }
-            RowLabel(title, summary, Modifier.weight(1f))
-            Spacer(Modifier.width(12.dp))
-            Text(
-                label(selected),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = 140.dp),
-            )
-            Icon(
-                Icons.Rounded.ChevronRight,
-                null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(label(option)) },
-                    trailingIcon = {
-                        if (option == selected) {
-                            Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.primary)
-                        }
-                    },
-                    onClick = { onSelect(option); expanded = false },
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun SettingsText(
     title: String,
     value: String,
@@ -440,7 +382,7 @@ fun SettingsText(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { draft = value; editing = true }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = SybSpacing.rowH, vertical = SybSpacing.rowV),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
@@ -492,7 +434,7 @@ fun SettingsText(
 }
 
 @Composable
-private fun RowLabel(title: String, summary: String?, modifier: Modifier = Modifier, enabled: Boolean = true) {
+internal fun RowLabel(title: String, summary: String?, modifier: Modifier = Modifier, enabled: Boolean = true) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             title,

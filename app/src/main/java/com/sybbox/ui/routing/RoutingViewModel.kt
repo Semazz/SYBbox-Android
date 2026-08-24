@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.graphics.drawable.Drawable
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.sybbox.R
@@ -29,7 +28,6 @@ import javax.inject.Inject
 data class InstalledApp(
     val packageName: String,
     val label: String,
-    val icon: Drawable?,
     val system: Boolean,
 )
 
@@ -123,7 +121,9 @@ class RoutingViewModel @Inject constructor(
             val packageManager = getApplication<Application>().packageManager
             val self = getApplication<Application>().packageName
             val loaded = withContext(Dispatchers.IO) {
-                packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+                // No GET_META_DATA: the metadata bundles are never read here and loading
+                // them for every installed package is pure cost.
+                packageManager.getInstalledApplications(0)
                     .asSequence()
                     .filter { it.packageName != self }
                     .map { info ->
@@ -131,7 +131,6 @@ class RoutingViewModel @Inject constructor(
                             packageName = info.packageName,
                             label = runCatching { packageManager.getApplicationLabel(info).toString() }
                                 .getOrDefault(info.packageName),
-                            icon = runCatching { packageManager.getApplicationIcon(info) }.getOrNull(),
                             system = info.isSystem(),
                         )
                     }

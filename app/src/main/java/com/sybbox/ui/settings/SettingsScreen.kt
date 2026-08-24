@@ -63,6 +63,7 @@ import com.sybbox.ui.components.SettingsDivider
 import com.sybbox.ui.components.SettingsGroup
 import com.sybbox.ui.components.SettingsText
 import com.sybbox.ui.components.SettingsToggle
+import com.sybbox.ui.theme.SybSpacing
 import com.sybbox.ui.theme.LocaleHelper
 import com.sybbox.ui.theme.THEME_DARK
 import com.sybbox.ui.theme.THEME_LIGHT
@@ -79,7 +80,7 @@ fun SettingsScreen(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+        contentPadding = PaddingValues(start = SybSpacing.screen, end = SybSpacing.screen, bottom = SybSpacing.xlarge),
     ) {
         item {
             Text(
@@ -142,6 +143,14 @@ fun SettingsScreen(
 
         item {
             SettingsGroup(stringResource(R.string.group_connection)) {
+                SettingsToggle(
+                    title = stringResource(R.string.tcp_fast_open),
+                    summary = stringResource(R.string.tcp_fast_open_summary),
+                    checked = state.tcpFastOpen,
+                    onCheckedChange = viewModel::setTcpFastOpen,
+                    icon = Icons.Rounded.Bolt,
+                )
+                SettingsDivider()
                 SettingsToggle(
                     title = stringResource(R.string.auto_connect_boot),
                     summary = stringResource(R.string.auto_connect_boot_summary),
@@ -346,6 +355,32 @@ fun SettingsScreen(
                     onCheckedChange = viewModel::setEnableMux,
                     icon = Icons.Rounded.MergeType,
                 )
+                SettingsDivider()
+                SettingsChoice(
+                    title = stringResource(R.string.mux_protocol),
+                    options = listOf("h2mux", "smux", "yamux"),
+                    selected = state.muxProtocol,
+                    onSelect = viewModel::setMuxProtocol,
+                    label = { it },
+                    icon = Icons.Rounded.Tune,
+                )
+                SettingsDivider()
+                SettingsChoice(
+                    title = stringResource(R.string.mux_max_streams),
+                    options = listOf(4, 8, 16, 32),
+                    selected = state.muxMaxStreams,
+                    onSelect = viewModel::setMuxMaxStreams,
+                    label = { it.toString() },
+                    icon = Icons.Rounded.Tune,
+                )
+                SettingsDivider()
+                SettingsToggle(
+                    title = stringResource(R.string.mux_padding),
+                    summary = stringResource(R.string.mux_padding_summary),
+                    checked = state.muxPadding,
+                    onCheckedChange = viewModel::setMuxPadding,
+                    icon = Icons.Rounded.Lock,
+                )
             }
         }
 
@@ -417,6 +452,14 @@ fun SettingsScreen(
 
         item {
             SettingsGroup(stringResource(R.string.group_diagnostics)) {
+                SettingsToggle(
+                    title = stringResource(R.string.tunnel_check),
+                    summary = stringResource(R.string.tunnel_check_summary),
+                    checked = state.tunnelCheck,
+                    onCheckedChange = viewModel::setTunnelCheck,
+                    icon = Icons.Rounded.Shield,
+                )
+                SettingsDivider()
                 SettingsChoice(
                     title = stringResource(R.string.log_level),
                     options = listOf("error", "warn", "info", "debug", "trace"),

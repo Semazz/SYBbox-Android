@@ -57,7 +57,6 @@
     <string name="share_link">Compartir enlace</string>
     <string name="share_qr">Compartir código QR</string>
     <string name="copy_link">Copiar enlace</string>
-    <string name="server_count">%1$d servidores</string>
     <string name="expires_on">Expira el %1$s</string>
     <string name="traffic_used">%1$s de %2$s</string>
 
@@ -234,5 +233,13 @@
     <string name="cd_refresh">Actualizar</string>
     <string name="check_ping">Ping</string>
     <string name="msg_ping_failed">Servidor inaccesible</string>
+    <string name="tcp_fast_open">TCP Fast Open</string>
+    <string name="tcp_fast_open_summary">Ahorra un viaje de ida y vuelta. Algunas redes lo descartan; desactívalo si los servidores dejan de conectar</string>
+    <string name="tunnel_check">Comprobar el túnel tras conectar</string>
+    <string name="tunnel_check_summary">Descarga una página por el túnel para confirmar que el tráfico circula, en vez de fiarse de que arrancó</string>
+    <string name="mux_protocol">Protocolo de multiplexación</string>
+    <string name="mux_max_streams">Flujos máximos</string>
+    <string name="mux_padding">Relleno de multiplexación</string>
+    <string name="mux_padding_summary">Rellena las tramas para ocultar su tamaño</string>
 </resources>
 

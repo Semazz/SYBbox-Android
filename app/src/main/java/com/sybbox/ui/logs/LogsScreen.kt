@@ -56,6 +56,7 @@ import com.sybbox.core.CoreLog
 import com.sybbox.core.LogEntry
 import com.sybbox.core.LogLevel
 import com.sybbox.ui.components.EmptyState
+import com.sybbox.ui.theme.SybSpacing
 import com.sybbox.ui.theme.LatencyFast
 import com.sybbox.ui.theme.LatencyMedium
 import com.sybbox.ui.theme.LatencySlow
@@ -120,7 +121,7 @@ fun LogsScreen(onBack: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = SybSpacing.screen),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 FilterChip(
@@ -153,9 +154,9 @@ fun LogsScreen(onBack: () -> Unit) {
                     state = listState,
                     reverseLayout = true,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    contentPadding = PaddingValues(horizontal = SybSpacing.screen, vertical = SybSpacing.small),
                 ) {
-                    items(visible.asReversed()) { entry -> LogRow(entry) }
+                    items(visible.asReversed(), key = { it.id }) { entry -> LogRow(entry) }
                 }
             }
         }
@@ -178,7 +179,7 @@ private fun LogRow(entry: LogEntry) {
         Box(
             modifier = Modifier
                 .background(levelColor(entry.level).copy(alpha = 0.16f), RoundedCornerShape(50))
-                .padding(horizontal = 7.dp, vertical = 2.dp),
+                .padding(horizontal = SybSpacing.chipH, vertical = SybSpacing.hair),
         ) {
             Text(
                 entry.level.name.take(1),

@@ -56,6 +56,7 @@ import com.sybbox.ui.components.EmptyState
 import com.sybbox.ui.components.SectionHeader
 import com.sybbox.ui.components.SettingsAction
 import com.sybbox.ui.components.SybCard
+import com.sybbox.ui.theme.SybSpacing
 import com.sybbox.ui.theme.LatencyFast
 import com.sybbox.ui.theme.LatencySlow
 
@@ -70,7 +71,7 @@ fun RoutingScreen(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 96.dp),
+        contentPadding = PaddingValues(start = SybSpacing.screen, end = SybSpacing.screen, bottom = SybSpacing.listBottom),
     ) {
         item {
             Row(
@@ -155,7 +156,7 @@ private fun RuleRow(
 ) {
     SybCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 14.dp, top = 10.dp, bottom = 10.dp, end = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = SybSpacing.cardH, top = SybSpacing.cardV, bottom = SybSpacing.cardV, end = SybSpacing.cardEndInset),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -205,7 +206,7 @@ private fun ActionChip(action: RoutingAction) {
         modifier = Modifier
             .clip(RoundedCornerShape(50))
             .background(color.copy(alpha = 0.16f))
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .padding(horizontal = SybSpacing.chipH, vertical = SybSpacing.chipV),
     ) {
         Text(stringResource(labelRes), style = MaterialTheme.typography.labelSmall, color = color)
     }

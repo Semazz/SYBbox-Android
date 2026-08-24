@@ -51,7 +51,6 @@
     <string name="share_link">分享链接</string>
     <string name="share_qr">分享二维码</string>
     <string name="copy_link">复制链接</string>
-    <string name="server_count">%1$d 台服务器</string>
     <string name="expires_on">%1$s 到期</string>
     <string name="traffic_used">%2$s 中已用 %1$s</string>
 
@@ -217,4 +216,12 @@
     <string name="cd_refresh">刷新</string>
     <string name="check_ping">测速</string>
     <string name="msg_ping_failed">服务器不可达</string>
+    <string name="tcp_fast_open">TCP Fast Open</string>
+    <string name="tcp_fast_open_summary">节省一次往返。部分网络会丢弃它，若服务器无法连接请关闭</string>
+    <string name="tunnel_check">连接后检查隧道</string>
+    <string name="tunnel_check_summary">通过隧道抓取一个页面，确认流量确实通过，而不只是核心已启动</string>
+    <string name="mux_protocol">多路复用协议</string>
+    <string name="mux_max_streams">最大流数</string>
+    <string name="mux_padding">多路复用填充</string>
+    <string name="mux_padding_summary">填充帧以隐藏其大小</string>
 </resources>

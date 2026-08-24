@@ -36,11 +36,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.Power
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material3.CircularProgressIndicator
@@ -78,6 +80,7 @@ import com.sybbox.ui.components.IconTile
 import com.sybbox.ui.components.LatencyBadge
 import com.sybbox.ui.components.PillShape
 import com.sybbox.ui.components.SybCard
+import com.sybbox.ui.theme.SybSpacing
 import com.sybbox.ui.theme.LatencySlow
 
 @Composable
@@ -121,7 +124,7 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = SybSpacing.screen),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.statusBarsPadding())
@@ -328,7 +331,32 @@ private fun ActiveServerCard(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconTile(Icons.Rounded.Public)
+            val ctx = LocalContext.current
+            val displayNameRaw = profile?.let { it.name.ifBlank { it.address } } ?: ""
+            val cleanName = androidx.compose.runtime.remember(displayNameRaw) { com.sybbox.ui.components.stripFlagEmoji(displayNameRaw) }
+            val isAuto = androidx.compose.runtime.remember(displayNameRaw) { displayNameRaw.contains("автоматический", ignoreCase = true) || displayNameRaw.contains("auto", ignoreCase = true) }
+            val code = androidx.compose.runtime.remember(displayNameRaw, profile?.address) {
+                if (profile == null) null else if (isAuto) null else com.sybbox.ui.components.countryCodeForProfile(displayNameRaw, profile.address)
+            }
+            val flagRes = androidx.compose.runtime.remember(code, ctx) {
+                if (code == null) 0 else ctx.resources.getIdentifier("flag_$code", "drawable", ctx.packageName)
+            }
+            val pColor = com.sybbox.ui.components.protocolColor(profile?.protocol ?: com.sybbox.domain.model.ProtocolType.VLESS)
+            when {
+                profile == null -> IconTile(Icons.Rounded.Public)
+                isAuto -> IconTile(Icons.Rounded.Bolt, tint = pColor, container = pColor.copy(alpha = 0.14f))
+                flagRes != 0 -> Image(
+                    painter = androidx.compose.ui.res.painterResource(flagRes),
+                    contentDescription = null,
+                    modifier = androidx.compose.ui.Modifier.size(42.dp).clip(RoundedCornerShape(12.dp)),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                )
+                code != null -> Box(
+                    modifier = androidx.compose.ui.Modifier.size(42.dp).clip(RoundedCornerShape(12.dp)).background(pColor.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center,
+                ) { Text(com.sybbox.ui.components.flagEmojiIn(displayNameRaw) ?: "", fontSize = androidx.compose.ui.unit.TextUnit(20f, androidx.compose.ui.unit.TextUnitType.Sp)) }
+                else -> IconTile(Icons.Rounded.Public, tint = pColor, container = pColor.copy(alpha = 0.14f))
+            }
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -338,12 +366,13 @@ private fun ActiveServerCard(
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    profile?.name?.ifBlank { profile.address } ?: stringResource(R.string.no_server_selected),
+                    (if (profile != null) cleanName else stringResource(R.string.no_server_selected)),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
+                    softWrap = true,
                 )
             }
             if (profile != null) {

@@ -56,7 +56,6 @@
     <string name="share_link">Поделиться ссылкой</string>
     <string name="share_qr">Поделиться QR-кодом</string>
     <string name="copy_link">Скопировать ссылку</string>
-    <string name="server_count">Серверов: %1$d</string>
     <string name="expires_on">Действует до %1$s</string>
     <string name="traffic_used">%1$s из %2$s</string>
 
@@ -225,5 +224,13 @@
     <string name="cd_refresh">Обновить</string>
     <string name="check_ping">Пинг</string>
     <string name="msg_ping_failed">Сервер недоступен</string>
+    <string name="tcp_fast_open">TCP Fast Open</string>
+    <string name="tcp_fast_open_summary">Экономит один обмен пакетами. Некоторые сети его отбрасывают — если серверы перестали подключаться, выключите</string>
+    <string name="tunnel_check">Проверять туннель после подключения</string>
+    <string name="tunnel_check_summary">Загружает страницу через туннель и убеждается, что трафик реально идёт, а не просто что ядро запустилось</string>
+    <string name="mux_protocol">Протокол мультиплексирования</string>
+    <string name="mux_max_streams">Максимум потоков</string>
+    <string name="mux_padding">Набивка мультиплекса</string>
+    <string name="mux_padding_summary">Дополняет кадры, скрывая их размеры</string>
 </resources>
 

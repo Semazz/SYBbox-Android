@@ -1,5 +1,6 @@
 package com.sybbox.ui.servers
 
+import com.sybbox.ui.theme.SybSpacing
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
@@ -147,7 +148,7 @@ fun ServersScreen(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 96.dp),
+        contentPadding = PaddingValues(start = SybSpacing.screen, end = SybSpacing.screen, bottom = SybSpacing.listBottom),
     ) {
         item {
             Row(
@@ -206,9 +207,10 @@ fun ServersScreen(
 
         if (manual.isNotEmpty()) {
             item(key = "manual-group") {
-                SybCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), onClick = { expandedManual = !expandedManual }) {
+                Spacer(Modifier.height(4.dp))
+                SybCard(modifier = Modifier.fillMaxWidth(), onClick = { expandedManual = !expandedManual }) {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 14.dp, bottom = 14.dp, end = 8.dp),
+                            modifier = Modifier.fillMaxWidth().padding(start = SybSpacing.cardH, top = SybSpacing.cardV, bottom = SybSpacing.cardV, end = SybSpacing.cardEndInset),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
@@ -219,12 +221,6 @@ fun ServersScreen(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
-                                )
-                                Spacer(Modifier.height(2.dp))
-                                Text(
-                                    stringResource(R.string.server_count, manual.size),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                             IconButton(
@@ -271,6 +267,11 @@ fun ServersScreen(
                             }
                         }
                     }
+                if (when {
+                    expandedManual -> manual.isNotEmpty()
+                    manual.any { it.id == selectedId } -> true
+                    else -> false
+                }) Spacer(Modifier.height(8.dp))
             }
             val manualHasSelected = manual.any { it.id == selectedId }
             val manualVisible = when {
@@ -280,7 +281,7 @@ fun ServersScreen(
             }
             items(manualVisible, key = { "m-${it.id}" }) { profile ->
                 val showLatency = nowTick < (pingVisibleUntil[profile.id] ?: 0L)
-                Box(modifier = Modifier.padding(bottom = 6.dp)) {
+                Box(modifier = Modifier.padding(bottom = 8.dp)) {
                     ServerRow(
                         profile = profile,
                         selected = profile.id == selectedId,
@@ -309,6 +310,8 @@ fun ServersScreen(
                 else -> emptyList()
             }
             item(key = "sub-${subscription.id}") {
+                // Gap between groups like in Happ: 12.dp before each subscription header
+                Spacer(Modifier.height(10.dp))
                 SubscriptionHeader(
                     subscription = subscription,
                     count = members.size,
@@ -336,10 +339,12 @@ fun ServersScreen(
                     },
                     onDelete = { viewModel.deleteSubscription(subscription) },
                 )
+                // Air gap between subscription header and first server (Happ style)
+                if (visibleMembers.isNotEmpty()) Spacer(Modifier.height(8.dp))
             }
             items(visibleMembers, key = { "s${subscription.id}-${it.id}" }) { profile ->
                 val showLatency = nowTick < (pingVisibleUntil[profile.id] ?: 0L)
-                Box(modifier = Modifier.padding(bottom = 6.dp)) {
+                Box(modifier = Modifier.padding(bottom = 8.dp)) {
                     ServerRow(
                         profile = profile,
                         selected = profile.id == selectedId,
@@ -441,17 +446,26 @@ private fun ServerRow(
 
     SybCard(modifier = Modifier.fillMaxWidth(), onClick = onSelect, selected = selected) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 14.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = SybSpacing.cardH, top = SybSpacing.cardV, bottom = SybSpacing.cardV, end = SybSpacing.cardEndInset),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val pColor = protocolColor(profile.protocol)
-            val cleanName = remember(profile.name) { com.sybbox.ui.components.stripFlagEmoji(profile.displayName()) }
-            val code = remember(cleanName) { com.sybbox.ui.components.countryCodeFromName(cleanName) }
+            val originalName = profile.displayName()
+            val cleanName = remember(profile.name) { com.sybbox.ui.components.stripFlagEmoji(originalName) }
+            val isAuto = remember(originalName) { originalName.contains("автоматический", ignoreCase = true) || originalName.contains("auto", ignoreCase = true) }
+            val code = remember(profile.name, profile.address, isAuto) {
+                if (isAuto) null else com.sybbox.ui.components.countryCodeForProfile(originalName, profile.address)
+            }
             val ctx = LocalContext.current
             val flagRes = remember(code, ctx) {
                 if (code == null) 0 else ctx.resources.getIdentifier("flag_$code", "drawable", ctx.packageName)
             }
             when {
+                isAuto -> IconTile(
+                    Icons.Rounded.Bolt,
+                    tint = pColor,
+                    container = pColor.copy(alpha = 0.14f),
+                )
                 flagRes != 0 -> Image(
                     painter = androidx.compose.ui.res.painterResource(flagRes),
                     contentDescription = null,
@@ -483,10 +497,12 @@ private fun ServerRow(
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
+                    softWrap = true,
+                    lineHeight = 18.sp,
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(3.dp))
                 Text(
                     profile.subInfoLine(),
                     style = MaterialTheme.typography.bodySmall,
@@ -585,7 +601,7 @@ private fun SubscriptionHeader(
     val progress = if (subscription.total > 0) (used.toFloat() / subscription.total).coerceIn(0f, 1f) else null
     Column {
         SybCard(modifier = Modifier.fillMaxWidth(), onClick = onToggle) {
-            Column(modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 14.dp, bottom = 14.dp, end = 12.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(start = SybSpacing.cardH, top = SybSpacing.cardV, bottom = SybSpacing.cardV, end = SybSpacing.cardEndInset)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconTile(Icons.Rounded.CloudSync)
                     Spacer(Modifier.width(14.dp))
@@ -597,12 +613,6 @@ private fun SubscriptionHeader(
                             color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                        )
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            stringResource(R.string.server_count, count),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     if (refreshing) {

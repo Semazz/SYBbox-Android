@@ -57,7 +57,6 @@
     <string name="share_link">Share link</string>
     <string name="share_qr">Share QR code</string>
     <string name="copy_link">Copy link</string>
-    <string name="server_count">%1$d servers</string>
     <string name="expires_on">Expires %1$s</string>
     <string name="traffic_used">%1$s of %2$s</string>
 
@@ -237,5 +236,13 @@
     <string name="check_ping">Ping</string>
     <string name="msg_ping_failed">Server unreachable</string>
     <string name="msg_foreign_vpn">Another VPN app is active — allow SYBbox VPN permission so it can switch it off automatically during the check</string>
+    <string name="tcp_fast_open">TCP Fast Open</string>
+    <string name="tcp_fast_open_summary">Saves a round trip. Some networks drop it, so try turning it off if servers stop connecting.</string>
+    <string name="tunnel_check">Check the tunnel after connecting</string>
+    <string name="tunnel_check_summary">Fetches a page through the tunnel to confirm traffic really flows, instead of trusting that it started</string>
+    <string name="mux_protocol">Multiplex protocol</string>
+    <string name="mux_max_streams">Max streams</string>
+    <string name="mux_padding">Multiplex padding</string>
+    <string name="mux_padding_summary">Pads multiplexed frames to hide their sizes</string>
 </resources>
 

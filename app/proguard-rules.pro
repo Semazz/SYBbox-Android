@@ -1,6 +1,11 @@
 # The gomobile binding is reached from native code by name, so nothing under it may be
 # renamed or stripped. `Platform` in particular is implemented in Kotlin and invoked from Go.
--keep class com.sybbox.libcore.** { *; }
+# These are what the AAR actually ships. They live in com.sybbox.core, a package shared
+# with app code, so they are named individually rather than by wildcard.
+-keep class com.sybbox.core.Core { *; }
+-keep class com.sybbox.core.Core$* { *; }
+-keep class com.sybbox.core.BoxService { *; }
+-keep interface com.sybbox.core.Platform { *; }
 -keep class go.** { *; }
 -keep class com.sybbox.core.SingBoxPlatform { *; }
 -keepclasseswithmembernames class * { native <methods>; }

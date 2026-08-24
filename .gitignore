@@ -63,3 +63,4 @@ Thumbs.db
 *.swp
 *~
 libcore/shadowsocks2-patch/
+cache.db

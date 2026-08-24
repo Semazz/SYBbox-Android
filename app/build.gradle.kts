@@ -37,6 +37,13 @@ val keystoreProperties = Properties().apply {
 val hasSigningKey = keystoreProperties.getProperty("storeFile")
     ?.let { rootProject.file(it).exists() } == true
 
+if (!hasSigningKey) {
+    logger.warn(
+        "SYBbox: keystore.properties or the .jks is missing, so release builds will come " +
+            "out unsigned and Android will refuse to install them.",
+    )
+}
+
 android {
     namespace = "com.sybbox"
     compileSdk = 35

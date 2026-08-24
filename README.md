@@ -1,76 +1,230 @@
+<div align="center">
+
 # SYBbox
 
-[![API](https://img.shields.io/badge/API-24%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=24)
-[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-orange.svg)](https://www.gnu.org/licenses/gpl-3.0)
+**Android VPN клиент на базе [sing-box](https://github.com/SagerNet/sing-box)**
+
+[![Android](https://img.shields.io/badge/Android-7.0%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=24)
+[![Release](https://img.shields.io/github/v/release/Semazz/SYBbox?style=flat&color=blue)](https://github.com/Semazz/SYBbox/releases/latest)
+[![License](https://img.shields.io/badge/license-GPL--3.0-orange.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
+[Скачать](#скачать) · [Возможности](#возможности) · [Как пользоваться](#как-пользоваться) · [Сборка](#сборка) · [Структура](#структура-проекта)
+
+</div>
+
+---
 
 ## Скачать
 
 [<img src="https://img.shields.io/badge/Скачать-RELEASE-brightgreen?style=for-the-badge" alt="Download" height="40">](https://github.com/Semazz/SYBbox/releases/latest)
 
-| ABI | Ссылка |
-| --- | --- |
-| arm64-v8a | [SYBbox-2.0.1-arm64-v8a.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.1/SYBbox-2.0.1-arm64-v8a.apk) |
-| armeabi-v7a | [SYBbox-2.0.1-armeabi-v7a.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.1/SYBbox-2.0.1-armeabi-v7a.apk) |
-| x86_64 | [SYBbox-2.0.1-x86_64.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.1/SYBbox-2.0.1-x86_64.apk) |
+| ABI | Для кого | Ссылка |
+| --- | --- | --- |
+| **arm64-v8a** | почти все телефоны с 2018 года | [SYBbox-2.0.1-arm64-v8a.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.1/SYBbox-2.0.1-arm64-v8a.apk) |
+| armeabi-v7a | старые 32-битные устройства | [SYBbox-2.0.1-armeabi-v7a.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.1/SYBbox-2.0.1-armeabi-v7a.apk) |
+| x86_64 | эмуляторы, планшеты на Intel | [SYBbox-2.0.1-x86_64.apk](https://github.com/Semazz/SYBbox/releases/download/v2.0.1/SYBbox-2.0.1-x86_64.apk) |
 
-Не знаете, какой ABI — берите **arm64-v8a**, он подходит почти всем современным телефонам.
+Не знаете, что выбрать — берите **arm64-v8a**. Требуется **Android 7.0** и новее.
 
-Android VPN клиент на базе [sing-box](https://github.com/SagerNet/sing-box).
-
-## Протоколы
-
-VLESS, VMess, Trojan, Shadowsocks, Hysteria2, TUIC, WireGuard, AnyTLS, ShadowTLS
-
-## Транспорты
-
-TCP, WebSocket, HTTP/2, gRPC, HTTP Upgrade, QUIC, KCP, XHTTP
+---
 
 ## Возможности
 
-- Подписки: ссылка со списком, base64, sing-box JSON, v2ray JSON, Clash YAML — с автообновлением
-- Проверка туннеля после подключения: приложение само загружает страницу через туннель и сообщает, если трафик не идёт
-- Измерение задержки по физической сети, лучшее из нескольких замеров
-- Обход DPI: фрагментация ClientHello, uTLS, REALITY
-- DNS: удалённый через туннель, прямой и системный — по отдельности
-- Прокси для отдельных приложений: только выбранные или все, кроме выбранных
-- Свои правила маршрутизации, обход для РФ и КНР, блокировка рекламы и трекеров
+### Протоколы
+
+**VLESS** · **VMess** · **Trojan** · **Shadowsocks** · **Hysteria2** · **WireGuard**
+
+Защита соединения — TLS и REALITY, с подменой отпечатка TLS (uTLS) и XTLS Vision.
+
+### Транспорты
+
+TCP · WebSocket · HTTP/2 · gRPC · HTTP Upgrade · QUIC · KCP · XHTTP
+
+### Подписки
+
+Формат определяется сам, вставлять можно что угодно из перечисленного:
+
+- список ссылок — `vless://`, `vmess://`, `trojan://`, `ss://`, `hy2://`
+- то же самое в base64
+- sing-box JSON и v2ray JSON
+- Clash YAML
+
+Одна битая запись не роняет всю подписку — остальные серверы всё равно импортируются.
+Автообновление по расписанию, имя подписки читается из заголовка `profile-title`.
+
+### Проверка соединения
+
+После подключения приложение **само загружает страницу через туннель** и сообщает, если
+трафик не идёт.
+
+Это важнее, чем кажется: обычный TCP-хендшейк до сервера проходит, даже если тот потом
+откажется пропускать трафик. Отсюда классическое «пинг есть, а интернета нет». При
+включённом автопереключении приложение само перейдёт к следующему рабочему серверу.
+
+Задержка меряется по физической сети, берётся лучшая из нескольких попыток — чтобы первое
+измерение не завышалось из-за пробуждения радиомодуля.
+
+### Маршрутизация
+
+- Режимы: всё через прокси, сбалансированный, только напрямую, свой
+- Обход для доменов и адресов РФ и КНР
+- Блокировка рекламы и трекеров
+- Свои правила: домен, суффикс, ключевое слово, IP, порт, процесс, geosite, geoip
+- По приложениям: **только выбранные** или **все, кроме выбранных**
+
+### DNS
+
+Раздельные резолверы для туннеля, прямых соединений и подключения к серверу.
+Поддержка `udp://`, `tcp://`, `tls://`, `quic://`, `https://`, `h3://`. FakeIP.
+
+### Обход блокировок
+
+Фрагментация ClientHello с настраиваемой задержкой, фрагментация TLS-записей,
+подмена отпечатка uTLS, REALITY.
+
+### Прочее
+
+- Material 3 с динамическими цветами, тёмная и светлая темы
+- Импорт по ссылке, из буфера обмена и **QR-кода**
 - Логи в реальном времени с пояснениями к типовым отказам
-- Material 3 с динамическими цветами
-- Языки: English, Русский, Español, 简体中文
+- Плитка в шторке быстрых настроек, автозапуск при загрузке
+- Языки: **English**, **Русский**, **Español**, **简体中文**
+
+---
+
+## Как пользоваться
+
+1. Установите APK для своего ABI и выдайте разрешение на VPN.
+2. Вкладка **Серверы** → кнопка **+**:
+   - **Подписка** — вставьте ссылку на подписку;
+   - **Ссылка** — одиночный сервер вида `vless://…`;
+   - **QR-код** — сканирование камерой.
+3. Нажмите на сервер, чтобы выбрать его, и включите VPN на главном экране.
+4. Если появилось «трафик не идёт» — сервер вас не принял, выберите другой из списка.
+
+Кнопка со спидометром меряет задержку: у группы — сразу для всех серверов, у строки — для
+одного.
+
+---
 
 ## Сборка
 
+### Требуется
+
+| | версия |
+| --- | --- |
+| JDK | 17 |
+| Android SDK | compileSdk 35 |
+| Android NDK | только для сборки ядра |
+| Go + gomobile | только для сборки ядра |
+
+### Открыть в Android Studio
+
+1. **File → Open** и выберите **корень репозитория** (папку `SYBbox`), а не подпапку `app`.
+2. Дождитесь Gradle Sync — зависимости подтянутся сами.
+3. Готовое ядро уже лежит в `app/libs/sybbox_core.aar`, пересобирать Go не нужно.
+4. Запуск: конфигурация **app**, вариант сборки **debug**.
+
+Путь к SDK берётся из `local.properties` — Android Studio создаст его при первом открытии.
+
+### Из командной строки
+
+```bash
+./gradlew assembleDebug       # отладочная сборка
+./gradlew assembleRelease     # релизные APK, по одному на ABI
+./gradlew test                # юнит-тесты
+```
+
+APK появятся в `app/build/outputs/apk/release/`.
+
 ### Ядро (Go)
+
+Нужно только если меняете сам sing-box или набор протоколов:
 
 ```bash
 cd libcore && ./build.sh
 ```
 
-Требуется: Go, gomobile, Android SDK + NDK.
+Собирает `sybbox_core.aar` под arm64, arm и amd64 и кладёт в `app/libs/`.
 
-### Приложение
+### Проверка конфигураций
+
+Конфигурации проверяются не только разбором, но и **запуском настоящего ядра** — часть
+ошибок возникает при старте транспортов, и `sing-box check` их не ловит:
 
 ```bash
+cd libcore/singbox-fork
+go build -tags "with_gvisor,with_quic,with_utls,with_clash_api,with_wireguard" -o /tmp/sing-box ./cmd/sing-box
+cd ../..
+./gradlew :app:testDebugUnitTest --tests '*ConfigMatrixDumpTest*'
+tools/validate-configs.sh /tmp/sing-box
+```
+
+Прогоняет 1440 конфигураций: каждый протокол и транспорт во всех сочетаниях настроек.
+
+### Версия
+
+Берётся из git-тега, править ничего в файлах не нужно:
+
+```bash
+git tag -a v2.0.2 -m "SYBbox 2.0.2"
+git push origin v2.0.2
 ./gradlew assembleRelease
 ```
 
-APK появятся в `app/build/outputs/apk/release/`, по одному на каждый ABI.
+Тег `v2.0.2` даст `versionName 2.0.2`. Сборка не на теге получит в версию хеш коммита,
+чтобы отладочный APK не спутали с релизным.
 
-### Тесты
+---
 
-```bash
-./gradlew test
+## Структура проекта
+
+```
+SYBbox/
+├── app/                        Android-приложение
+│   ├── libs/sybbox_core.aar    собранное ядро sing-box
+│   └── src/
+│       ├── main/java/com/sybbox/
+│       │   ├── core/           сборка конфигурации и мост к ядру
+│       │   ├── data/           подписки, база, настройки
+│       │   ├── domain/         модели и репозитории
+│       │   ├── service/        VPN-сервис, плитка, автозапуск
+│       │   ├── ui/             экраны на Compose
+│       │   └── di/             Hilt
+│       ├── main/res/           ресурсы и переводы
+│       └── test/               юнит-тесты
+├── libcore/                    ядро на Go
+│   ├── core/                   мост gomobile ↔ Android
+│   ├── singbox-fork/           форк sing-box с поддержкой XHTTP
+│   └── build.sh                сборка AAR
+└── tools/
+    └── validate-configs.sh     запуск конфигураций настоящим ядром
 ```
 
-Конфигурации проверяются не только разбором, но и запуском настоящего ядра — часть ошибок
-возникает при старте транспортов, и `sing-box check` их не ловит:
+### Что где искать
 
-```bash
-cd libcore/singbox-fork && go build -tags "with_gvisor,with_quic,with_utls,with_clash_api,with_wireguard" -o /tmp/sing-box ./cmd/sing-box
-cd ../.. && ./gradlew :app:testDebugUnitTest --tests '*ConfigMatrixDumpTest*'
-tools/validate-configs.sh /tmp/sing-box
-```
+| Задача | Файл |
+| --- | --- |
+| Как строится конфигурация для ядра | `core/ConfigBuilder.kt` |
+| Разбор подписок и определение формата | `data/parser/SubscriptionParser.kt` |
+| Разбор конкретного протокола | `data/parser/VlessParser.kt` и соседние |
+| Запуск и остановка VPN | `service/SybBoxVpnService.kt` |
+| Мост к Go-ядру, создание TUN | `core/SingBoxPlatform.kt` |
+| Измерение задержки | `core/PingTool.kt` |
+| Пояснения к ошибкам в логе | `core/Diagnostics.kt` |
+| Обход DPI | `core/DpiBypass.kt` |
+| Экраны | `ui/home`, `ui/servers`, `ui/settings`, `ui/routing`, `ui/logs` |
+| Отступы и общие компоненты | `ui/theme/Spacing.kt`, `ui/components/` |
+
+### Технологии
+
+Kotlin · Jetpack Compose · Material 3 · Hilt · Room · DataStore · WorkManager · OkHttp ·
+CameraX + ML Kit (QR) · Go + gomobile
+
+---
 
 ## Лицензия
 
 [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0)
+
+Основано на [sing-box](https://github.com/SagerNet/sing-box) от SagerNet.

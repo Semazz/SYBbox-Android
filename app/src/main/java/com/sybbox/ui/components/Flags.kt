@@ -209,7 +209,7 @@ fun countryCodeFromName(name: String): String? {
         }
     }
 
-    // Fallback: check address/host for country code like se.alertyagency.com
+    // Fallback: check address/host for country code like se.example.com
     val addressLower = name.lowercase()
     for (code in ISO_CODES) {
         if (addressLower.contains(".$code.") || addressLower.startsWith("$code.") || addressLower.contains("-$code-") || addressLower.contains("_$code")) {

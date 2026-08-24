@@ -14,8 +14,8 @@ class SubscriptionParserTest {
           {
             "remarks": "🔁 Автоматический выбор | Vless, Hysteria2, Grpc",
             "outbounds": [
-              {"tag":"hysteria2-187","protocol":"hysteria","settings":{"address":"se.alertyagency.com","port":1443},"streamSettings":{"network":"hysteria","security":"tls","tlsSettings":{"serverName":"se.alertyagency.com"}}},
-              {"tag":"vless-187","protocol":"vless","settings":{"vnext":[{"address":"se.alertyagency.com","port":443,"users":[{"id":"uuid-1","flow":"xtls-rprx-vision"}]}]},"streamSettings":{"network":"tcp","security":"reality","realitySettings":{"publicKey":"pk1","shortId":"sid1","serverName":"yandex.ru","fingerprint":"firefox"}}},
+              {"tag":"hysteria2-187","protocol":"hysteria","settings":{"address":"se.example.com","port":1443},"streamSettings":{"network":"hysteria","security":"tls","tlsSettings":{"serverName":"se.example.com"}}},
+              {"tag":"vless-187","protocol":"vless","settings":{"vnext":[{"address":"se.example.com","port":443,"users":[{"id":"uuid-1","flow":"xtls-rprx-vision"}]}]},"streamSettings":{"network":"tcp","security":"reality","realitySettings":{"publicKey":"pk1","shortId":"sid1","serverName":"yandex.ru","fingerprint":"firefox"}}},
               {"tag":"direct","protocol":"freedom","settings":{}},
               {"tag":"block","protocol":"blackhole","settings":{}}
             ]
@@ -23,8 +23,8 @@ class SubscriptionParserTest {
           {
             "remarks": "🇸🇪 Стокгольм #1 | Vless",
             "outbounds": [
-              {"tag":"vless-187","protocol":"vless","settings":{"vnext":[{"address":"se.alertyagency.com","port":443,"users":[{"id":"uuid-1","flow":"xtls-rprx-vision"}]}]},"streamSettings":{"network":"tcp","security":"reality","realitySettings":{"publicKey":"pk1","shortId":"sid1","serverName":"yandex.ru","fingerprint":"firefox"}}},
-              {"tag":"fallback-vless-187","protocol":"vless","settings":{"vnext":[{"address":"195.181.166.73","port":443,"users":[{"id":"uuid-1"}]}]},"streamSettings":{"network":"tcp","security":"reality","realitySettings":{"publicKey":"pk1"}}},
+              {"tag":"vless-187","protocol":"vless","settings":{"vnext":[{"address":"se.example.com","port":443,"users":[{"id":"uuid-1","flow":"xtls-rprx-vision"}]}]},"streamSettings":{"network":"tcp","security":"reality","realitySettings":{"publicKey":"pk1","shortId":"sid1","serverName":"yandex.ru","fingerprint":"firefox"}}},
+              {"tag":"fallback-vless-187","protocol":"vless","settings":{"vnext":[{"address":"203.0.113.10","port":443,"users":[{"id":"uuid-1"}]}]},"streamSettings":{"network":"tcp","security":"reality","realitySettings":{"publicKey":"pk1"}}},
               {"tag":"direct","protocol":"freedom","settings":{}},
               {"tag":"block","protocol":"blackhole","settings":{}}
             ]
@@ -32,8 +32,8 @@ class SubscriptionParserTest {
           {
             "remarks": "🇸🇪 Стокгольм #1 | Hysteria2",
             "outbounds": [
-              {"tag":"hysteria2-187","protocol":"hysteria","settings":{"address":"se.alertyagency.com","port":1443},"streamSettings":{"network":"hysteria","security":"tls","tlsSettings":{"serverName":"se.alertyagency.com"}}},
-              {"tag":"fallback-vless-187","protocol":"vless","settings":{"vnext":[{"address":"195.181.166.73","port":443,"users":[{"id":"uuid-1"}]}]},"streamSettings":{"network":"tcp","security":"reality","realitySettings":{"publicKey":"pk1"}}},
+              {"tag":"hysteria2-187","protocol":"hysteria","settings":{"address":"se.example.com","port":1443},"streamSettings":{"network":"hysteria","security":"tls","tlsSettings":{"serverName":"se.example.com"}}},
+              {"tag":"fallback-vless-187","protocol":"vless","settings":{"vnext":[{"address":"203.0.113.10","port":443,"users":[{"id":"uuid-1"}]}]},"streamSettings":{"network":"tcp","security":"reality","realitySettings":{"publicKey":"pk1"}}},
               {"tag":"direct","protocol":"freedom","settings":{}},
               {"tag":"block","protocol":"blackhole","settings":{}}
             ]
@@ -41,8 +41,8 @@ class SubscriptionParserTest {
           {
             "remarks": "🇸🇪 Стокгольм #1 | Grpc",
             "outbounds": [
-              {"tag":"grpc-187","protocol":"vless","settings":{"vnext":[{"address":"se.alertyagency.com","port":9443,"users":[{"id":"uuid-1"}]}]},"streamSettings":{"network":"grpc","security":"reality","realitySettings":{"publicKey":"pk1","shortId":"sid1","serverName":"yandex.ru"},"grpcSettings":{"serviceName":"grpc"}}},
-              {"tag":"fallback-vless-187","protocol":"vless","settings":{"vnext":[{"address":"195.181.166.73","port":443,"users":[{"id":"uuid-1"}]}]},"streamSettings":{"network":"tcp","security":"reality","realitySettings":{"publicKey":"pk1"}}},
+              {"tag":"grpc-187","protocol":"vless","settings":{"vnext":[{"address":"se.example.com","port":9443,"users":[{"id":"uuid-1"}]}]},"streamSettings":{"network":"grpc","security":"reality","realitySettings":{"publicKey":"pk1","shortId":"sid1","serverName":"yandex.ru"},"grpcSettings":{"serviceName":"grpc"}}},
+              {"tag":"fallback-vless-187","protocol":"vless","settings":{"vnext":[{"address":"203.0.113.10","port":443,"users":[{"id":"uuid-1"}]}]},"streamSettings":{"network":"tcp","security":"reality","realitySettings":{"publicKey":"pk1"}}},
               {"tag":"direct","protocol":"freedom","settings":{}},
               {"tag":"block","protocol":"blackhole","settings":{}}
             ]
@@ -66,7 +66,7 @@ class SubscriptionParserTest {
         val result = SubscriptionParser.parseLiteVpnArray(litePayload)!!
         // First is hysteria2-187 -> HYSTERIA2
         assertEquals(ProtocolType.HYSTERIA2, result[0].protocol)
-        assertEquals("se.alertyagency.com", result[0].address)
+        assertEquals("se.example.com", result[0].address)
         assertEquals(1443, result[0].port)
 
         // Second is vless tcp reality

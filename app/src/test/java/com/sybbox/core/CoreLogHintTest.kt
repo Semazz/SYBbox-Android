@@ -10,7 +10,7 @@ class CoreLogHintTest {
         "connection: open connection to 34.102.215.99:443 using outbound/vless[proxy]: " +
             "x509: certificate is valid for *.google.com, *.appengine.google.com, *.bdn.dev, " +
             (1..40).joinToString(", ") { "*.google.co.x$it" } +
-            ", not api-maps.yandex.ru"
+            ", not www.example.org"
 
     @Before fun reset() = CoreLog.clear()
 
@@ -23,7 +23,7 @@ class CoreLogHintTest {
         assertTrue(entries[0].message.length <= Diagnostics.MAX_MESSAGE + 32)
         assertEquals(LogLevel.WARN, entries[1].level)
         assertTrue(entries[1].message.contains("REALITY"))
-        assertTrue(entries[1].message.contains("api-maps.yandex.ru"))
+        assertTrue(entries[1].message.contains("www.example.org"))
     }
 
     @Test

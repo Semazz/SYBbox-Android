@@ -11,13 +11,13 @@ class DiagnosticsTest {
         "connection: open connection to 194.221.250.50:443 using outbound/vless[proxy]: " +
             "x509: certificate is valid for *.google.com, *.appengine.google.com, *.gstatic.com, " +
             "*.youtube.com, youtube.com, google.com, android.com, *.android.com, goo.gl, yt.be, " +
-            "*.yt.be, android.clients.google.com, *.aistudio.google.com, not api-maps.yandex.ru"
+            "*.yt.be, android.clients.google.com, *.aistudio.google.com, not www.example.org"
 
     @Test
     fun `a reality fallback is explained in terms of the subscription`() {
         val hint = Diagnostics.explain(realityFallback)
         assertNotNull(hint)
-        assertTrue(hint!!.contains("api-maps.yandex.ru"))
+        assertTrue(hint!!.contains("www.example.org"))
         assertTrue(hint.contains("REALITY"))
         // The point is to say what to do, not to restate the certificate.
         assertFalse(hint.contains("*.gstatic.com"))
@@ -34,10 +34,10 @@ class DiagnosticsTest {
     fun `a bootstrap failure names the host that could not be resolved`() {
         val hint = Diagnostics.explain(
             "connection: open connection to 1.1.1.1:53 using outbound/vless[proxy]: " +
-                "lookup node.subsyb.online: context canceled",
+                "lookup node.example.com: context canceled",
         )
         assertNotNull(hint)
-        assertTrue(hint!!.contains("node.subsyb.online"))
+        assertTrue(hint!!.contains("node.example.com"))
     }
 
     @Test

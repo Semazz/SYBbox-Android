@@ -21,9 +21,9 @@ import org.junit.Test
 class SubscriptionEndpointTest {
 
     private val linkList = listOf(
-        "vless://8c1f4d90-2a1b-4d5e-9f3c-7a6b5c4d3e2f@195.181.166.73:443" +
-            "?security=reality&sni=api-maps.yandex.ru&fp=firefox" +
-            "&pbk=UtAnh-HlChjh3afrhycDmeOSFs7cZBjIJx0qG7NB5Rc&sid=b419319c" +
+        "vless://8c1f4d90-2a1b-4d5e-9f3c-7a6b5c4d3e2f@203.0.113.10:443" +
+            "?security=reality&sni=www.example.org&fp=firefox" +
+            "&pbk=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&sid=0123abcd" +
             "&flow=xtls-rprx-vision&type=tcp#Stockholm",
         "vless://8c1f4d90-2a1b-4d5e-9f3c-7a6b5c4d3e2f@se.example.com:8443" +
             "?security=tls&sni=se.example.com&fp=firefox&type=grpc&serviceName=grpc#Stockholm",
@@ -63,15 +63,15 @@ class SubscriptionEndpointTest {
                "settings":{"vnext":[{"address":"se.example.com","port":443,
                  "users":[{"id":"8c1f4d90-2a1b-4d5e-9f3c-7a6b5c4d3e2f","flow":"xtls-rprx-vision"}]}]},
                "streamSettings":{"network":"tcp","security":"reality",
-                 "realitySettings":{"publicKey":"UtAnh-HlChjh3afrhycDmeOSFs7cZBjIJx0qG7NB5Rc",
-                   "shortId":"b419319c","serverName":"api-maps.yandex.ru","fingerprint":"firefox"}}},
+                 "realitySettings":{"publicKey":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                   "shortId":"0123abcd","serverName":"www.example.org","fingerprint":"firefox"}}},
               {"tag":"direct","protocol":"freedom","settings":{}}]}]
         """.trimIndent()
 
         val fromJson = SubscriptionParser.parseAny(json)
         assertEquals(1, fromJson.size)
         assertEquals(SecurityType.REALITY, fromJson[0].security)
-        assertEquals("UtAnh-HlChjh3afrhycDmeOSFs7cZBjIJx0qG7NB5Rc", fromJson[0].realityPublicKey)
+        assertEquals("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", fromJson[0].realityPublicKey)
 
         assertEquals(3, SubscriptionParser.parseAny(linkList).size)
     }

@@ -22,11 +22,11 @@ class DnsRoutingTest {
         address = "se.example.com",
         port = 443,
         protocol = ProtocolType.VLESS,
-        uuid = "1faf3952-7ef0-4b61-baa1-99036bd4ca0f",
+        uuid = "00000000-0000-4000-8000-000000000001",
         security = SecurityType.REALITY,
-        serverName = "api-maps.yandex.ru",
-        realityPublicKey = "UtAnh-HlChjh3afrhycDmeOSFs7cZBjIJx0qG7NB5Rc",
-        realityShortId = "b419319c",
+        serverName = "www.example.org",
+        realityPublicKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        realityShortId = "0123abcd",
     )
 
     private val deviceDns = listOf("192.168.1.1", "fe80::1")

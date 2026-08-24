@@ -7,12 +7,6 @@ import java.net.URLDecoder
 
 object SubscriptionParser {
 
-    /**
-     * Format detection for a subscription body of unknown shape. Providers serve plain
-     * link lists, base64 of the same, sing-box JSON, v2ray JSON, Clash YAML and the
-     * v2ray config array, sometimes varying by the User-Agent they were asked with.
-     * Every shape is tried rather than guessed at from the first character.
-     */
     fun parseAny(content: String): List<ServerProfile> = parseAny(content, depth = 0)
 
     private fun parseAny(content: String, depth: Int): List<ServerProfile> {
@@ -32,7 +26,6 @@ object SubscriptionParser {
 
         parseStandard(body).takeIf { it.isNotEmpty() }?.let { return it }
 
-        // The whole body may be base64 wrapping any of the above.
         if (depth == 0) {
             val decoded = decodeBase64Payload(body)
             if (decoded != null && decoded.trim() != body) {
@@ -42,7 +35,6 @@ object SubscriptionParser {
         return emptyList()
     }
 
-    /** Like tryDecodeBase64 but accepts JSON and YAML payloads, not only link lists. */
     private fun decodeBase64Payload(raw: String): String? {
         tryDecodeBase64(raw)?.let { return it }
         val compact = raw.filter { it.isLetterOrDigit() || it == '+' || it == '/' || it == '=' || it == '-' || it == '_' }
@@ -60,8 +52,7 @@ object SubscriptionParser {
     }
 
     fun parse(content: String, type: SubType): List<ServerProfile> {
-        // A v2ray config array: each element carries "remarks" and its own "outbounds".
-        // Detected before the generic handlers so names and ordering survive.
+
         parseConfigArray(content)?.let { if (it.isNotEmpty()) return it }
         return when (type) {
             SubType.STANDARD -> parseStandard(content)
@@ -72,12 +63,10 @@ object SubscriptionParser {
         }
     }
 
-    /** A v2ray full-config array: every JSON object carries remarks and its own outbounds.
-     *  Returns one profile per config object, keeping the order the provider sent. */
     fun parseConfigArray(content: String): List<ServerProfile>? {
         val trimmed = content.trim()
         if (trimmed.isEmpty()) return null
-        // Heuristic: must contain remarks and outbounds and protocol fields
+
         if (!trimmed.contains("\"remarks\"") || !trimmed.contains("\"outbounds\"")) return null
         return try {
             val root = JsonParser.parseString(trimmed)
@@ -102,7 +91,7 @@ object SubscriptionParser {
         val remarks = root.get("remarks")?.takeIf { it.isJsonPrimitive }?.asString?.trim().orEmpty()
         if (remarks.isEmpty()) return null
         val outbounds = root.getAsJsonArray("outbounds") ?: return null
-        // Find primary outbound: first non-direct/block and not fallback unless all are fallback
+
         var primary: com.google.gson.JsonObject? = null
         var fallback: com.google.gson.JsonObject? = null
         for (e in outbounds) {
@@ -119,8 +108,6 @@ object SubscriptionParser {
         if (primary == null) primary = fallback
         if (primary == null) return null
 
-        // A config that lists several primaries collapses to the first; its remarks name
-        // already says what it is.
         val tag = primary.get("tag")?.asString ?: remarks
         val protocolRaw = primary.get("protocol")?.asString?.lowercase() ?: return null
         val settings = primary.getAsJsonObject("settings")
@@ -131,7 +118,6 @@ object SubscriptionParser {
         val tlsSettings = stream?.getAsJsonObject("tlsSettings")
         val realitySettings = stream?.getAsJsonObject("realitySettings")
 
-        // Determine address/port/users based on protocol
         var address = ""
         var port = 443
         var uuid = ""
@@ -170,10 +156,10 @@ object SubscriptionParser {
                 ssPassword = servers?.get("password")?.asString ?: ""
             }
             "hysteria", "hysteria2" -> {
-                // V2Ray hysteria2 uses settings { address, port } and hysteriaSettings { auth }
+
                 address = settings?.get("address")?.asString ?: primary.get("address")?.asString ?: ""
                 if (address.isEmpty()) {
-                    // fallback: try servers array
+
                     address = settings?.getAsJsonArray("servers")?.firstOrNull()?.asJsonObject?.get("address")?.asString ?: ""
                 }
                 port = settings?.get("port")?.asInt ?: primary.get("port")?.asInt ?: 443
@@ -229,7 +215,6 @@ object SubscriptionParser {
             else -> ProtocolType.VLESS
         }
 
-        // HYSTERIA often uses port 1443 with quic/h3; keep as is
         return ServerProfile(
             name = remarks,
             address = address,
@@ -343,10 +328,6 @@ object SubscriptionParser {
         return null
     }
 
-    /**
-     * Never throws. A subscription is a list of links written by other people's tooling,
-     * and a single malformed entry used to abort the parse of every server after it.
-     */
     fun parseUri(uri: String): ServerProfile? = runCatching { parseUriInternal(uri) }
         .getOrNull()
         ?.takeIf { it.address.isNotBlank() }
@@ -372,8 +353,7 @@ object SubscriptionParser {
         val proxies = root.getAsJsonArray("proxies") ?: return emptyList()
         val profiles = mutableListOf<ServerProfile>()
         for (element in proxies) {
-            // Per proxy, so one entry using a protocol or shape we do not model
-            // does not discard the rest of the subscription.
+
             val profile = runCatching {
                 val proxy = element.asJsonObject
                 val type = proxy.get("type")?.asString?.lowercase() ?: return@runCatching null
@@ -394,7 +374,6 @@ object SubscriptionParser {
         return profiles
     }
 
-    /** Clash configs are YAML; a few panels serve the same shape as JSON. Accept both. */
     private fun clashRoot(content: String): com.google.gson.JsonObject? {
         runCatching {
             val parsed = JsonParser.parseString(content)
@@ -698,15 +677,9 @@ object SubscriptionParser {
         return out
     }
 
-    /** URLDecoder throws on a stray '%', which links in the wild contain often enough. */
     fun safeDecode(raw: String): String =
         runCatching { URLDecoder.decode(raw, "UTF-8") }.getOrDefault(raw)
 
-    /**
-     * Splits `host:port`, `[v6::addr]:port` and bare hosts. The previous per-protocol
-     * versions of this used indexOf(':'), which cut IPv6 literals in half and threw
-     * outright when a link carried no port.
-     */
     fun parseHostPort(raw: String, defaultPort: Int = 443): Pair<String, Int>? {
         val s = raw.trim().substringBefore('?').substringBefore('#').removeSuffix("/")
         if (s.isEmpty()) return null
@@ -727,7 +700,6 @@ object SubscriptionParser {
         return host to port
     }
 
-    /** Splits a link into `#fragment` name and the part before it. */
     fun splitFragment(body: String): Pair<String, String> {
         val idx = body.indexOf('#')
         if (idx < 0) return body to ""

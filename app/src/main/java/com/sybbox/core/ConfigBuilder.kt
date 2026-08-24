@@ -146,18 +146,10 @@ object ConfigBuilder {
         val isWg = profile.protocol == ProtocolType.WIREGUARD
         val servers = JsonArray()
 
-        // Queries for everything the tunnel carries. Sent through the proxy, so a plain
-        // transport is already private and avoids the certificate problems that DoH hits
-        // when the handshake itself is what censorship is inspecting.
         servers.add(dnsServer(TAG_DNS_REMOTE, settings.remoteDns, detour = if (isWg) "wg-endpoint" else TAG_PROXY))
 
-        // Queries for whatever is routed around the tunnel.
         servers.add(dnsServer(TAG_DNS_DIRECT, settings.directDns, resolver = TAG_DNS_LOCAL, systemDnsServers = systemDnsServers))
 
-        // Bootstraps the proxy server's hostname, which cannot be resolved through the
-        // proxy itself. This has to be the resolver the device is actually using: the
-        // core's own `type: "local"` reads /etc/resolv.conf, which Android does not have,
-        // and falls back to 127.0.0.1:53 where nothing is listening.
         servers.add(localDnsServer(TAG_DNS_LOCAL, systemDnsServers))
 
         if (settings.enableFakeIp) {
@@ -172,7 +164,6 @@ object ConfigBuilder {
 
         val rules = JsonArray()
 
-        // Break the bootstrap loop before any other rule can claim the server's hostname.
         val serverHost = profile.address.trim().trim('[', ']')
         if (serverHost.isNotBlank() && !isIpLiteral(serverHost)) {
             rules.add(JsonObject().apply {
@@ -191,9 +182,6 @@ object ConfigBuilder {
         }
         if (rules.size() > 0) add("rules", rules)
 
-        // Everything not matched above resolves through the tunnel. Resolving it directly
-        // instead would leak every lookup to the local network and, where the resolver is
-        // blocked, leave the tunnel up but unable to resolve a single name.
         addProperty("final", TAG_DNS_REMOTE)
         addProperty("strategy", domainStrategy(settings.dnsQueryStrategy))
         if (settings.enableFakeIp) addProperty("independent_cache", true)
@@ -202,11 +190,6 @@ object ConfigBuilder {
     private fun isIpLiteral(host: String): Boolean =
         host.count { it == ':' } > 1 || host.matches(Regex("""\d{1,3}(\.\d{1,3}){3}"""))
 
-    /**
-     * Resolver addresses are taken at face value. An earlier version rewrote every scheme
-     * to https:// , which meant a user asking for plain UDP silently got DoH instead —
-     * and where DoH is blocked that turns into a tunnel that connects but resolves nothing.
-     */
     private fun dnsServer(
         tag: String,
         address: String,
@@ -226,7 +209,7 @@ object ConfigBuilder {
 
         val separator = value.indexOf("://")
         if (separator < 0) {
-            // Bare host or IP means plain UDP, the same reading every other client gives it.
+
             server.addProperty("type", "udp")
             server.addProperty("server", value.substringBefore(':'))
             value.substringAfter(':', "").toIntOrNull()?.let { server.addProperty("server_port", it) }
@@ -260,11 +243,6 @@ object ConfigBuilder {
         return server
     }
 
-    /**
-     * The resolver the device itself uses, queried over the direct outbound so it stays on
-     * the underlying network. Android hands these to us through ConnectivityManager; when
-     * that comes back empty we fall back to a public resolver rather than to localhost.
-     */
     private fun localDnsServer(tag: String, systemDnsServers: List<String>, detour: String? = null): JsonObject {
         val preferred = systemDnsServers
             .map { it.trim().substringBefore('%') }
@@ -275,14 +253,11 @@ object ConfigBuilder {
             addProperty("tag", tag)
             addProperty("type", "udp")
             addProperty("server", preferred ?: FALLBACK_BOOTSTRAP_DNS)
-            // No detour: without one the transport uses the default dialer, which already
-            // goes out the underlying network. Naming the bare `direct` outbound here is
-            // rejected outright — "detour to an empty direct outbound makes no sense".
+
             if (detour != null && detour != TAG_DIRECT) addProperty("detour", detour)
         }
     }
 
-    /** A resolver named by hostname needs something to resolve it that is not itself. */
     private fun addDomainResolver(server: JsonObject, host: String, resolver: String) {
         if (host.isBlank() || isIpLiteral(host)) return
         server.add("domain_resolver", JsonObject().apply { addProperty("server", resolver) })
@@ -360,9 +335,6 @@ object ConfigBuilder {
             }
         })
 
-        // A loopback entrance the app itself can send a request through, to find out
-        // whether the tunnel actually carries traffic. The app is excluded from the tun,
-        // so without this there is no way for it to test its own tunnel.
         if (probePort in 1..65535) {
             add(JsonObject().apply {
                 addProperty("type", "mixed")
@@ -391,10 +363,7 @@ object ConfigBuilder {
         serverAddressOverride: String? = null,
     ): JsonObject {
         val isWg = profile.protocol == ProtocolType.WIREGUARD
-        // Resolved on the underlying network before the tunnel exists. Dialing by name here
-        // makes every connection wait on the core's bootstrap resolver, and when that
-        // resolver is unreachable the tunnel comes up but carries nothing.
-        // profile.address is deliberately left alone: it still supplies the SNI fallback.
+
         val dialAddress = serverAddressOverride?.takeIf { it.isNotBlank() } ?: profile.address
         val outbound = JsonObject().apply {
             addProperty("tag", TAG_PROXY)
@@ -406,12 +375,11 @@ object ConfigBuilder {
         if (settings.connectionTimeout > 0) {
             outbound.addProperty("connect_timeout", "${settings.connectionTimeout}s")
         }
-        // Saves a round trip where the path supports it. Off by default: some middleboxes
-        // drop a SYN that carries data, which would look like a dead server.
+
         if (settings.tcpFastOpen && !isWg) outbound.addProperty("tcp_fast_open", true)
 
         if (!isWg && !isIpLiteral(dialAddress.trim().trim('[', ']'))) {
-            // Only reached when pre-resolution failed and a name is still being dialed.
+
             outbound.add("domain_resolver", JsonObject().apply {
                 addProperty("server", TAG_DNS_LOCAL)
             })
@@ -524,9 +492,7 @@ object ConfigBuilder {
                 addProperty("public_key", profile.realityPublicKey.trim())
                 if (profile.realityShortId.isNotBlank()) addProperty("short_id", profile.realityShortId)
             })
-            // Temporary: allow insecure to bypass x509 fallback mismatch for testing (Happ works without this, but helps diagnose)
-            // Comment out after Reality is verified
-            // tls.addProperty("insecure", true)
+
         }
 
         val effectiveFingerprint = DpiBypass.fingerprintFor(profile)
@@ -591,10 +557,7 @@ object ConfigBuilder {
                 val host = profile.wsHost.ifBlank { profile.h2Host }
                 if (path.isNotBlank()) addProperty("path", path)
                 if (host.isNotBlank()) addProperty("host", host)
-                // The core accepts only path/host/headers/mode/extra here, and rejects the
-                // whole config on any unknown key. A subscription's xhttpSettings block is
-                // v2ray-shaped, so lift the keys that map across and hand the rest over as
-                // the opaque `extra` string the core expects.
+
                 var mode = profile.xhttpMode
                 if (profile.xhttpExtra.isNotBlank()) {
                     val extra = runCatching {
@@ -627,12 +590,8 @@ object ConfigBuilder {
     private fun addMultiplex(outbound: JsonObject, profile: ServerProfile, settings: SettingsState) {
         if (!settings.enableMux && !profile.multiplexEnabled) return
 
-        // Vision carries its own framing; multiplexing on top of it is rejected.
         if (profile.flow.isNotBlank()) return
 
-        // A profile only overrides the global settings when it opted into multiplex itself.
-        // Its fields carry non-empty defaults, so reading them unconditionally would mean the
-        // settings screen could never change anything.
         val fromProfile = profile.multiplexEnabled
         val protocol = (if (fromProfile) profile.multiplexProtocol else settings.muxProtocol)
             .ifBlank { "h2mux" }
@@ -736,9 +695,6 @@ object ConfigBuilder {
         })
         addProperty("auto_detect_interface", true)
 
-        // Anything dialing by name without its own resolver uses the device's, which is
-        // what the direct outbound wants. Leaving it unset is deprecated since 1.12 and
-        // becomes an error in 1.14.
         add("default_domain_resolver", JsonObject().apply {
             addProperty("server", TAG_DNS_LOCAL)
         })
@@ -793,8 +749,7 @@ object ConfigBuilder {
                 addProperty("tag", tag)
                 addProperty("format", "binary")
                 addProperty("url", url)
-                // Rule sets live on GitHub, which is exactly the kind of host the tunnel
-                // exists to reach. Fetching them directly fails wherever it is blocked.
+
                 addProperty("download_detour", TAG_PROXY)
                 addProperty("update_interval", "7d")
             }

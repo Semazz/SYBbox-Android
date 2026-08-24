@@ -43,7 +43,6 @@ data class SettingsState(
     val autoFailover: Boolean = false,
     val tcpFastOpen: Boolean = false,
 
-    /** Verify the tunnel actually carries traffic once it is up, not merely that it started. */
     val tunnelCheck: Boolean = true,
 
     val themeMode: String = "SYSTEM",

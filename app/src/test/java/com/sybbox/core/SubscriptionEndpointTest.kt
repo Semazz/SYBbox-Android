@@ -7,17 +7,6 @@ import com.sybbox.domain.model.TransportType
 import org.junit.Assert.*
 import org.junit.Test
 
-/**
- * A provider can serve different server sets from different paths of the same subscription.
- * One endpoint of the subscription in question returns a v2ray JSON array carrying only
- * REALITY and Hysteria2 nodes; another returns a base64 link list that also carries plain
- * TLS nodes on a different port. Measured against the live servers, the REALITY nodes
- * refused the handshake and the TLS ones carried traffic — so which endpoint was added
- * decided whether anything worked.
- *
- * Both shapes have to parse, and the link list must not lose the entries that differ only
- * by port or transport.
- */
 class SubscriptionEndpointTest {
 
     private val linkList = listOf(
@@ -32,7 +21,7 @@ class SubscriptionEndpointTest {
 
     @Test
     fun `entries on the same host survive differing only by port and transport`() {
-        // These collapse into one another if anything keys servers by host alone.
+
         val parsed = SubscriptionParser.parseAny(linkList)
         assertEquals(3, parsed.size)
         assertEquals(listOf(443, 8443, 1443), parsed.map { it.port })
@@ -51,7 +40,7 @@ class SubscriptionEndpointTest {
         assertEquals(8443, tls.port)
         assertEquals(TransportType.GRPC, tls.transport)
         assertEquals("grpc", tls.grpcServiceName)
-        // Plain TLS must not inherit reality material from its neighbour.
+
         assertEquals("", tls.realityPublicKey)
     }
 

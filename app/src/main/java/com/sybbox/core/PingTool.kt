@@ -13,12 +13,6 @@ object PingTool {
     const val UNREACHABLE = -1
     private const val TIMEOUT_MS = 2500
 
-    /**
-     * The first connection to a host pays for things that have nothing to do with the
-     * server: waking a dormant radio, ARP, building the route. On mobile that alone can be
-     * hundreds of milliseconds, which is why the first reading came out far larger than
-     * every one after it. Taking the best of a few samples throws that cost away.
-     */
     private const val ATTEMPTS = 3
 
     fun tcp(context: Context, host: String, port: Int): Int = ping(context, host, port, isUdp = false)
@@ -79,10 +73,6 @@ object PingTool {
         if (millis in 1..TIMEOUT_MS) millis else UNREACHABLE
     }.getOrDefault(UNREACHABLE)
 
-    /**
-     * Lowest of several samples, stopping early once a server has failed twice so an
-     * unreachable one is not hammered for the full timeout three times over.
-     */
     private inline fun best(isUdp: Boolean, sample: () -> Int): Int {
         var lowest = UNREACHABLE
         var failures = 0

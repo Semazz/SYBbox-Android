@@ -42,20 +42,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.sybbox.ui.theme.SybSpacing
 
-/**
- * A setting with a fixed set of values.
- *
- * Two layouts, chosen by how the options read rather than by a flag at each call site:
- *
- * - A few short labels are laid out as segments. Every choice is visible and switching
- *   takes one tap.
- * - Anything longer opens a sheet, where each option gets a full-width row. Russian labels
- *   run long — "gVisor (в пространстве пользователя, надёжнее)" — and squeezing those into
- *   segments would leave nothing legible.
- *
- * Both replace a bare DropdownMenu, which anchored to the row's upper-left corner and drew
- * itself on default surfaces that had nothing to do with the rest of the app.
- */
 @Composable
 fun <T> SettingsChoice(
     title: String,
@@ -140,17 +126,8 @@ fun <T> SettingsChoice(
     }
 }
 
-/** Longest label that still reads comfortably inside a segment. */
 private const val SEGMENT_LABEL_MAX = 9
 
-/**
- * The app's segmented control: every option visible, one tap to switch, the selection
- * animating rather than snapping. Shared so the settings rows and the per-app mode switch
- * cannot drift apart — the per-app one used to be a hand-built copy whose two halves had
- * different icon sizes and different padding.
- *
- * [minHeight] gives room for labels that wrap onto a second line.
- */
 @Composable
 fun <T> SybSegmented(
     options: List<T>,

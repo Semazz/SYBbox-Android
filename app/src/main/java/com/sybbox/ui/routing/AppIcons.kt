@@ -10,14 +10,6 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/**
- * Launcher icons, fetched for the rows that are actually on screen.
- *
- * Loading every installed app's icon up front meant decoding a few hundred drawables before
- * the list could appear, and then holding all of them for as long as the screen lived. Only
- * a dozen or so are ever visible, so they are fetched per row and kept in a small cache —
- * scrolling back up finds them already there.
- */
 private val cache = object : LruCache<String, Drawable>(160) {}
 
 @Composable

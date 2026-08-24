@@ -43,8 +43,7 @@ class CoreLogHintTest {
 
     @Test
     fun `every entry gets its own id`() {
-        // The list keys off this. Timestamps collide because the core emits many lines
-        // inside one millisecond, so they cannot be used instead.
+
         repeat(50) { CoreLog.write(4, "line $it") }
         val ids = CoreLog.entries.value.map { it.id }
         assertEquals(ids.size, ids.toSet().size)

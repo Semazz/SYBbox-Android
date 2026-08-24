@@ -9,11 +9,6 @@ import com.sybbox.ui.settings.SettingsState
 import org.junit.Assert.*
 import org.junit.Test
 
-/**
- * A setting that does not reach the generated config is a switch that does nothing, which
- * is worse than not offering it. Every option added to the settings screen is checked here
- * against the JSON the core actually receives.
- */
 class SettingsReachConfigTest {
 
     private val vless = ServerProfile(
@@ -56,7 +51,7 @@ class SettingsReachConfigTest {
 
     @Test
     fun `multiplex is never layered on top of vision`() {
-        // Vision does its own framing; the core rejects multiplex combined with it.
+
         val vision = vless.copy(flow = "xtls-rprx-vision", security = SecurityType.REALITY,
             realityPublicKey = "xhpTOZQKJm9nXbUZTZvR4MtCkQnZ5FGGvWEo0nZ4Vjs", realityShortId = "6ba85179e30d4fc2")
         assertNull(outbound(vision, SettingsState(enableMux = true)).get("multiplex"))

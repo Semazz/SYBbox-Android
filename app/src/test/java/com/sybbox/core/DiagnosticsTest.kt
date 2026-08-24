@@ -5,8 +5,6 @@ import org.junit.Test
 
 class DiagnosticsTest {
 
-    // Verbatim from a device log, trimmed in the middle. One of these is roughly 1.5 KB,
-    // and a few of them used to push everything else out of a 300-entry log buffer.
     private val realityFallback =
         "connection: open connection to 194.221.250.50:443 using outbound/vless[proxy]: " +
             "x509: certificate is valid for *.google.com, *.appengine.google.com, *.gstatic.com, " +
@@ -19,7 +17,7 @@ class DiagnosticsTest {
         assertNotNull(hint)
         assertTrue(hint!!.contains("www.example.org"))
         assertTrue(hint.contains("REALITY"))
-        // The point is to say what to do, not to restate the certificate.
+
         assertFalse(hint.contains("*.gstatic.com"))
     }
 
@@ -57,7 +55,7 @@ class DiagnosticsTest {
 
     @Test
     fun `long messages are condensed but stay identifiable`() {
-        // The real message carries the full SAN list of Google's certificate, ~1.5 KB.
+
         val full = realityFallback.replace(
             "*.gstatic.com,",
             "*.gstatic.com, " + (1..40).joinToString(", ") { "*.google.co.x$it" } + ",",

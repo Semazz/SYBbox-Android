@@ -191,8 +191,7 @@ class ServersViewModel @Inject constructor(
         _refreshing.update { it + subscriptionId }
         try {
             val primaryUa = com.sybbox.data.remote.SubscriptionUserAgent.value(settingsDataStore)
-            // Panels can serve different content per User-Agent. Ours goes first; a plain
-            // browser string is the fallback for a panel that does not recognise it.
+
             val fallbackUas = listOf(primaryUa, "Mozilla/5.0").distinct()
 
             var response: SubscriptionResponse? = null
@@ -201,8 +200,7 @@ class ServersViewModel @Inject constructor(
             for ((index, ua) in fallbackUas.withIndex()) {
                 val resp = withContext(Dispatchers.IO) { runCatching { fetch(url, ua) }.getOrNull() }
                 if (resp == null) {
-                    // A transport failure will repeat for every other User-Agent too;
-                    // retrying it five more times only makes the user wait.
+
                     if (index == 0) continue else break
                 }
                 if (resp.body.isBlank()) continue
@@ -416,8 +414,6 @@ class ServersViewModel @Inject constructor(
     private companion object {
         const val REFRESH_COOLDOWN_MS = 30_000L
 
-        // Shared so the user-agent fallback list reuses one connection pool rather than
-        // standing up a new client, pool and dispatcher per attempt.
         val httpClient: OkHttpClient by lazy {
             OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)

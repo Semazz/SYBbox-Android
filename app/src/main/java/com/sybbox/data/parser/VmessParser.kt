@@ -50,7 +50,6 @@ object VmessParser {
         )
     }
 
-    /** vmess:// payloads turn up padded, unpadded and url-safe depending on who generated them. */
     private fun decode(payload: String): String? {
         if (payload.isEmpty()) return null
         val flags = listOf(

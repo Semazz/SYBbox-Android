@@ -9,12 +9,6 @@ import com.sybbox.ui.settings.SettingsState
 import org.junit.Assert.*
 import org.junit.Test
 
-/**
- * Covers the failure the app shipped with: the tunnel came up and the server answered a
- * TCP handshake, so latency was reported, but every DNS query was sent to a DoH resolver
- * over the direct outbound. Where that resolver is blocked nothing ever resolves, which
- * reads to a user as "ping works, no internet".
- */
 class DnsRoutingTest {
 
     private val vlessReality = ServerProfile(
@@ -54,8 +48,7 @@ class DnsRoutingTest {
 
     @Test
     fun `the remote resolver defaults to doh on an address`() {
-        // Port 443 rather than 53, which some providers drop, and an address rather than a
-        // name so nothing has to resolve the resolver.
+
         val remote = servers(dnsOf()).getValue("dns-remote")
         assertEquals("https", remote.get("type").asString)
         assertEquals("1.1.1.1", remote.get("server").asString)
@@ -68,17 +61,13 @@ class DnsRoutingTest {
         val local = servers(dnsOf()).getValue("dns-local")
         assertEquals("udp", local.get("type").asString)
         assertEquals("192.168.1.1", local.get("server").asString)
-        // No detour: without one the default dialer already stays on the underlying
-        // network, and naming the bare direct outbound is refused by the core with
-        // "detour to an empty direct outbound makes no sense".
+
         assertNull(local.get("detour"))
     }
 
     @Test
     fun `no resolver is ever left pointing at localhost`() {
-        // The core's own `type: "local"` reads /etc/resolv.conf, which Android does not
-        // have, so it falls back to 127.0.0.1:53 and every lookup is refused. Emitting it
-        // took the whole tunnel down, so nothing may reintroduce it.
+
         listOf(
             dnsOf(),
             dnsOf(systemDns = emptyList()),
@@ -123,7 +112,7 @@ class DnsRoutingTest {
 
     @Test
     fun `the server's own hostname resolves on the underlying network`() {
-        // Resolving it through the proxy would require the proxy to already be connected.
+
         val rule = dnsOf().getAsJsonArray("rules").first().asJsonObject
         assertEquals("se.example.com", rule.getAsJsonArray("domain").first().asString)
         assertEquals("dns-local", rule.get("server").asString)
@@ -146,15 +135,13 @@ class DnsRoutingTest {
 
     @Test
     fun `a pre-resolved server is dialed by address, not by name`() {
-        // Dialing by name makes every connection wait on the core's bootstrap resolver.
-        // When that resolver is unreachable the tunnel comes up and carries nothing, while
-        // the latency check — which resolves in Kotlin — still reports a healthy server.
+
         val config = JsonParser.parseString(
             ConfigBuilder.build(vlessReality, SettingsState(), emptyList(), true, deviceDns, "203.0.113.9"),
         ).asJsonObject
         val outbound = config.getAsJsonArray("outbounds")[0].asJsonObject
         assertEquals("203.0.113.9", outbound.get("server").asString)
-        // An address needs no resolver, so the core must not be given one to wait on.
+
         assertNull(outbound.get("domain_resolver"))
     }
 
@@ -166,7 +153,7 @@ class DnsRoutingTest {
         ).asJsonObject
         val outbound = config.getAsJsonArray("outbounds")[0].asJsonObject
         assertEquals("203.0.113.9", outbound.get("server").asString)
-        // The certificate is issued for the name, never for the address.
+
         assertEquals("se.example.com", outbound.getAsJsonObject("tls").get("server_name").asString)
     }
 
@@ -187,7 +174,7 @@ class DnsRoutingTest {
 
     @Test
     fun `a udp resolver stays udp`() {
-        // It used to be rewritten to https, so asking for plain DNS silently produced DoH.
+
         val remote = servers(dnsOf(settings = SettingsState(remoteDns = "udp://9.9.9.9"))).getValue("dns-remote")
         assertEquals("udp", remote.get("type").asString)
         assertEquals("9.9.9.9", remote.get("server").asString)
@@ -217,7 +204,7 @@ class DnsRoutingTest {
 
     @Test
     fun `rule sets are fetched through the tunnel`() {
-        // They are hosted on GitHub, which is exactly what the tunnel exists to reach.
+
         val config = JsonParser.parseString(
             ConfigBuilder.build(vlessReality, SettingsState(bypassRussia = true, routingMode = ConfigBuilder.MODE_BALANCED)),
         ).asJsonObject
@@ -230,7 +217,7 @@ class DnsRoutingTest {
 
     @Test
     fun `webrtc hosts are not blanket rejected`() {
-        // The keyword list matched saturn, return and turnitin as readily as stun and turn.
+
         val rules = JsonParser.parseString(ConfigBuilder.build(vlessReality, SettingsState()))
             .asJsonObject.getAsJsonObject("route").getAsJsonArray("rules")
         assertFalse(rules.any { it.asJsonObject.has("domain_keyword") })

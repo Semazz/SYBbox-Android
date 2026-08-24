@@ -10,7 +10,6 @@ object TuicParser {
         if (atIndex <= 0) return null
         val userInfo = main.substring(0, atIndex)
 
-        // tuic://uuid:password@host:port — the password lives in the userinfo, not the query.
         val colon = userInfo.indexOf(':')
         val uuid = SubscriptionParser.safeDecode(if (colon >= 0) userInfo.substring(0, colon) else userInfo)
         val userPassword = if (colon >= 0) SubscriptionParser.safeDecode(userInfo.substring(colon + 1)) else ""

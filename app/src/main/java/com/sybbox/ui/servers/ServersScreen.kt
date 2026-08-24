@@ -310,7 +310,7 @@ fun ServersScreen(
                 else -> emptyList()
             }
             item(key = "sub-${subscription.id}") {
-                // Gap between groups like in Happ: 12.dp before each subscription header
+
                 Spacer(Modifier.height(10.dp))
                 SubscriptionHeader(
                     subscription = subscription,
@@ -339,7 +339,7 @@ fun ServersScreen(
                     },
                     onDelete = { viewModel.deleteSubscription(subscription) },
                 )
-                // Air gap between subscription header and first server (Happ style)
+
                 if (visibleMembers.isNotEmpty()) Spacer(Modifier.height(8.dp))
             }
             items(visibleMembers, key = { "s${subscription.id}-${it.id}" }) { profile ->

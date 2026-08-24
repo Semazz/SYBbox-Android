@@ -8,10 +8,6 @@ import com.sybbox.domain.model.TransportType
 import org.junit.Assert.*
 import org.junit.Test
 
-/**
- * A subscription body is written by someone else's tooling. These cover the shapes that
- * used to throw partway through and take every server after them down with the exception.
- */
 class SubscriptionRobustnessTest {
 
     private val goodVless =
@@ -32,7 +28,7 @@ class SubscriptionRobustnessTest {
 
     @Test
     fun `an ipv6 literal keeps its address and port`() {
-        // indexOf(':') used to split this at the first colon inside the address.
+
         val p = VlessParser.parse("vless://uuid-1@[2001:db8::1]:8443?security=tls#v6")!!
         assertEquals("2001:db8::1", p.address)
         assertEquals(8443, p.port)
@@ -57,7 +53,7 @@ class SubscriptionRobustnessTest {
 
     @Test
     fun `a stray percent sign does not abort the parse`() {
-        // URLDecoder throws on an incomplete escape; the link is still perfectly usable.
+
         val p = VlessParser.parse("vless://uuid-1@example.com:443?security=tls&path=/100%off#deal")!!
         assertEquals("example.com", p.address)
         assertEquals("/100%off", p.wsPath)
@@ -79,8 +75,7 @@ class SubscriptionRobustnessTest {
 
     @Test
     fun `a clash yaml subscription imports its proxies`() {
-        // Clash configs are YAML. They were being handed to a JSON parser, which threw,
-        // and the swallowed exception turned every Clash subscription into zero servers.
+
         val yaml = """
             port: 7890
             proxies:
@@ -142,7 +137,7 @@ class SubscriptionRobustnessTest {
 
     @Test
     fun `tuic takes its password from the userinfo`() {
-        // tuic://uuid:password@host:port — the password is not a query parameter.
+
         val p = SubscriptionParser.parseUri("tuic://uuid-1:s3cret@tu.example.com:443?sni=tu.example.com#T")!!
         assertEquals(ProtocolType.TUIC, p.protocol)
         assertEquals("uuid-1", p.uuid)

@@ -68,11 +68,6 @@ class SettingsDataStore @Inject constructor(
     val includedApps: Flow<List<String>> = dataStore.data.map { (it[KEY_INCLUDED_APPS] ?: emptySet()).toList() }
     val excludedApps: Flow<List<String>> = dataStore.data.map { (it[KEY_EXCLUDED_APPS] ?: emptySet()).toList() }
 
-    /**
-     * Every setting from one read of the preferences file. Building the tunnel used to pull
-     * these one at a time, which meant ~25 separate collections of the same flow before a
-     * connection could even start being assembled.
-     */
     suspend fun snapshot(): SettingsState {
         val p = dataStore.data.first()
         return SettingsState(

@@ -79,8 +79,7 @@ val COUNTRY_KEYWORDS: Map<String, String> = mapOf(
 )
 
 fun stripFlagEmoji(name: String): String {
-    // Remove leading flag emojis, pirate/white flags, recycle etc., preserving the rest.
-    // First, strip classic regional indicator flags
+
     val sb = StringBuilder(name.length)
     var i = 0
     while (i < name.length) {
@@ -89,7 +88,7 @@ fun stripFlagEmoji(name: String): String {
             val nextIndex = i + Character.charCount(cp)
             if (nextIndex < name.length && name.codePointAt(nextIndex) in 0x1F1E6..0x1F1FF) {
                 i = nextIndex + Character.charCount(name.codePointAt(nextIndex))
-                // skip ZWJ/variation/fe0f/spaces after flag
+
                 while (i < name.length && (name.codePointAt(i) == 0x200D || name.codePointAt(i) == 0xFE0F || name[i] == ' ' || name[i] == '\uFE0F')) {
                     i += Character.charCount(name.codePointAt(i))
                 }
@@ -98,30 +97,29 @@ fun stripFlagEmoji(name: String): String {
         }
         break
     }
-    // Now strip any other leading emoji/non-letter sequence (🏴‍☠️, 🏳️, 🔁, etc.) up to first letter
+
     var start = i
     while (start < name.length) {
         val cp = name.codePointAt(start)
-        // If it's a letter or digit, stop
+
         if (Character.isLetterOrDigit(cp)) break
-        // If it's variation selector, ZWJ, emoji modifiers, skip
+
         if (cp == 0xFE0F || cp == 0x200D || cp == 0xFE0E) {
             start += Character.charCount(cp)
             continue
         }
-        // For any non-letter including emoji, skip one codepoint
-        // But also skip following spaces
+
         if (!Character.isLetterOrDigit(cp) && cp != ' '.code) {
-            // emoji range check: skip
+
             start += Character.charCount(cp)
-            // skip following variation/ZWJ chain
+
             while (start < name.length) {
                 val ncp = name.codePointAt(start)
                 if (ncp == 0x200D || ncp == 0xFE0F || ncp == 0xFE0E || (ncp in 0x1F3FB..0x1F3FF)) {
                     start += Character.charCount(ncp)
                 } else break
             }
-            // skip space after emoji
+
             if (start < name.length && name[start] == ' ') start++
             continue
         }
@@ -131,9 +129,9 @@ fun stripFlagEmoji(name: String): String {
         }
         break
     }
-    // If we stripped leading emojis, return remainder; otherwise process full name with classic loop for embedded flags
+
     if (start > 0) {
-        // For remaining string, still strip any embedded country flags (should not happen but safe)
+
         var j = start
         while (j < name.length) {
             val cp = name.codePointAt(j)
@@ -150,7 +148,7 @@ fun stripFlagEmoji(name: String): String {
         }
         return sb.toString().trim()
     }
-    // No leading emoji stripped, use original logic for whole string
+
     while (i < name.length) {
         val cp = name.codePointAt(i)
         if (cp in 0x1F1E6..0x1F1FF) {
@@ -209,7 +207,6 @@ fun countryCodeFromName(name: String): String? {
         }
     }
 
-    // Fallback: check address/host for country code like se.example.com
     val addressLower = name.lowercase()
     for (code in ISO_CODES) {
         if (addressLower.contains(".$code.") || addressLower.startsWith("$code.") || addressLower.contains("-$code-") || addressLower.contains("_$code")) {

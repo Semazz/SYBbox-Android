@@ -7,14 +7,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
-/**
- * Writes one config per protocol/settings combination to `build/config-matrix/` so the real
- * sing-box binary can start each of them. Parsing a config is not enough: `detour to an
- * empty direct outbound makes no sense` is raised when transports start, and shipped twice
- * because nothing here ever ran the core.
- *
- * See `tools/validate-configs.sh`.
- */
 class ConfigMatrixDumpTest {
 
     private val deviceDns = listOf("192.168.1.1")
@@ -46,7 +38,7 @@ class ConfigMatrixDumpTest {
         "vless-none-tcp" to vless("plain", TransportType.TCP, SecurityType.NONE, flow = ""),
         "vless-xhttp-v2ray-extra" to vless("xhttp", TransportType.XHTTP, SecurityType.TLS, flow = "").copy(
             xhttpMode = "packet-up",
-            // A subscription hands this over verbatim, in v2ray's own shape.
+
             xhttpExtra = """{"mode":"packet-up","path":"/x","host":"cdn.example.com","scMaxEachPostBytes":1000000,"xPaddingBytes":"100-1000"}""",
         ),
         "vmess-ws-tls" to ServerProfile(
@@ -90,8 +82,7 @@ class ConfigMatrixDumpTest {
             shadowTlsVersion = 3, security = SecurityType.TLS, serverName = "st.example.com",
         ),
         "wireguard" to ServerProfile(
-            // An address, not a name: a WireGuard endpoint resolves its peer while the core
-            // is starting, so a fixture hostname that does not exist makes the run flaky.
+
             name = "wg", address = "203.0.113.9", port = 51820,
             protocol = ProtocolType.WIREGUARD,
             wgPrivateKey = "iPKjM0Ck9Bu8lRmMWJ1cV3cVBcS4CQ0EYCf9fq0oS1Y=",
@@ -129,12 +120,10 @@ class ConfigMatrixDumpTest {
             for ((sName, settings) in settingsVariants) {
                 for (systemDns in listOf(deviceDns, emptyList())) {
                     val suffix = if (systemDns.isEmpty()) "nodns" else "dns"
-                    // Rule sets are fetched over the network at start; leave them out of the
-                    // runtime matrix and cover their schema in the parse-only pass.
+
                     for (useRuleSets in listOf(false, true)) {
                         val rs = if (useRuleSets) "rs" else "nors"
-                        // Both paths matter: the server pre-resolved on the underlying
-                        // network, and the fallback where it could not be.
+
                         for (resolved in listOf<String?>(null, "203.0.113.9")) {
                             val rv = if (resolved == null) "byname" else "byip"
                             val json = ConfigBuilder.build(

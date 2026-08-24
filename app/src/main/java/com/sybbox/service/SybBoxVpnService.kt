@@ -300,20 +300,11 @@ class SybBoxVpnService : VpnService() {
         throw lastError ?: IllegalStateException("Core failed to start")
     }
 
-    /**
-     * A loopback port the core listens on so the app can put a request through its own
-     * tunnel. Chosen once per process; the core binds it, the app connects to it.
-     */
     private val probePort: Int by lazy {
         runCatching { java.net.ServerSocket(0, 1, java.net.InetAddress.getByName("127.0.0.1")).use { it.localPort } }
             .getOrDefault(0)
     }
 
-    /**
-     * Answers the question the latency number cannot: does this server actually carry
-     * traffic? A TCP handshake succeeds against a REALITY server whether or not it will
-     * accept us, which is why a server can show a healthy latency and pass nothing.
-     */
     private suspend fun tunnelCarriesTraffic(): Boolean {
         if (probePort == 0) return true
         val client = okhttp3.OkHttpClient.Builder()
@@ -323,9 +314,7 @@ class SybBoxVpnService : VpnService() {
             .retryOnConnectionFailure(false)
             .build()
         return withContext(Dispatchers.IO) {
-            // More than one operator: a server that happens to block one of them is still a
-            // working server, and calling it dead would send the user hunting for a fault
-            // that is not there.
+
             for (url in PROBE_URLS) {
                 val request = okhttp3.Request.Builder().url(url).header("User-Agent", "SYBbox").build()
                 val reached = runCatching {
@@ -339,15 +328,6 @@ class SybBoxVpnService : VpnService() {
         }
     }
 
-    /**
-     * Resolves the server's hostname on the physical network, before the tunnel exists.
-     *
-     * This is the same path the latency check uses, which is why latency was reported on
-     * servers that could not actually carry traffic: the core's own bootstrap resolver was
-     * unreachable, so every connection sat waiting on `lookup <server>` until it timed out.
-     * Returns null when the address is already a literal or cannot be resolved, in which
-     * case the core falls back to resolving the name itself.
-     */
     private fun resolveServerAddress(address: String): String? {
         val host = address.trim().trim('[', ']')
         if (host.isBlank()) return null
@@ -378,11 +358,6 @@ class SybBoxVpnService : VpnService() {
         return resolved
     }
 
-    /**
-     * The resolvers of the real network, not the tunnel. The core cannot discover these
-     * itself on Android: it reads /etc/resolv.conf, which does not exist here, and falls
-     * back to 127.0.0.1:53 where nothing answers.
-     */
     private fun systemDnsServers(): List<String> {
         val manager = getSystemService(android.net.ConnectivityManager::class.java) ?: return emptyList()
         return runCatching {

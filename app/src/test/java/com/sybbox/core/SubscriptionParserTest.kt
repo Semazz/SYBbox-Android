@@ -8,7 +8,6 @@ import org.junit.Test
 
 class SubscriptionParserTest {
 
-    // A minimal v2ray config array: each element has remarks and its own outbounds.
     private val configArrayPayload = """
         [
           {
@@ -64,20 +63,17 @@ class SubscriptionParserTest {
     @Test
     fun `config array protocols and transports are read correctly`() {
         val result = SubscriptionParser.parseConfigArray(configArrayPayload)!!
-        // First is hysteria2-187 -> HYSTERIA2
+
         assertEquals(ProtocolType.HYSTERIA2, result[0].protocol)
         assertEquals("se.example.com", result[0].address)
         assertEquals(1443, result[0].port)
 
-        // Second is vless tcp reality
         assertEquals(ProtocolType.VLESS, result[1].protocol)
         assertEquals(TransportType.TCP, result[1].transport)
         assertEquals(443, result[1].port)
 
-        // Third is hysteria2
         assertEquals(ProtocolType.HYSTERIA2, result[2].protocol)
 
-        // Fourth is grpc vless
         assertEquals(TransportType.GRPC, result[3].transport)
         assertEquals(9443, result[3].port)
         assertEquals("grpc", result[3].grpcServiceName)
@@ -98,8 +94,7 @@ class SubscriptionParserTest {
         val moscow = "🇷🇺 Москва #4 | Vless"
         assertEquals("ru", com.sybbox.ui.components.countryCodeFromName(moscow))
         val auto = "🔁 Автоматический выбор | Vless, Hysteria2, Grpc"
-        // auto should not map to country, expect null or ru via torrent? Actually auto contains no city, so null is correct (shows bolt icon)
-        // we just verify it doesn't crash
+
         assertTrue(com.sybbox.ui.components.countryCodeFromName(auto) == null || com.sybbox.ui.components.countryCodeFromName(auto) == "ru")
     }
 

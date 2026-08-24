@@ -10,8 +10,7 @@ data class LogEntry(
     val level: LogLevel,
     val message: String,
     val timestamp: Long = System.currentTimeMillis(),
-    /** Stable identity for list rendering. Timestamps collide — the core emits many lines
-     *  within the same millisecond — so they cannot serve as keys. */
+
     val id: Long = 0,
 )
 
@@ -24,7 +23,6 @@ object CoreLog {
     private val _entries = MutableStateFlow<List<LogEntry>>(emptyList())
     val entries: StateFlow<List<LogEntry>> = _entries.asStateFlow()
 
-    // Explanations repeat for every failing connection; one per tunnel is enough.
     private val explained = HashSet<String>()
 
     fun write(nativeLevel: Int, message: String) {

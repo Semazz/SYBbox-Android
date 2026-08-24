@@ -8,9 +8,6 @@ plugins {
     id("com.google.dagger.hilt.android")
 }
 
-// The version comes from the git tag, so a release is cut by tagging rather than by
-// editing this file: `v2.0.1` gives versionName 2.0.1. Builds made after the tag carry the
-// same version, so the apk is named for the version alone.
 fun git(vararg args: String): String? = runCatching {
     val process = ProcessBuilder(listOf("git") + args)
         .directory(rootProject.projectDir)
@@ -20,22 +17,17 @@ fun git(vararg args: String): String? = runCatching {
     if (process.waitFor() == 0 && output.isNotEmpty()) output else null
 }.getOrNull()
 
-// Used when there is no git checkout at all, such as a source archive download.
 val fallbackVersion = "2.0.1"
 
 val latestTag = git("describe", "--tags", "--abbrev=0")
 val computedVersionName = latestTag?.removePrefix("v") ?: fallbackVersion
 val releaseVersion = computedVersionName
 
-// 2.0.1 becomes 20001, which keeps rising as the version does.
 val computedVersionCode = releaseVersion.split(".")
     .map { it.takeWhile(Char::isDigit).toIntOrNull() ?: 0 }
     .let { (it + listOf(0, 0, 0)).take(3) }
     .let { (major, minor, patch) -> major * 10000 + minor * 100 + patch }
 
-// Signing credentials live outside the tree: keystore.properties and the .jks are both
-// gitignored. A signing key is the one thing that must never be committed — whoever holds
-// it can publish updates as this app.
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) {
@@ -62,8 +54,6 @@ android {
             useSupportLibrary = true
         }
 
-        // Only the languages the app is translated into ship, so the dependencies do not drag
-        // in resource tables for dozens of locales.
         resourceConfigurations += listOf("en", "ru", "es", "zh-rCN")
     }
 
@@ -74,9 +64,7 @@ android {
                 storePassword = keystoreProperties.getProperty("storePassword")
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
-                // minSdk is 24, and every release of Android from 7.0 verifies v2, so the
-                // old JAR signature buys nothing here. v3 carries the same signature plus
-                // room to rotate the key later without breaking updates.
+
                 enableV2Signing = true
                 enableV3Signing = true
             }
@@ -85,8 +73,7 @@ android {
 
     buildTypes {
         release {
-            // Without a key the build still succeeds and produces an unsigned apk, so a
-            // fresh clone can compile. Only this machine holds the key.
+
             signingConfig = if (hasSigningKey) signingConfigs.getByName("release") else null
             isMinifyEnabled = true
             isShrinkResources = true
@@ -97,8 +84,6 @@ android {
         }
     }
 
-    // The Go core is around 35 MB per architecture, so a universal APK would be enormous.
-    // Splitting keeps each install to the one architecture the device can actually run.
     splits {
         abi {
             isEnable = true
@@ -115,7 +100,6 @@ android {
             output.outputFileName = "SYBbox-${versionName}-${abi}.apk"
         }
     }
-
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -140,7 +124,7 @@ android {
 }
 
 dependencies {
-    // Compose BOM
+
     val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(composeBom)
     implementation("androidx.compose.material3:material3")
@@ -151,7 +135,6 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
-    // Core
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
@@ -159,54 +142,41 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("androidx.activity:activity-compose:1.9.3")
 
-    // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.5")
 
-    // Hilt
     implementation("com.google.dagger:hilt-android:2.53.1")
     ksp("com.google.dagger:hilt-android-compiler:2.53.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
-    // Room
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
 
-    // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
-    // Network
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.code.gson:gson:2.11.0")
 
-    // YAML (Clash config parsing)
     implementation("org.yaml:snakeyaml:2.3")
 
-    // QR Code
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
     implementation("com.google.zxing:core:3.5.3")
     implementation("androidx.camera:camera-camera2:1.4.1")
     implementation("androidx.camera:camera-lifecycle:1.4.1")
     implementation("androidx.camera:camera-view:1.4.1")
 
-    // Lottie
     implementation("com.airbnb.android:lottie-compose:6.6.2")
 
-    // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.10.0")
     implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
 
-    // Chrome Custom Tabs
     implementation("androidx.browser:browser:1.8.0")
 
-    // Accompanist
     implementation("com.google.accompanist:accompanist-permissions:0.36.0")
 
-    // Sing-box core (Go native), built by libcore/build.sh
     implementation(files("libs/sybbox_core.aar"))
 
-    // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")

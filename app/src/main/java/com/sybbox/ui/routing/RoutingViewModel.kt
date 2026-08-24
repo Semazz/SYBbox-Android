@@ -121,8 +121,7 @@ class RoutingViewModel @Inject constructor(
             val packageManager = getApplication<Application>().packageManager
             val self = getApplication<Application>().packageName
             val loaded = withContext(Dispatchers.IO) {
-                // No GET_META_DATA: the metadata bundles are never read here and loading
-                // them for every installed package is pure cost.
+
                 packageManager.getInstalledApplications(0)
                     .asSequence()
                     .filter { it.packageName != self }

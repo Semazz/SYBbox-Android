@@ -83,8 +83,6 @@ fun PerAppScreen(
 
     LaunchedEffect(Unit) { viewModel.loadApps() }
 
-    // Keyed on what the result depends on. Without this the whole list was filtered again
-    // on every recomposition, including each time a single checkbox was ticked.
     val visible = remember(apps, query, showSystem) {
         apps.filter { app ->
             (showSystem || !app.system) &&
@@ -342,8 +340,7 @@ private fun ExpressiveSegment(
     includeMode: Boolean,
     onModeChange: (Boolean) -> Unit,
 ) {
-    // Both halves come from one component now. Hand-built, they had drifted: different icon
-    // sizes, different padding and a hard-coded font size on each side.
+
     SybSegmented(
         options = listOf(true, false),
         labels = listOf(

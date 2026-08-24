@@ -1,17 +1,7 @@
 package com.sybbox.core
 
-/**
- * Turns the core's failure messages into something a person can act on.
- *
- * The messages themselves are accurate but not self-explanatory: a REALITY server that
- * refuses a handshake hands the connection to its fallback site, so the client reports a
- * certificate mismatch against a site nobody asked for, listing every name on that
- * certificate. Read literally it looks like a TLS bug in the app; it actually means the
- * subscription's REALITY parameters no longer match the server.
- */
 object Diagnostics {
 
-    /** The certificate SAN list alone runs well past a kilobyte and floods the log buffer. */
     const val MAX_MESSAGE = 400
 
     private val rules: List<Pair<Regex, (MatchResult) -> String>> = listOf(
@@ -40,13 +30,11 @@ object Diagnostics {
         },
     )
 
-    /** Shortens a message for display without losing the part that identifies it. */
     fun condense(message: String): String {
         if (message.length <= MAX_MESSAGE) return message
         return message.take(MAX_MESSAGE).trimEnd().trimEnd(',') + "… (+${message.length - MAX_MESSAGE} chars)"
     }
 
-    /** A one-line explanation for a known failure, or null when there is nothing useful to add. */
     fun explain(message: String): String? {
         for ((pattern, build) in rules) {
             val match = pattern.find(message) ?: continue

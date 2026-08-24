@@ -34,8 +34,8 @@ val computedVersionCode = releaseVersion.split(".")
     .let { (major, minor, patch) -> major * 10000 + minor * 100 + patch }
 
 // Signing credentials live outside the tree: keystore.properties and the .jks are both
-// gitignored. The repository is public, and a signing key is the one thing that must never
-// enter it — whoever holds it can publish updates as this app.
+// gitignored. A signing key is the one thing that must never be committed — whoever holds
+// it can publish updates as this app.
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) {

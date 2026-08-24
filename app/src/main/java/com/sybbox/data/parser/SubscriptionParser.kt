@@ -10,7 +10,7 @@ object SubscriptionParser {
     /**
      * Format detection for a subscription body of unknown shape. Providers serve plain
      * link lists, base64 of the same, sing-box JSON, v2ray JSON, Clash YAML and the
-     * LiteVPN/Happ array, sometimes varying by the User-Agent they were asked with.
+     * v2ray config array, sometimes varying by the User-Agent they were asked with.
      * Every shape is tried rather than guessed at from the first character.
      */
     fun parseAny(content: String): List<ServerProfile> = parseAny(content, depth = 0)
@@ -19,7 +19,7 @@ object SubscriptionParser {
         val body = content.trim().removePrefix("﻿")
         if (body.isEmpty()) return emptyList()
 
-        parseLiteVpnArray(body)?.takeIf { it.isNotEmpty() }?.let { return it }
+        parseConfigArray(body)?.takeIf { it.isNotEmpty() }?.let { return it }
 
         if (body.startsWith("{") || body.startsWith("[")) {
             parseSingBox(body).takeIf { it.isNotEmpty() }?.let { return it }
@@ -60,9 +60,9 @@ object SubscriptionParser {
     }
 
     fun parse(content: String, type: SubType): List<ServerProfile> {
-        // LiteVPN / Happ style: JSON array where each element has "remarks" + "outbounds" (V2Ray format)
-        // Must be detected before generic handlers to preserve names/flags in order
-        parseLiteVpnArray(content)?.let { if (it.isNotEmpty()) return it }
+        // A v2ray config array: each element carries "remarks" and its own "outbounds".
+        // Detected before the generic handlers so names and ordering survive.
+        parseConfigArray(content)?.let { if (it.isNotEmpty()) return it }
         return when (type) {
             SubType.STANDARD -> parseStandard(content)
             SubType.CLASH_META -> parseClashMeta(content)
@@ -72,9 +72,9 @@ object SubscriptionParser {
         }
     }
 
-    /** LiteVPN / Happ V2Ray full-config array — each JSON object has remarks + outbounds.
-     *  Returns exactly one ServerProfile per config object preserving order and flags. */
-    fun parseLiteVpnArray(content: String): List<ServerProfile>? {
+    /** A v2ray full-config array: every JSON object carries remarks and its own outbounds.
+     *  Returns one profile per config object, keeping the order the provider sent. */
+    fun parseConfigArray(content: String): List<ServerProfile>? {
         val trimmed = content.trim()
         if (trimmed.isEmpty()) return null
         // Heuristic: must contain remarks and outbounds and protocol fields
@@ -90,7 +90,7 @@ object SubscriptionParser {
             for (el in elements) {
                 val obj = runCatching { el.asJsonObject }.getOrNull() ?: continue
                 if (!obj.has("remarks") || !obj.has("outbounds")) continue
-                val profile = runCatching { parseLiteVpnObject(obj) }.getOrNull() ?: continue
+                val profile = runCatching { parseConfigObject(obj) }.getOrNull() ?: continue
                 if (profile.address.isBlank()) continue
                 out.add(profile)
             }
@@ -98,7 +98,7 @@ object SubscriptionParser {
         } catch (_: Exception) { null }
     }
 
-    private fun parseLiteVpnObject(root: com.google.gson.JsonObject): ServerProfile? {
+    private fun parseConfigObject(root: com.google.gson.JsonObject): ServerProfile? {
         val remarks = root.get("remarks")?.takeIf { it.isJsonPrimitive }?.asString?.trim().orEmpty()
         if (remarks.isEmpty()) return null
         val outbounds = root.getAsJsonArray("outbounds") ?: return null
@@ -119,8 +119,8 @@ object SubscriptionParser {
         if (primary == null) primary = fallback
         if (primary == null) return null
 
-        // For "Автоматический выбор" that has many primaries, we keep single primary (first)
-        // but preserve the remarks name which already contains flags.
+        // A config that lists several primaries collapses to the first; its remarks name
+        // already says what it is.
         val tag = primary.get("tag")?.asString ?: remarks
         val protocolRaw = primary.get("protocol")?.asString?.lowercase() ?: return null
         val settings = primary.getAsJsonObject("settings")

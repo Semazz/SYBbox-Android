@@ -8,8 +8,8 @@ import org.junit.Test
 
 class SubscriptionParserTest {
 
-    // Minimal LiteVPN style payload: JSON array with remarks + V2Ray outbounds
-    private val litePayload = """
+    // A minimal v2ray config array: each element has remarks and its own outbounds.
+    private val configArrayPayload = """
         [
           {
             "remarks": "🔁 Автоматический выбор | Vless, Hysteria2, Grpc",
@@ -51,8 +51,8 @@ class SubscriptionParserTest {
     """.trimIndent()
 
     @Test
-    fun `lite vpn json array parses to one profile per remarks in order`() {
-        val result = SubscriptionParser.parseLiteVpnArray(litePayload)
+    fun `a config array yields one profile per remarks, in order`() {
+        val result = SubscriptionParser.parseConfigArray(configArrayPayload)
         assertNotNull(result)
         assertEquals(4, result!!.size)
         assertEquals("🔁 Автоматический выбор | Vless, Hysteria2, Grpc", result[0].name)
@@ -62,8 +62,8 @@ class SubscriptionParserTest {
     }
 
     @Test
-    fun `lite vpn protocols and transports are correct`() {
-        val result = SubscriptionParser.parseLiteVpnArray(litePayload)!!
+    fun `config array protocols and transports are read correctly`() {
+        val result = SubscriptionParser.parseConfigArray(configArrayPayload)!!
         // First is hysteria2-187 -> HYSTERIA2
         assertEquals(ProtocolType.HYSTERIA2, result[0].protocol)
         assertEquals("se.example.com", result[0].address)
@@ -84,8 +84,8 @@ class SubscriptionParserTest {
     }
 
     @Test
-    fun `lite vpn integrates via generic parse`() {
-        val generic = SubscriptionParser.parse(litePayload, com.sybbox.domain.model.SubType.SING_BOX)
+    fun `a config array is picked up by the generic entry point`() {
+        val generic = SubscriptionParser.parse(configArrayPayload, com.sybbox.domain.model.SubType.SING_BOX)
         assertEquals(4, generic.size)
         assertTrue(generic.all { it.name.isNotBlank() })
     }

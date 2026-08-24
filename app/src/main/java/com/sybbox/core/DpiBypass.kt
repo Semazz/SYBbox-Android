@@ -37,7 +37,7 @@ object DpiBypass {
         return FragmentSpec(shouldFragment, delay, shouldRecord)
     }
 
-    /** Decide uTLS fingerprint: firefox for Reality (matches LiteVPN), chrome for others */
+    /** uTLS fingerprint: firefox for reality, chrome for the rest. */
     fun fingerprintFor(profile: ServerProfile): String {
         if (profile.fingerprint.isNotBlank() && profile.fingerprint != "chrome") return profile.fingerprint
         return when (profile.security) {

@@ -27,7 +27,7 @@
   of them and left an empty list behind the catch; SnakeYAML was already a declared,
   unused dependency.
 - One malformed entry no longer discards the whole subscription. `parseUri` cannot throw,
-  and Clash, sing-box and LiteVPN entries are isolated per item.
+  and Clash, sing-box and config-array entries are isolated per item.
 - IPv6 literals keep their address and port — `indexOf(':')` used to cut them in half.
   Links with no port, no `@`, or a stray `%` are rejected individually.
 - TUIC reads its password from the userinfo, not the query. `vmess://` payloads decode

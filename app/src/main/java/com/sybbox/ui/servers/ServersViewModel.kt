@@ -191,8 +191,8 @@ class ServersViewModel @Inject constructor(
         _refreshing.update { it + subscriptionId }
         try {
             val primaryUa = com.sybbox.data.remote.SubscriptionUserAgent.value(settingsDataStore)
-            // Panels vary what they serve by User-Agent. Happ first, because it is what
-            // yields the LiteVPN array with its names and ordering intact.
+            // Panels vary what they serve by User-Agent, so the list is tried in the order
+            // most likely to return a config array with its names and ordering intact.
             val fallbackUas = listOf(
                 "Happ/1.0",
                 primaryUa,

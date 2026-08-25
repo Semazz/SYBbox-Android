@@ -10,8 +10,13 @@
 - **Hide the tunnel address**, on by default. The tunnel takes a link-local address
   (`169.254.19.1/30`), which WebRTC skips when it lists local addresses — a full-tunnel VPN
   otherwise hands the probe its own tunnel address to report. Link-local source addresses are
-  unusual enough that the tunnel check now falls back to `172.19.0.1/30` and says so in the log
-  if nothing gets through, and the setting can be turned off outright.
+  unusual enough that the app falls back to `172.19.0.1/30` and says so in the log when the
+  tunnel carries nothing or Android keeps no resolver for it, and the setting can be turned off
+  outright.
+- Apps get a routable resolver address while the tunnel address is link-local. Android would not
+  hand a link-local resolver to apps, so name lookups died — anything with hardcoded addresses
+  kept working, which made it look like only websites were broken. DNS is hijacked by protocol,
+  not by destination, so the advertised address only has to fall inside the tunnel's routes.
 - STUN rides the tunnel. Rejecting it is what made a leak test report the tunnel's own address:
   with no server-reflexive candidate to show, the page falls back to the local one. Letting STUN
   through means WebRTC reports the exit address, which is the answer a leak test wants to see.

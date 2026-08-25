@@ -25,6 +25,23 @@
   per-install id into every request whether or not you wanted one; identity now lives in the
   headers, behind the switch.
 
+### Added — home screen widgets
+- **Two widgets.** A small one is a logo, a state line and a power button. A wide one adds the
+  server it is on, total traffic and how long it has been up. Both use the app's own palette and
+  follow the system between light and dark; the power button carries the accent while the tunnel
+  is up and goes quiet when it is not.
+- The button connects to the last server used and disconnects again. Where VPN permission has not
+  been granted, or no server has been picked, it opens the app instead of failing silently.
+  Tapping anywhere else on the widget opens the app.
+- Widgets follow the tunnel while the app's process is alive, refreshing on a state change and
+  about every ten seconds while connected, so traffic and uptime stay honest without redrawing
+  every second.
+
+### Changed — subscriptions
+- The subscription User-Agent carries a per-install key again — `SYBbox/2.0.2/Android/<key>` —
+  rather than the build number. Panels key their device lists on it, and a number shared by every
+  install of the same build is no key at all.
+
 ### Fixed — IP leaks
 - **Leak protection**, on by default. IPv6 is rejected and the resolver is pinned to `ipv4_only`.
   The tunnel carries IPv4; leaving AAAA answers in play meant an address the tunnel never covered.

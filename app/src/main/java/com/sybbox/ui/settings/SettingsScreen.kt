@@ -435,6 +435,14 @@ fun SettingsScreen(
                     onCheckedChange = viewModel::setLeakProtection,
                     icon = Icons.Rounded.Shield,
                 )
+                SettingsDivider()
+                SettingsToggle(
+                    title = stringResource(R.string.block_webrtc),
+                    summary = stringResource(R.string.block_webrtc_summary),
+                    checked = state.blockWebRtc,
+                    onCheckedChange = viewModel::setBlockWebRtc,
+                    icon = Icons.Rounded.Lock,
+                )
             }
         }
 

@@ -181,7 +181,7 @@ object ConfigBuilder {
             })
         }
 
-        if (settings.leakProtection) {
+        if (settings.blockWebRtc) {
             rules.add(JsonObject().apply {
                 add("domain_regex", jsonArrayOf(STUN_DOMAIN_REGEX))
                 add("domain_suffix", jsonArrayOf(STUN_DOMAINS))
@@ -632,7 +632,7 @@ object ConfigBuilder {
             addProperty("action", "hijack-dns")
         })
 
-        if (settings.leakProtection) {
+        if (settings.blockWebRtc) {
             rules.add(JsonObject().apply {
                 add("network", jsonArrayOf("udp"))
                 add("port", JsonArray().apply { STUN_PORTS.forEach { add(it) } })
@@ -643,6 +643,8 @@ object ConfigBuilder {
                 add("domain_suffix", jsonArrayOf(STUN_DOMAINS))
                 addProperty("action", "reject")
             })
+        }
+        if (settings.leakProtection) {
             rules.add(JsonObject().apply {
                 addProperty("ip_version", 6)
                 addProperty("action", "reject")

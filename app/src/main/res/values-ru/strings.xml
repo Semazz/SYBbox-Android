@@ -239,10 +239,12 @@
     <string name="rename_subscription">Переименовать подписку</string>
     <string name="subscription_name">Название подписки</string>
     <string name="leak_protection">Защита от утечек IP</string>
-    <string name="leak_protection_summary">Блокирует определение адреса через WebRTC и IPv6, чтобы наружу не ушёл реальный IP. Звонки и видеосвязь могут перестать работать.</string>
+    <string name="leak_protection_summary">Держит IPv6 вне туннеля и переводит разрешение имён на IPv4, чтобы трафик не ушёл дорогой, которую туннель не покрывает.</string>
     <string name="delete_all_servers">Удалить все</string>
     <string name="delete_all_servers_confirm">Удалить все отдельные серверы (%1$d)?</string>
     <string name="msg_servers_deleted">Серверы удалены</string>
     <string name="no_apps_found">Ничего не найдено</string>
+    <string name="block_webrtc">Блокировать WebRTC</string>
+    <string name="block_webrtc_summary">Полностью режет STUN и TURN. WebRTC не найдёт никакого адреса, но звонки и видеосвязь перестанут работать.</string>
 </resources>
 

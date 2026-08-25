@@ -226,9 +226,11 @@
     <string name="mux_padding_summary">填充帧以隐藏其大小</string>
     <string name="msg_foreign_vpn">另一个 VPN 应用正在运行 — 请授予 SYBbox VPN 权限，以便在检查期间将其关闭</string>
     <string name="leak_protection">IP 泄漏防护</string>
-    <string name="leak_protection_summary">阻止 WebRTC 与 IPv6 探测真实地址，通话和视频可能无法使用。</string>
+    <string name="leak_protection_summary">将 IPv6 挡在隧道之外，并把域名解析固定为 IPv4。</string>
     <string name="delete_all_servers">全部删除</string>
     <string name="delete_all_servers_confirm">删除全部 %1$d 个独立服务器？</string>
     <string name="msg_servers_deleted">服务器已删除</string>
     <string name="no_apps_found">未找到应用</string>
+    <string name="block_webrtc">阻止 WebRTC</string>
+    <string name="block_webrtc_summary">直接拒绝 STUN 与 TURN。WebRTC 找不到任何地址，通话也将无法使用。</string>
 </resources>

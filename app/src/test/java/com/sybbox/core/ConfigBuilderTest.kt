@@ -261,10 +261,8 @@ class ConfigBuilderTest {
             rules.none { it.get("outbound")?.asString == ConfigBuilder.TAG_DIRECT },
         )
         assertTrue(
-            "stun is only rejected while leak protection asks for it",
-            parse(ConfigBuilder.build(realityVless, global.copy(leakProtection = false)))
-                .getAsJsonObject("route").getAsJsonArray("rules").map { it.asJsonObject }
-                .none { it.get("action")?.asString == "reject" && it.getAsJsonArray("port") != null },
+            "stun is only rejected while the webrtc switch asks for it",
+            rules.none { it.get("action")?.asString == "reject" && it.getAsJsonArray("port") != null },
         )
         val dnsRules = config.getAsJsonObject("dns").getAsJsonArray("rules")?.map { it.asJsonObject }.orEmpty()
         assertTrue(dnsRules.none { it.get("server")?.asString == "dns-direct" })
@@ -309,29 +307,19 @@ class ConfigBuilderTest {
     }
 
     @Test
-    fun `leak protection closes the webrtc and ipv6 paths`() {
+    fun `leak protection closes the ipv6 path and drops the ipv6 tunnel address`() {
         val rules = parse(ConfigBuilder.build(realityVless, defaults))
             .getAsJsonObject("route").getAsJsonArray("rules").map { it.asJsonObject }
-
-        val stun = rules.firstOrNull { it.get("action")?.asString == "reject" && it.get("port") != null }
-        assertNotNull("webrtc discovery must not reach the network", stun)
-        assertEquals("udp", stun!!.getAsJsonArray("network").first().asString)
-        assertTrue(stun.getAsJsonArray("port").map { it.asInt }.contains(19302))
 
         assertTrue(
             "ipv6 must not escape while the tunnel carries ipv4",
             rules.any { it.get("ip_version")?.asInt == 6 && it.get("action")?.asString == "reject" },
-        )
-        assertTrue(
-            "matching by keyword catches saturn and return, which is why it was dropped",
-            rules.none { it.has("domain_keyword") },
         )
         assertEquals(
             "ipv4_only",
             parse(ConfigBuilder.build(realityVless, defaults))
                 .getAsJsonObject("dns").get("strategy").asString,
         )
-
         val addresses = parse(ConfigBuilder.build(realityVless, defaults))
             .getAsJsonArray("inbounds")[0].asJsonObject
             .getAsJsonArray("address").map { it.asString }
@@ -343,12 +331,32 @@ class ConfigBuilderTest {
     }
 
     @Test
-    fun `leak protection off leaves webrtc and ipv6 alone`() {
+    fun `stun rides the tunnel unless webrtc is blocked outright`() {
+        val rules = parse(ConfigBuilder.build(realityVless, defaults))
+            .getAsJsonObject("route").getAsJsonArray("rules").map { it.asJsonObject }
+        assertTrue(
+            "blocking stun leaves webrtc reporting the tunnel address instead of the exit address",
+            rules.none { it.get("action")?.asString == "reject" && it.get("port") != null },
+        )
+
+        val blocked = parse(ConfigBuilder.build(realityVless, defaults.copy(blockWebRtc = true)))
+            .getAsJsonObject("route").getAsJsonArray("rules").map { it.asJsonObject }
+        val stun = blocked.firstOrNull { it.get("action")?.asString == "reject" && it.get("port") != null }
+        assertNotNull(stun)
+        assertEquals("udp", stun!!.getAsJsonArray("network").first().asString)
+        assertTrue(stun.getAsJsonArray("port").map { it.asInt }.contains(19302))
+        assertTrue(
+            "matching by keyword catches saturn and return, which is why it was dropped",
+            blocked.none { it.has("domain_keyword") },
+        )
+    }
+
+    @Test
+    fun `leak protection off leaves ipv6 alone`() {
         val off = defaults.copy(leakProtection = false)
         val rules = parse(ConfigBuilder.build(realityVless, off))
             .getAsJsonObject("route").getAsJsonArray("rules").map { it.asJsonObject }
         assertTrue(rules.none { it.get("ip_version") != null })
-        assertTrue(rules.none { it.get("action")?.asString == "reject" && it.get("port") != null })
         val addresses = parse(ConfigBuilder.build(realityVless, off))
             .getAsJsonArray("inbounds")[0].asJsonObject
             .getAsJsonArray("address").map { it.asString }

@@ -37,6 +37,7 @@ data class SettingsState(
     val autoRoute: Boolean = true,
     val strictRoute: Boolean = true,
     val leakProtection: Boolean = true,
+    val blockWebRtc: Boolean = false,
 
     val subAutoUpdate: Boolean = true,
     val defaultSubInterval: Int = 12,

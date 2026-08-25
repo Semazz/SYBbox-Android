@@ -245,10 +245,12 @@
     <string name="mux_padding">Multiplex padding</string>
     <string name="mux_padding_summary">Pads multiplexed frames to hide their sizes</string>
     <string name="leak_protection">IP leak protection</string>
-    <string name="leak_protection_summary">Blocks WebRTC discovery and IPv6, so nothing outside the tunnel can reveal your address. Voice and video calls may stop working.</string>
+    <string name="leak_protection_summary">Keeps IPv6 out of the tunnel and pins name resolution to IPv4, so nothing can travel a path the tunnel does not cover.</string>
     <string name="delete_all_servers">Delete all</string>
     <string name="delete_all_servers_confirm">Delete all %1$d standalone servers?</string>
     <string name="msg_servers_deleted">Servers deleted</string>
     <string name="no_apps_found">No apps found</string>
+    <string name="block_webrtc">Block WebRTC discovery</string>
+    <string name="block_webrtc_summary">Refuses STUN and TURN outright. WebRTC then finds no address at all, and voice and video calls stop working.</string>
 </resources>
 

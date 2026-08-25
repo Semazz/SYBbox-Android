@@ -10,9 +10,11 @@
 - **Hide the tunnel address**, on by default. The tunnel takes a link-local address
   (`169.254.19.1/30`), which WebRTC skips when it lists local addresses — a full-tunnel VPN
   otherwise hands the probe its own tunnel address to report. Link-local source addresses are
-  unusual enough that the app falls back to `172.19.0.1/30` and says so in the log when the
-  tunnel carries nothing or Android keeps no resolver for it, and the setting can be turned off
-  outright.
+  unusual enough that the app falls back to `172.19.0.1/30`, and says so in the log, if Android
+  keeps no resolver for the tunnel. That is the one symptom the address can cause; a server that
+  carries no traffic is the server's problem and no longer costs the hidden address — which is
+  why XHTTP, slow to come up, was the one transport still showing `172.19.0.1`. The check waits
+  up to two seconds for Android to publish the tunnel's resolver rather than judging it at once.
 - Apps get a routable resolver address while the tunnel address is link-local. Android would not
   hand a link-local resolver to apps, so name lookups died — anything with hardcoded addresses
   kept working, which made it look like only websites were broken. DNS is hijacked by protocol,

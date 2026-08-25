@@ -131,8 +131,8 @@ fun ServersScreen(
     var showAddMenu by remember { mutableStateOf(false) }
     var addServerDialog by remember { mutableStateOf(false) }
     var addSubscriptionDialog by remember { mutableStateOf(false) }
-    var expandedSubscription by remember { mutableStateOf<Long?>(null) }
-    var expandedManual by remember { mutableStateOf(true) }
+    val collapsedGroups by viewModel.collapsedGroups.collectAsStateWithLifecycle()
+    val expandedManual = MANUAL_GROUP !in collapsedGroups
     var showQrDialog by remember { mutableStateOf(false) }
     var qrDialogProfile by remember { mutableStateOf<ServerProfile?>(null) }
     var manualMenu by remember { mutableStateOf(false) }
@@ -140,7 +140,7 @@ fun ServersScreen(
 
     val manual = profiles.filter { it.subscriptionId == 0L }
 
-    val settledAt = remember(expandedManual, expandedSubscription, selectedId, profiles.size, subscriptions.size) {
+    val settledAt = remember(collapsedGroups, selectedId, profiles.size, subscriptions.size) {
         SystemClock.elapsedRealtime()
     }
     fun steady(): Boolean = SystemClock.elapsedRealtime() - settledAt >= MISCLICK_GUARD_MS
@@ -216,7 +216,7 @@ fun ServersScreen(
         if (manual.isNotEmpty()) {
             item(key = "manual-group") {
                 Spacer(Modifier.height(4.dp))
-                SybCard(modifier = Modifier.fillMaxWidth(), onClick = { if (steady()) expandedManual = !expandedManual }) {
+                SybCard(modifier = Modifier.fillMaxWidth(), onClick = { if (steady()) viewModel.toggleGroup(MANUAL_GROUP) }) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(start = SybSpacing.cardH, top = SybSpacing.cardV, bottom = SybSpacing.cardV, end = SybSpacing.cardEndInset),
                             verticalAlignment = Alignment.CenterVertically,
@@ -243,7 +243,7 @@ fun ServersScreen(
                                 }
                             }
                             IconButton(
-                                onClick = { if (steady()) expandedManual = !expandedManual },
+                                onClick = { if (steady()) viewModel.toggleGroup(MANUAL_GROUP) },
                                 modifier = Modifier.size(36.dp),
                             ) {
                                 val rot by animateFloatAsState(
@@ -280,7 +280,7 @@ fun ServersScreen(
                                         leadingIcon = { Icon(Icons.Rounded.Speed, null) },
                                         onClick = {
                                             manualMenu = false
-                                            expandedManual = true
+                                            viewModel.expandGroup(MANUAL_GROUP)
                                             viewModel.measureAll(manual)
                                         },
                                     )
@@ -307,10 +307,7 @@ fun ServersScreen(
                         latency = if (showLatency) latencies[profile.id] ?: profile.lastLatency else 0,
                         testing = profile.id in testing,
                         onSelect = { if (steady()) viewModel.select(profile.id) },
-                        onPing = {
-                            expandedManual = true
-                            viewModel.measureLatency(profile)
-                        },
+                        onPing = { viewModel.measureLatency(profile) },
                         onDelete = { viewModel.deleteProfile(profile) },
                         onCopied = { viewModel.notifyCopied() },
                         onShareQr = { qrDialogProfile = profile; showQrDialog = true },
@@ -321,7 +318,8 @@ fun ServersScreen(
 
         subscriptions.forEach { subscription ->
             val members = profiles.filter { it.subscriptionId == subscription.id }
-            val isExpanded = expandedSubscription == subscription.id
+            val groupKey = "sub-${subscription.id}"
+            val isExpanded = groupKey !in collapsedGroups
             val visibleMembers = if (isExpanded) members else emptyList()
             item(key = "sub-${subscription.id}") {
 
@@ -334,14 +332,11 @@ fun ServersScreen(
                     showPing = true,
                     selectedName = members.firstOrNull { it.id == selectedId }?.displayName(),
                     onToggle = {
-                        if (steady()) {
-                            expandedSubscription =
-                                if (expandedSubscription == subscription.id) null else subscription.id
-                        }
+                        if (steady()) viewModel.toggleGroup(groupKey)
                     },
                     onRefresh = { viewModel.refreshSubscription(subscription) },
                     onPingAll = {
-                        expandedSubscription = subscription.id
+                        viewModel.expandGroup(groupKey)
                         viewModel.measureAll(members)
                     },
                     onCopyLink = {
@@ -368,10 +363,7 @@ fun ServersScreen(
                         latency = if (showLatency) latencies[profile.id] ?: profile.lastLatency else 0,
                         testing = profile.id in testing,
                         onSelect = { if (steady()) viewModel.select(profile.id) },
-                        onPing = {
-                            expandedSubscription = subscription.id
-                            viewModel.measureLatency(profile)
-                        },
+                        onPing = { viewModel.measureLatency(profile) },
                         onDelete = { viewModel.deleteProfile(profile) },
                         onCopied = { viewModel.notifyCopied() },
                         onShareQr = { qrDialogProfile = profile; showQrDialog = true },
@@ -430,6 +422,8 @@ fun ServersScreen(
 }
 
 private const val MISCLICK_GUARD_MS = 400L
+
+private const val MANUAL_GROUP = "manual"
 
 @Composable
 private fun AddMenu(

@@ -58,6 +58,23 @@ class ServersViewModel @Inject constructor(
     val selectedProfileId: StateFlow<Long> = settingsDataStore.lastProfileId
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), -1L)
 
+    val collapsedGroups: StateFlow<Set<String>> = settingsDataStore.collapsedGroups
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
+    fun toggleGroup(key: String) {
+        viewModelScope.launch {
+            val current = settingsDataStore.collapsedGroups.first()
+            settingsDataStore.setCollapsedGroups(if (key in current) current - key else current + key)
+        }
+    }
+
+    fun expandGroup(key: String) {
+        viewModelScope.launch {
+            val current = settingsDataStore.collapsedGroups.first()
+            if (key in current) settingsDataStore.setCollapsedGroups(current - key)
+        }
+    }
+
     private val _latencies = MutableStateFlow<Map<Long, Int>>(emptyMap())
     val latencies: StateFlow<Map<Long, Int>> = _latencies.asStateFlow()
 

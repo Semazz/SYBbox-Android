@@ -40,6 +40,8 @@ class SettingsDataStore @Inject constructor(
     val strictRoute: Flow<Boolean> = dataStore.data.map { it[KEY_STRICT_ROUTE] ?: true }
     val leakProtection: Flow<Boolean> = dataStore.data.map { it[KEY_LEAK_PROTECTION] ?: true }
     val blockWebRtc: Flow<Boolean> = dataStore.data.map { it[KEY_BLOCK_WEBRTC] ?: false }
+    val hideTunnelAddress: Flow<Boolean> = dataStore.data.map { it[KEY_HIDE_TUNNEL_ADDRESS] ?: true }
+    val collapsedGroups: Flow<Set<String>> = dataStore.data.map { it[KEY_COLLAPSED_GROUPS] ?: emptySet() }
 
     val themeMode: Flow<String> = dataStore.data.map { it[KEY_THEME_MODE] ?: "SYSTEM" }
     val dynamicColor: Flow<Boolean> = dataStore.data.map { it[KEY_DYNAMIC_COLOR] ?: true }
@@ -100,6 +102,7 @@ class SettingsDataStore @Inject constructor(
             strictRoute = p[KEY_STRICT_ROUTE] ?: true,
             leakProtection = p[KEY_LEAK_PROTECTION] ?: true,
             blockWebRtc = p[KEY_BLOCK_WEBRTC] ?: false,
+            hideTunnelAddress = p[KEY_HIDE_TUNNEL_ADDRESS] ?: true,
             subAutoUpdate = p[KEY_SUB_AUTO_UPDATE] ?: true,
             defaultSubInterval = p[KEY_DEFAULT_SUB_INTERVAL] ?: 12,
             autoFailover = p[KEY_AUTO_FAILOVER] ?: false,
@@ -139,6 +142,8 @@ class SettingsDataStore @Inject constructor(
     suspend fun setStrictRoute(value: Boolean) = dataStore.edit { it[KEY_STRICT_ROUTE] = value }
     suspend fun setLeakProtection(value: Boolean) = dataStore.edit { it[KEY_LEAK_PROTECTION] = value }
     suspend fun setBlockWebRtc(value: Boolean) = dataStore.edit { it[KEY_BLOCK_WEBRTC] = value }
+    suspend fun setHideTunnelAddress(value: Boolean) = dataStore.edit { it[KEY_HIDE_TUNNEL_ADDRESS] = value }
+    suspend fun setCollapsedGroups(value: Set<String>) = dataStore.edit { it[KEY_COLLAPSED_GROUPS] = value }
     suspend fun setThemeMode(value: String) = dataStore.edit { it[KEY_THEME_MODE] = value }
     suspend fun setDynamicColor(value: Boolean) = dataStore.edit { it[KEY_DYNAMIC_COLOR] = value }
     suspend fun setLanguage(value: String) = dataStore.edit { it[KEY_LANGUAGE] = value }
@@ -182,6 +187,8 @@ class SettingsDataStore @Inject constructor(
         private val KEY_STRICT_ROUTE = booleanPreferencesKey("strict_route")
         private val KEY_LEAK_PROTECTION = booleanPreferencesKey("leak_protection")
         private val KEY_BLOCK_WEBRTC = booleanPreferencesKey("block_webrtc")
+        private val KEY_HIDE_TUNNEL_ADDRESS = booleanPreferencesKey("hide_tunnel_address")
+        private val KEY_COLLAPSED_GROUPS = stringSetPreferencesKey("collapsed_groups")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         private val KEY_DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         private val KEY_LANGUAGE = stringPreferencesKey("language")

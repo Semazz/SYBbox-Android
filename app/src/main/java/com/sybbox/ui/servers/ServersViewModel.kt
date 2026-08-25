@@ -335,10 +335,7 @@ class ServersViewModel @Inject constructor(
         viewModelScope.launch {
             _testing.update { it + profile.id }
             if (com.sybbox.service.VpnConflict.foreignVpnActive(getApplication())) {
-                val evicted = com.sybbox.service.VpnConflict.evictForeignVpn(
-                    getApplication(),
-                    selectedProfileId.value.takeIf { it > 0 } ?: profile.id,
-                )
+                val evicted = com.sybbox.service.VpnConflict.evictForeignVpn(getApplication())
                 if (!evicted) emit(UiMessage(R.string.msg_foreign_vpn))
             }
             val latency = withContext(Dispatchers.IO) {
@@ -355,10 +352,7 @@ class ServersViewModel @Inject constructor(
         viewModelScope.launch {
             _testing.update { it + targets.map(ServerProfile::id) }
             if (targets.isNotEmpty() && com.sybbox.service.VpnConflict.foreignVpnActive(getApplication())) {
-                val evicted = com.sybbox.service.VpnConflict.evictForeignVpn(
-                    getApplication(),
-                    selectedProfileId.value.takeIf { it > 0 } ?: targets.first().id,
-                )
+                val evicted = com.sybbox.service.VpnConflict.evictForeignVpn(getApplication())
                 if (!evicted) emit(UiMessage(R.string.msg_foreign_vpn))
             }
             val results = withContext(Dispatchers.IO) {
@@ -389,6 +383,18 @@ class ServersViewModel @Inject constructor(
             profileRepository.deleteProfile(profile)
             if (wasActive) SybBoxVpnService.disconnect(getApplication())
             emit(UiMessage(R.string.msg_server_deleted))
+        }
+    }
+
+    fun deleteAllManualProfiles() {
+        viewModelScope.launch {
+            val activeId = SybBoxVpnService.appState.value.activeProfile?.id
+            val manual = profileRepository.getAllProfilesOnce().filter { it.subscriptionId == 0L }
+            if (manual.isEmpty()) return@launch
+            val shouldDisconnect = manual.any { it.id == activeId }
+            profileRepository.deleteProfilesBySubscription(0L)
+            if (shouldDisconnect) SybBoxVpnService.disconnect(getApplication())
+            emit(UiMessage(R.string.msg_servers_deleted))
         }
     }
 

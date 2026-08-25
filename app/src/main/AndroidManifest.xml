@@ -86,6 +86,11 @@
                 android:value="vpn" />
         </service>
 
+        <service
+            android:name=".service.VpnEvictService"
+            android:exported="false"
+            android:permission="android.permission.BIND_VPN_SERVICE" />
+
         <receiver
             android:name=".service.BootReceiver"
             android:exported="true">

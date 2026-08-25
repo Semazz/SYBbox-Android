@@ -13,7 +13,6 @@ import com.sybbox.service.SybBoxVpnService
 import com.sybbox.ui.UiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -22,6 +21,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -60,6 +62,10 @@ class HomeViewModel @Inject constructor(
     private val _messages = MutableSharedFlow<UiMessage>(extraBufferCapacity = 4)
     val messages: SharedFlow<UiMessage> = _messages
 
+    init {
+        pingOnConnect()
+    }
+
     fun connect() {
         val profileId = selectedProfileId.value
         if (profileId <= 0) {
@@ -80,17 +86,32 @@ class HomeViewModel @Inject constructor(
     }
 
     fun pingSelected() {
-        val profileId = selectedProfileId.value
-        if (profileId <= 0 || _pingTesting.value) return
+        viewModelScope.launch { measure(selectedProfileId.value, announceFailure = true) }
+    }
+
+    private fun pingOnConnect() {
         viewModelScope.launch {
-            _pingTesting.value = true
-            if (com.sybbox.service.VpnConflict.foreignVpnActive(getApplication())) {
-                val evicted = com.sybbox.service.VpnConflict.evictForeignVpn(getApplication(), profileId)
-                if (!evicted) {
-                    _messages.tryEmit(UiMessage(R.string.msg_foreign_vpn))
+            appState
+                .map { it.connectionState }
+                .distinctUntilChanged()
+                .filter { it == ConnectionState.CONNECTED }
+                .collect {
+                    val active = SybBoxVpnService.appState.value.activeProfile?.id ?: selectedProfileId.value
+                    measure(active, announceFailure = false)
                 }
+        }
+    }
+
+    private suspend fun measure(profileId: Long, announceFailure: Boolean) {
+        if (profileId <= 0 || _pingTesting.value) return
+        _pingTesting.value = true
+        try {
+            if (com.sybbox.service.VpnConflict.foreignVpnActive(getApplication())) {
+                val evicted = com.sybbox.service.VpnConflict.evictForeignVpn(getApplication())
+                if (!evicted) _messages.tryEmit(UiMessage(R.string.msg_foreign_vpn))
             }
             val target = profiles.value.firstOrNull { it.id == profileId }
+                ?: profileRepository.getProfileById(profileId)
             val latency = if (target == null) {
                 com.sybbox.core.PingTool.UNREACHABLE
             } else {
@@ -100,9 +121,14 @@ class HomeViewModel @Inject constructor(
             }
             _latencies.update { it + (profileId to latency) }
             profileRepository.updateLatency(profileId, latency)
-            if (latency <= 0) _messages.tryEmit(UiMessage(R.string.msg_ping_failed))
-            _pingVisibleUntil.value = System.currentTimeMillis() + 10_000
+            if (latency <= 0 && announceFailure) _messages.tryEmit(UiMessage(R.string.msg_ping_failed))
+            _pingVisibleUntil.value = System.currentTimeMillis() + PING_VISIBLE_MS
+        } finally {
             _pingTesting.value = false
         }
+    }
+
+    private companion object {
+        const val PING_VISIBLE_MS = 10_000L
     }
 }

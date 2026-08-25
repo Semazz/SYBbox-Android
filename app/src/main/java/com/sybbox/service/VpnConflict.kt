@@ -1,6 +1,7 @@
 package com.sybbox.service
 
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.VpnService
@@ -8,6 +9,9 @@ import com.sybbox.domain.model.ConnectionState
 import kotlinx.coroutines.delay
 
 object VpnConflict {
+
+    private const val WAIT_STEP_MS = 100L
+    private const val WAIT_STEPS = 30
 
     fun foreignVpnActive(context: Context): Boolean {
         if (SybBoxVpnService.appState.value.connectionState == ConnectionState.CONNECTED) return false
@@ -23,27 +27,17 @@ object VpnConflict {
         VpnService.prepare(context) == null
     }.getOrDefault(false)
 
-    suspend fun evictForeignVpn(context: Context, profileId: Long): Boolean {
+    suspend fun evictForeignVpn(context: Context): Boolean {
         if (!foreignVpnActive(context)) return true
         if (!canTakeOver(context)) return false
-        SybBoxVpnService.connect(context, profileId)
-        var connected = false
-        repeat(50) {
-            delay(100)
-            val state = SybBoxVpnService.appState.value.connectionState
-            if (state == ConnectionState.CONNECTED) {
-                connected = true
-                return@repeat
-            }
-            if (state == ConnectionState.FAILED) return@repeat
+        val started = runCatching {
+            context.startService(Intent(context, VpnEvictService::class.java))
+        }.isSuccess
+        if (!started) return false
+        repeat(WAIT_STEPS) {
+            delay(WAIT_STEP_MS)
+            if (!foreignVpnActive(context)) return true
         }
-        if (!connected) {
-            SybBoxVpnService.disconnect(context)
-            return false
-        }
-        delay(600)
-        SybBoxVpnService.disconnect(context)
-        delay(400)
-        return !foreignVpnActive(context)
+        return false
     }
 }

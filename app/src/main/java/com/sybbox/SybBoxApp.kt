@@ -8,7 +8,15 @@ import android.os.Build
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.sybbox.service.SybBoxVpnService
+import com.sybbox.service.SybBoxWidget
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -22,6 +30,23 @@ class SybBoxApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannels()
+        keepWidgetsCurrent()
+    }
+
+    private fun keepWidgetsCurrent() {
+        CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
+            SybBoxVpnService.appState
+                .map { state ->
+                    listOf(
+                        state.connectionState,
+                        state.activeProfile?.id,
+                        state.stats.totalUpload + state.stats.totalDownload shr 20,
+                        state.stats.duration / WIDGET_TICK_MILLIS,
+                    ).joinToString("|")
+                }
+                .distinctUntilChanged()
+                .collect { SybBoxWidget.refresh(this@SybBoxApp) }
+        }
     }
 
     private fun createNotificationChannels() {
@@ -52,6 +77,7 @@ class SybBoxApp : Application(), Configuration.Provider {
     }
 
     companion object {
+        const val WIDGET_TICK_MILLIS = 10_000L
         const val CHANNEL_VPN = "sybbox_vpn"
         const val CHANNEL_UPDATES = "sybbox_updates"
 

@@ -3,5 +3,11 @@
     <color name="ic_launcher_background">#1A1C1E</color>
     
     <color name="syb_window_background">#F1F3E6</color>
+    <color name="widget_surface">#FFFFFF</color>
+    <color name="widget_accent">#D9FF57</color>
+    <color name="widget_power_idle">#E4E7D8</color>
+    <color name="widget_on_accent">#41611D</color>
+    <color name="widget_text">#14170F</color>
+    <color name="widget_text_dim">#8A14170F</color>
 </resources>
 

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="syb_window_background">#070707</color>
+    <color name="widget_surface">#12150F</color>
+    <color name="widget_accent">#D9FF57</color>
+    <color name="widget_power_idle">#20241C</color>
+    <color name="widget_on_accent">#14170F</color>
+    <color name="widget_text">#F5F6EF</color>
+    <color name="widget_text_dim">#8CFFFFFF</color>
 </resources>
 

@@ -242,5 +242,11 @@
     <string name="mux_padding">Relleno de multiplexación</string>
     <string name="mux_padding_summary">Rellena las tramas para ocultar su tamaño</string>
     <string name="msg_foreign_vpn">Otra app VPN está activa: concede el permiso de VPN a SYBbox para que pueda desactivarla durante la comprobación</string>
+    <string name="leak_protection">Proteccion contra fugas de IP</string>
+    <string name="leak_protection_summary">Bloquea la deteccion por WebRTC e IPv6 para que no se filtre tu direccion real. Las llamadas y videollamadas pueden dejar de funcionar.</string>
+    <string name="delete_all_servers">Eliminar todos</string>
+    <string name="delete_all_servers_confirm">Eliminar los %1$d servidores independientes?</string>
+    <string name="msg_servers_deleted">Servidores eliminados</string>
+    <string name="no_apps_found">No se encontraron aplicaciones</string>
 </resources>
 

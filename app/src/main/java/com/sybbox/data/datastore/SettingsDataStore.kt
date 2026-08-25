@@ -38,6 +38,7 @@ class SettingsDataStore @Inject constructor(
     val tunMTU: Flow<Int> = dataStore.data.map { it[KEY_TUN_MTU] ?: 1500 }
     val autoRoute: Flow<Boolean> = dataStore.data.map { it[KEY_AUTO_ROUTE] ?: true }
     val strictRoute: Flow<Boolean> = dataStore.data.map { it[KEY_STRICT_ROUTE] ?: true }
+    val leakProtection: Flow<Boolean> = dataStore.data.map { it[KEY_LEAK_PROTECTION] ?: true }
 
     val themeMode: Flow<String> = dataStore.data.map { it[KEY_THEME_MODE] ?: "SYSTEM" }
     val dynamicColor: Flow<Boolean> = dataStore.data.map { it[KEY_DYNAMIC_COLOR] ?: true }
@@ -96,6 +97,7 @@ class SettingsDataStore @Inject constructor(
             tunMTU = p[KEY_TUN_MTU] ?: 1500,
             autoRoute = p[KEY_AUTO_ROUTE] ?: true,
             strictRoute = p[KEY_STRICT_ROUTE] ?: true,
+            leakProtection = p[KEY_LEAK_PROTECTION] ?: true,
             subAutoUpdate = p[KEY_SUB_AUTO_UPDATE] ?: true,
             defaultSubInterval = p[KEY_DEFAULT_SUB_INTERVAL] ?: 12,
             autoFailover = p[KEY_AUTO_FAILOVER] ?: false,
@@ -133,6 +135,7 @@ class SettingsDataStore @Inject constructor(
     suspend fun setTunMTU(value: Int) = dataStore.edit { it[KEY_TUN_MTU] = value }
     suspend fun setAutoRoute(value: Boolean) = dataStore.edit { it[KEY_AUTO_ROUTE] = value }
     suspend fun setStrictRoute(value: Boolean) = dataStore.edit { it[KEY_STRICT_ROUTE] = value }
+    suspend fun setLeakProtection(value: Boolean) = dataStore.edit { it[KEY_LEAK_PROTECTION] = value }
     suspend fun setThemeMode(value: String) = dataStore.edit { it[KEY_THEME_MODE] = value }
     suspend fun setDynamicColor(value: Boolean) = dataStore.edit { it[KEY_DYNAMIC_COLOR] = value }
     suspend fun setLanguage(value: String) = dataStore.edit { it[KEY_LANGUAGE] = value }
@@ -174,6 +177,7 @@ class SettingsDataStore @Inject constructor(
         private val KEY_TUN_MTU = intPreferencesKey("tun_mtu")
         private val KEY_AUTO_ROUTE = booleanPreferencesKey("auto_route")
         private val KEY_STRICT_ROUTE = booleanPreferencesKey("strict_route")
+        private val KEY_LEAK_PROTECTION = booleanPreferencesKey("leak_protection")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         private val KEY_DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         private val KEY_LANGUAGE = stringPreferencesKey("language")

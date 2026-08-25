@@ -261,8 +261,10 @@ class ConfigBuilderTest {
             rules.none { it.get("outbound")?.asString == ConfigBuilder.TAG_DIRECT },
         )
         assertTrue(
-            "stun and turn ride the tunnel like everything else; rejecting them only breaks calls",
-            rules.none { it.get("action")?.asString == "reject" && it.getAsJsonArray("port") != null },
+            "stun is only rejected while leak protection asks for it",
+            parse(ConfigBuilder.build(realityVless, global.copy(leakProtection = false)))
+                .getAsJsonObject("route").getAsJsonArray("rules").map { it.asJsonObject }
+                .none { it.get("action")?.asString == "reject" && it.getAsJsonArray("port") != null },
         )
         val dnsRules = config.getAsJsonObject("dns").getAsJsonArray("rules")?.map { it.asJsonObject }.orEmpty()
         assertTrue(dnsRules.none { it.get("server")?.asString == "dns-direct" })
@@ -304,6 +306,40 @@ class ConfigBuilderTest {
 
         File(directory, "fallback-no-rule-sets.json")
             .writeText(ConfigBuilder.build(realityVless, everythingOn, customRules, useRuleSets = false))
+    }
+
+    @Test
+    fun `leak protection closes the webrtc and ipv6 paths`() {
+        val rules = parse(ConfigBuilder.build(realityVless, defaults))
+            .getAsJsonObject("route").getAsJsonArray("rules").map { it.asJsonObject }
+
+        val stun = rules.firstOrNull { it.get("action")?.asString == "reject" && it.get("port") != null }
+        assertNotNull("webrtc discovery must not reach the network", stun)
+        assertEquals("udp", stun!!.getAsJsonArray("network").first().asString)
+        assertTrue(stun.getAsJsonArray("port").map { it.asInt }.contains(19302))
+
+        assertTrue(
+            "ipv6 must not escape while the tunnel carries ipv4",
+            rules.any { it.get("ip_version")?.asInt == 6 && it.get("action")?.asString == "reject" },
+        )
+        assertTrue(
+            "matching by keyword catches saturn and return, which is why it was dropped",
+            rules.none { it.has("domain_keyword") },
+        )
+        assertEquals(
+            "ipv4_only",
+            parse(ConfigBuilder.build(realityVless, defaults))
+                .getAsJsonObject("dns").get("strategy").asString,
+        )
+    }
+
+    @Test
+    fun `leak protection off leaves webrtc and ipv6 alone`() {
+        val off = defaults.copy(leakProtection = false)
+        val rules = parse(ConfigBuilder.build(realityVless, off))
+            .getAsJsonObject("route").getAsJsonArray("rules").map { it.asJsonObject }
+        assertTrue(rules.none { it.get("ip_version") != null })
+        assertTrue(rules.none { it.get("action")?.asString == "reject" && it.get("port") != null })
     }
 
     private fun parse(json: String): JsonObject = JsonParser.parseString(json).asJsonObject

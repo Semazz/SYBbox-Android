@@ -46,10 +46,13 @@ class SettingsViewModel @Inject constructor(
     }
 
     private val tunnel = combine(
-        store.tunStack, store.tunMTU, store.autoRoute, store.strictRoute, store.bypassLocalNetwork,
-    ) { stack, mtu, autoRoute, strictRoute, bypassLocal ->
-        TunnelSlice(stack, mtu, autoRoute, strictRoute, bypassLocal)
-    }
+        combine(
+            store.tunStack, store.tunMTU, store.autoRoute, store.strictRoute, store.bypassLocalNetwork,
+        ) { stack, mtu, autoRoute, strictRoute, bypassLocal ->
+            TunnelSlice(stack, mtu, autoRoute, strictRoute, bypassLocal)
+        },
+        store.leakProtection,
+    ) { slice, leakProtection -> slice.copy(leakProtection = leakProtection) }
 
     private val appearance = combine(
         store.themeMode, store.dynamicColor, store.language, store.logLevel,
@@ -101,6 +104,7 @@ class SettingsViewModel @Inject constructor(
             autoRoute = tunnelSlice.autoRoute,
             strictRoute = tunnelSlice.strictRoute,
             bypassLocalNetwork = tunnelSlice.bypassLocal,
+            leakProtection = tunnelSlice.leakProtection,
             themeMode = appearanceSlice.theme,
             dynamicColor = appearanceSlice.dynamicColor,
             language = appearanceSlice.language,
@@ -154,6 +158,7 @@ class SettingsViewModel @Inject constructor(
     fun setTunMTU(value: Int) = edit { setTunMTU(value) }
     fun setAutoRoute(value: Boolean) = edit { setAutoRoute(value) }
     fun setStrictRoute(value: Boolean) = edit { setStrictRoute(value) }
+    fun setLeakProtection(value: Boolean) = edit { setLeakProtection(value) }
 
     fun setSubAutoUpdate(value: Boolean) {
         edit { setSubAutoUpdate(value) }
@@ -210,6 +215,7 @@ class SettingsViewModel @Inject constructor(
         val autoRoute: Boolean,
         val strictRoute: Boolean,
         val bypassLocal: Boolean,
+        val leakProtection: Boolean = true,
     )
 
     private data class AppearanceSlice(

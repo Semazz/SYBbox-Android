@@ -44,6 +44,15 @@ object ConfigBuilder {
     )
     private val CN_DIRECT_SUFFIXES = listOf(".cn", ".中国", ".xn--fiqs8s")
 
+    private val STUN_PORTS = listOf(
+        3478, 3479, 3480, 3481, 5349, 5350, 5351, 5352,
+        19302, 19303, 19304, 19305, 19306, 19307, 19308, 19309,
+    )
+
+    private val STUN_DOMAIN_REGEX = listOf("""^stun[0-9]*\.""", """^turn[0-9]*\.""")
+
+    private val STUN_DOMAINS = listOf("openrelay.metered.ca", "relay.metered.ca")
+
     fun build(
         profile: ServerProfile,
         settings: SettingsState,
@@ -172,6 +181,14 @@ object ConfigBuilder {
             })
         }
 
+        if (settings.leakProtection) {
+            rules.add(JsonObject().apply {
+                add("domain_regex", jsonArrayOf(STUN_DOMAIN_REGEX))
+                add("domain_suffix", jsonArrayOf(STUN_DOMAINS))
+                addProperty("action", "reject")
+            })
+        }
+
         directDnsSuffixRule(settings, profile)?.let { rules.add(it) }
         addRuleSetDnsRules(settings, rules, ruleSets, profile)
         if (settings.enableFakeIp) {
@@ -183,7 +200,10 @@ object ConfigBuilder {
         if (rules.size() > 0) add("rules", rules)
 
         addProperty("final", TAG_DNS_REMOTE)
-        addProperty("strategy", domainStrategy(settings.dnsQueryStrategy))
+        addProperty(
+            "strategy",
+            if (settings.leakProtection) "ipv4_only" else domainStrategy(settings.dnsQueryStrategy),
+        )
         if (settings.enableFakeIp) addProperty("independent_cache", true)
     }
 
@@ -622,6 +642,23 @@ object ConfigBuilder {
             add("protocol", jsonArrayOf("dns"))
             addProperty("action", "hijack-dns")
         })
+
+        if (settings.leakProtection) {
+            rules.add(JsonObject().apply {
+                add("network", jsonArrayOf("udp"))
+                add("port", JsonArray().apply { STUN_PORTS.forEach { add(it) } })
+                addProperty("action", "reject")
+            })
+            rules.add(JsonObject().apply {
+                add("domain_regex", jsonArrayOf(STUN_DOMAIN_REGEX))
+                add("domain_suffix", jsonArrayOf(STUN_DOMAINS))
+                addProperty("action", "reject")
+            })
+            rules.add(JsonObject().apply {
+                addProperty("ip_version", 6)
+                addProperty("action", "reject")
+            })
+        }
 
         if (bypassLocal) {
             rules.add(JsonObject().apply {

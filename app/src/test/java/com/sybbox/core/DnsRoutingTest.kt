@@ -169,7 +169,8 @@ class DnsRoutingTest {
     @Test
     fun `an ip literal server needs no bootstrap rule`() {
         val dns = dnsOf(vlessReality.copy(address = "203.0.113.9"))
-        assertNull(dns.getAsJsonArray("rules"))
+        val rules = dns.getAsJsonArray("rules")?.map { it.asJsonObject }.orEmpty()
+        assertTrue(rules.none { it.get("server")?.asString == "dns-local" })
     }
 
     @Test

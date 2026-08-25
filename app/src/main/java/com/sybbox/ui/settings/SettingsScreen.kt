@@ -427,6 +427,14 @@ fun SettingsScreen(
                     onCheckedChange = viewModel::setStrictRoute,
                     icon = Icons.Rounded.Lock,
                 )
+                SettingsDivider()
+                SettingsToggle(
+                    title = stringResource(R.string.leak_protection),
+                    summary = stringResource(R.string.leak_protection_summary),
+                    checked = state.leakProtection,
+                    onCheckedChange = viewModel::setLeakProtection,
+                    icon = Icons.Rounded.Shield,
+                )
             }
         }
 

@@ -109,6 +109,7 @@ class SybBoxVpnService : VpnService() {
         prefs[androidx.datastore.preferences.core.intPreferencesKey("tun_mtu")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("auto_route")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("strict_route")],
+        prefs[androidx.datastore.preferences.core.booleanPreferencesKey("leak_protection")],
         prefs[androidx.datastore.preferences.core.stringPreferencesKey("routing_mode")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("block_ads")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("block_trackers")],

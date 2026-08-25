@@ -244,5 +244,11 @@
     <string name="mux_max_streams">Max streams</string>
     <string name="mux_padding">Multiplex padding</string>
     <string name="mux_padding_summary">Pads multiplexed frames to hide their sizes</string>
+    <string name="leak_protection">IP leak protection</string>
+    <string name="leak_protection_summary">Blocks WebRTC discovery and IPv6, so nothing outside the tunnel can reveal your address. Voice and video calls may stop working.</string>
+    <string name="delete_all_servers">Delete all</string>
+    <string name="delete_all_servers_confirm">Delete all %1$d standalone servers?</string>
+    <string name="msg_servers_deleted">Servers deleted</string>
+    <string name="no_apps_found">No apps found</string>
 </resources>
 

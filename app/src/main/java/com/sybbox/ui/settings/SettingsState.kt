@@ -36,6 +36,7 @@ data class SettingsState(
     val tunMTU: Int = 1500,
     val autoRoute: Boolean = true,
     val strictRoute: Boolean = true,
+    val leakProtection: Boolean = true,
 
     val subAutoUpdate: Boolean = true,
     val defaultSubInterval: Int = 12,

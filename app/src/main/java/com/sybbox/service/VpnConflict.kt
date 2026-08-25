@@ -15,6 +15,11 @@ object VpnConflict {
 
     fun foreignVpnActive(context: Context): Boolean {
         if (SybBoxVpnService.appState.value.connectionState == ConnectionState.CONNECTED) return false
+        if (!vpnTransportPresent(context)) return false
+        return !holdsVpnSlot(context)
+    }
+
+    private fun vpnTransportPresent(context: Context): Boolean {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
             ?: return false
         return cm.allNetworks.any { network ->
@@ -23,13 +28,13 @@ object VpnConflict {
         }
     }
 
-    private fun canTakeOver(context: Context): Boolean = runCatching {
+    private fun holdsVpnSlot(context: Context): Boolean = runCatching {
         VpnService.prepare(context) == null
     }.getOrDefault(false)
 
     suspend fun evictForeignVpn(context: Context): Boolean {
         if (!foreignVpnActive(context)) return true
-        if (!canTakeOver(context)) return false
+        if (!holdsVpnSlot(context)) return false
         val started = runCatching {
             context.startService(Intent(context, VpnEvictService::class.java))
         }.isSuccess

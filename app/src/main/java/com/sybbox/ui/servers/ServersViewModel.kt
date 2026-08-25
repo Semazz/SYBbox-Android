@@ -94,6 +94,10 @@ class ServersViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            if (settingsDataStore.updateOnStart.first()) refreshAll()
+        }
+        viewModelScope.launch {
+            if (!settingsDataStore.pingOnStart.first()) return@launch
             var measured = false
             profiles.collect { list ->
                 if (!measured && list.isNotEmpty()) {
@@ -356,8 +360,9 @@ class ServersViewModel @Inject constructor(
                 val evicted = com.sybbox.service.VpnConflict.evictForeignVpn(getApplication())
                 if (!evicted) emit(UiMessage(R.string.msg_foreign_vpn))
             }
+            val timeout = settingsDataStore.pingTimeout.first() * 1000
             val latency = withContext(Dispatchers.IO) {
-                com.sybbox.core.PingTool.pingForProfile(getApplication(), profile)
+                com.sybbox.core.PingTool.pingForProfile(getApplication(), profile, timeout)
             }
             _latencies.update { it + (profile.id to latency) }
             _pingVisibleUntil.update { it + (profile.id to (System.currentTimeMillis() + 10_000)) }
@@ -373,13 +378,14 @@ class ServersViewModel @Inject constructor(
                 val evicted = com.sybbox.service.VpnConflict.evictForeignVpn(getApplication())
                 if (!evicted) emit(UiMessage(R.string.msg_foreign_vpn))
             }
+            val timeout = settingsDataStore.pingTimeout.first() * 1000
             val results = withContext(Dispatchers.IO) {
                 coroutineScope {
                     val semaphore = Semaphore(16)
                     targets.map { target ->
                         async {
                             semaphore.withPermit {
-                                target.id to com.sybbox.core.PingTool.pingForProfile(getApplication(), target)
+                                target.id to com.sybbox.core.PingTool.pingForProfile(getApplication(), target, timeout)
                             }
                         }
                     }.awaitAll().toMap()

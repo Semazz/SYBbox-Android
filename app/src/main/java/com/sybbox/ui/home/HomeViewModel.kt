@@ -22,18 +22,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import android.net.VpnService
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     application: Application,
     private val profileRepository: ProfileRepository,
-    settingsDataStore: SettingsDataStore,
+    private val settingsDataStore: SettingsDataStore,
 ) : AndroidViewModel(application) {
 
     val appState: StateFlow<AppState> = SybBoxVpnService.appState
@@ -63,6 +66,21 @@ class HomeViewModel @Inject constructor(
 
     init {
         pingOnConnect()
+        connectOnStart()
+    }
+
+    private fun connectOnStart() {
+        viewModelScope.launch {
+            if (!settingsDataStore.connectOnStart.first()) return@launch
+            if (SybBoxVpnService.appState.value.connectionState != ConnectionState.DISCONNECTED) return@launch
+            val consented = runCatching { VpnService.prepare(getApplication()) == null }.getOrDefault(false)
+            if (!consented) return@launch
+            val profileId = withTimeoutOrNull(AUTO_CONNECT_WAIT_MS) {
+                selectedProfileId.first { it > 0 }
+            } ?: return@launch
+            if (SybBoxVpnService.appState.value.connectionState != ConnectionState.DISCONNECTED) return@launch
+            SybBoxVpnService.connect(getApplication(), profileId)
+        }
     }
 
     fun connect() {
@@ -114,8 +132,9 @@ class HomeViewModel @Inject constructor(
             val latency = if (target == null) {
                 com.sybbox.core.PingTool.UNREACHABLE
             } else {
+                val timeout = settingsDataStore.pingTimeout.first() * 1000
                 withContext(Dispatchers.IO) {
-                    com.sybbox.core.PingTool.pingForProfile(getApplication(), target)
+                    com.sybbox.core.PingTool.pingForProfile(getApplication(), target, timeout)
                 }
             }
             _latencies.update { it + (profileId to latency) }
@@ -129,5 +148,6 @@ class HomeViewModel @Inject constructor(
 
     private companion object {
         const val PING_VISIBLE_MS = 10_000L
+        const val AUTO_CONNECT_WAIT_MS = 5_000L
     }
 }

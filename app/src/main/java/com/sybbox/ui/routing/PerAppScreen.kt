@@ -83,11 +83,15 @@ fun PerAppScreen(
 
     LaunchedEffect(Unit) { viewModel.loadApps() }
 
-    val visible = remember(apps, query, showSystem) {
+    val visible = remember(apps, query, showSystem, perApp.selected) {
         apps.filter { app ->
             (showSystem || !app.system) &&
                 (query.isBlank() || app.label.contains(query, true) || app.packageName.contains(query, true))
-        }
+        }.sortedWith(
+            compareByDescending<InstalledApp> { it.packageName in perApp.selected }
+                .thenBy { it.system }
+                .thenBy { it.label.lowercase() },
+        )
     }
 
     val selectedCount = perApp.selected.size
@@ -306,7 +310,7 @@ fun PerAppScreen(
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                "������ �� �������",
+                                stringResource(R.string.no_apps_found),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

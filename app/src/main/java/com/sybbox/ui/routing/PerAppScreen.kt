@@ -68,6 +68,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sybbox.R
 import com.sybbox.ui.components.SybCard
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,12 +84,19 @@ fun PerAppScreen(
 
     LaunchedEffect(Unit) { viewModel.loadApps() }
 
-    val visible = remember(apps, query, showSystem, perApp.selected) {
+    var ordering by remember { mutableStateOf<Set<String>?>(null) }
+    LaunchedEffect(perApp.selected) {
+        if (ordering != null) delay(REORDER_SETTLE_MS)
+        ordering = perApp.selected
+    }
+    val order = ordering ?: perApp.selected
+
+    val visible = remember(apps, query, showSystem, order) {
         apps.filter { app ->
             (showSystem || !app.system) &&
                 (query.isBlank() || app.label.contains(query, true) || app.packageName.contains(query, true))
         }.sortedWith(
-            compareByDescending<InstalledApp> { it.packageName in perApp.selected }
+            compareByDescending<InstalledApp> { it.packageName in order }
                 .thenBy { it.system }
                 .thenBy { it.label.lowercase() },
         )
@@ -324,11 +332,7 @@ fun PerAppScreen(
                         app = app,
                         checked = checked,
                         onToggle = { viewModel.toggleApp(app.packageName) },
-                        modifier = Modifier.animateItem(
-                            fadeInSpec = spring(stiffness = Spring.StiffnessMedium),
-                            fadeOutSpec = spring(stiffness = Spring.StiffnessMedium),
-                            placementSpec = null,
-                        ),
+                        modifier = Modifier,
                     )
                 }
             }
@@ -444,3 +448,5 @@ private fun AppRowExpressive(
             }
         }
     }
+
+private const val REORDER_SETTLE_MS = 600L

@@ -10,6 +10,9 @@
   once caught `saturn`, `return` and `turnitin` is not coming back.
 - IPv6 is rejected while the setting is on, and the resolver is pinned to `ipv4_only`. The tunnel
   carries IPv4; leaving AAAA answers in play meant an address the tunnel never covered.
+- The tunnel address is fixed at `172.19.0.1/30` again. Randomising it every connect put a
+  different private address in front of every WebRTC probe, and there was nothing to gain.
+  The IPv6 tunnel address is dropped while leak protection is on — one less candidate to report.
 - Voice and video calls rely on STUN, so the setting is switchable in Settings → Tunnel.
 
 ### Fixed — latency checks
@@ -19,6 +22,9 @@
 - A foreign VPN is now evicted by a service that claims the VPN slot and closes it immediately.
   The other app stops, the tunnel is never built, and the measurement runs over the physical
   network as before.
+- “Another VPN app is active” only appears when one really is. A VPN transport alone was enough
+  to trigger it, so the tunnel we had just torn down — or our own, still winding up — counted as
+  somebody else's.
 
 ### Fixed — servers
 - The standalone servers card has an overflow menu: test all, and delete all behind a
@@ -27,6 +33,17 @@
   group and moves every row below it, so a second quick tap used to land on whichever server
   had slid under the finger — pick Hysteria, connect to VLESS.
 - Latency shows for ten seconds after the tunnel comes up, without having to ask for it.
+
+### Changed — server list
+- Row and subscription actions live in the overflow menu. The inline test and refresh buttons
+  are gone; the latency badge stays.
+- A collapsed group shows no rows at all. It used to keep the selected one visible, so choosing
+  a server elsewhere made that row vanish and slid the whole list up under the finger — pick
+  Hysteria, land on the first server of a subscription. The group header names its selection
+  instead.
+- The home screen keeps the server you picked. It used to fall back to the first profile in the
+  list whenever the stored id was briefly missing, which a subscription refresh causes on its
+  own. Deleting a server now repoints the selection deliberately instead.
 
 ### Fixed — per-app routing
 - Selected apps sort to the top of the list.

@@ -257,7 +257,6 @@
     <string name="allow_lan">Разрешить подключения из LAN</string>
     <string name="allow_lan_summary">Слушает все интерфейсы вместо loopback — прокси станет доступен другим устройствам в сети</string>
     <string name="update_on_start">Обновлять подписки</string>
-    <string name="ping_on_start">Проверять пинг</string>
     <string name="connect_on_start">Подключаться</string>
     <string name="connect_on_start_summary">Только если разрешение на VPN уже выдано</string>
     <string name="probe_url">Адрес проверки туннеля</string>
@@ -273,8 +272,6 @@
     <string name="reset_settings_summary">Вернуть значения по умолчанию; серверы и подписки останутся</string>
     <string name="reset_settings_confirm">Сбросить все настройки к значениям по умолчанию? Серверы и подписки останутся.</string>
     <string name="reset">Сбросить</string>
-    <string name="send_hwid">Передавать HWID</string>
-    <string name="send_hwid_summary">Запрос подписки понесёт идентификатор устройства, версию Android и модель — панель с лимитом устройств сможет их считать</string>
     <string name="hwid">HWID</string>
     <string name="update_banner">Вышла версия %1$s</string>
     <string name="auto_update_check">Следить за обновлениями</string>
@@ -282,5 +279,9 @@
     <string name="widget_switch_description">Логотип и кнопка. Нажмите, чтобы подключиться.</string>
     <string name="widget_button_description">Одна кнопка. Нажмите, чтобы подключиться.</string>
     <string name="widget_toggle">Подключить или отключить</string>
+    <string name="group_interface">Интерфейс</string>
+    <string name="group_tunnel_settings">Туннель</string>
+    <string name="group_advanced">Расширенные</string>
+    <string name="group_other">Другое</string>
 </resources>
 

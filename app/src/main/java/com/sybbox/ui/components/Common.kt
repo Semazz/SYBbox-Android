@@ -142,7 +142,13 @@ fun SectionHeader(
     trailing: (@Composable () -> Unit)? = null,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 24.dp, bottom = 12.dp),
+        modifier = modifier.fillMaxWidth()
+            .padding(
+                start = SybSpacing.small,
+                end = SybSpacing.small,
+                top = SybSpacing.xlarge,
+                bottom = SybSpacing.medium,
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(

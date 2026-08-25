@@ -45,11 +45,9 @@ class SettingsDataStore @Inject constructor(
     val localProxyPort: Flow<Int> = dataStore.data.map { it[KEY_LOCAL_PROXY_PORT] ?: 10808 }
     val allowLan: Flow<Boolean> = dataStore.data.map { it[KEY_ALLOW_LAN] ?: false }
     val updateOnStart: Flow<Boolean> = dataStore.data.map { it[KEY_UPDATE_ON_START] ?: false }
-    val pingOnStart: Flow<Boolean> = dataStore.data.map { it[KEY_PING_ON_START] ?: true }
     val connectOnStart: Flow<Boolean> = dataStore.data.map { it[KEY_CONNECT_ON_START] ?: false }
     val probeUrl: Flow<String> = dataStore.data.map { it[KEY_PROBE_URL] ?: DEFAULT_PROBE_URL }
     val pingTimeout: Flow<Int> = dataStore.data.map { it[KEY_PING_TIMEOUT] ?: 3 }
-    val sendHwid: Flow<Boolean> = dataStore.data.map { it[KEY_SEND_HWID] ?: true }
     val autoUpdateCheck: Flow<Boolean> = dataStore.data.map { it[KEY_AUTO_UPDATE_CHECK] ?: true }
     val knownRelease: Flow<String> = dataStore.data.map { it[KEY_KNOWN_RELEASE] ?: "" }
     val knownReleasePage: Flow<String> = dataStore.data.map { it[KEY_KNOWN_RELEASE_PAGE] ?: "" }
@@ -120,11 +118,9 @@ class SettingsDataStore @Inject constructor(
             localProxyPort = p[KEY_LOCAL_PROXY_PORT] ?: 10808,
             allowLan = p[KEY_ALLOW_LAN] ?: false,
             updateOnStart = p[KEY_UPDATE_ON_START] ?: false,
-            pingOnStart = p[KEY_PING_ON_START] ?: true,
             connectOnStart = p[KEY_CONNECT_ON_START] ?: false,
             probeUrl = p[KEY_PROBE_URL] ?: DEFAULT_PROBE_URL,
             pingTimeout = p[KEY_PING_TIMEOUT] ?: 3,
-            sendHwid = p[KEY_SEND_HWID] ?: true,
             autoUpdateCheck = p[KEY_AUTO_UPDATE_CHECK] ?: true,
             subAutoUpdate = p[KEY_SUB_AUTO_UPDATE] ?: true,
             defaultSubInterval = p[KEY_DEFAULT_SUB_INTERVAL] ?: 12,
@@ -181,11 +177,9 @@ class SettingsDataStore @Inject constructor(
     suspend fun setLocalProxyPort(value: Int) = dataStore.edit { it[KEY_LOCAL_PROXY_PORT] = value }
     suspend fun setAllowLan(value: Boolean) = dataStore.edit { it[KEY_ALLOW_LAN] = value }
     suspend fun setUpdateOnStart(value: Boolean) = dataStore.edit { it[KEY_UPDATE_ON_START] = value }
-    suspend fun setPingOnStart(value: Boolean) = dataStore.edit { it[KEY_PING_ON_START] = value }
     suspend fun setConnectOnStart(value: Boolean) = dataStore.edit { it[KEY_CONNECT_ON_START] = value }
     suspend fun setProbeUrl(value: String) = dataStore.edit { it[KEY_PROBE_URL] = value }
     suspend fun setPingTimeout(value: Int) = dataStore.edit { it[KEY_PING_TIMEOUT] = value }
-    suspend fun setSendHwid(value: Boolean) = dataStore.edit { it[KEY_SEND_HWID] = value }
     suspend fun setAutoUpdateCheck(value: Boolean) = dataStore.edit { it[KEY_AUTO_UPDATE_CHECK] = value }
     suspend fun setDismissedRelease(value: String) = dataStore.edit { it[KEY_DISMISSED_RELEASE] = value }
 
@@ -261,11 +255,9 @@ class SettingsDataStore @Inject constructor(
         private val KEY_LOCAL_PROXY_PORT = intPreferencesKey("local_proxy_port")
         private val KEY_ALLOW_LAN = booleanPreferencesKey("allow_lan")
         private val KEY_UPDATE_ON_START = booleanPreferencesKey("update_on_start")
-        private val KEY_PING_ON_START = booleanPreferencesKey("ping_on_start")
         private val KEY_CONNECT_ON_START = booleanPreferencesKey("connect_on_start")
         private val KEY_PROBE_URL = stringPreferencesKey("probe_url")
         private val KEY_PING_TIMEOUT = intPreferencesKey("ping_timeout")
-        private val KEY_SEND_HWID = booleanPreferencesKey("send_hwid")
         private val KEY_AUTO_UPDATE_CHECK = booleanPreferencesKey("auto_update_check")
         private val KEY_KNOWN_RELEASE = stringPreferencesKey("known_release")
         private val KEY_KNOWN_RELEASE_PAGE = stringPreferencesKey("known_release_page")

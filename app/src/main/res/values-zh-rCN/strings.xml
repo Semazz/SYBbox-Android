@@ -244,7 +244,6 @@
     <string name="allow_lan">允许局域网连接</string>
     <string name="allow_lan_summary">监听所有网卡而非仅本机回环</string>
     <string name="update_on_start">更新订阅</string>
-    <string name="ping_on_start">测试延迟</string>
     <string name="connect_on_start">自动连接</string>
     <string name="connect_on_start_summary">仅在已授予 VPN 权限时</string>
     <string name="probe_url">隧道检测地址</string>
@@ -260,8 +259,6 @@
     <string name="reset_settings_summary">恢复默认值；服务器与订阅将保留</string>
     <string name="reset_settings_confirm">将所有设置恢复默认？服务器与订阅会保留。</string>
     <string name="reset">重置</string>
-    <string name="send_hwid">发送设备标识</string>
-    <string name="send_hwid_summary">订阅请求将携带设备标识、Android 版本与机型，便于面板统计设备数</string>
     <string name="hwid">设备标识</string>
     <string name="update_banner">已发布 %1$s</string>
     <string name="auto_update_check">自动检查更新</string>
@@ -269,4 +266,8 @@
     <string name="widget_switch_description">一个标志与一个按钮，点一下即可连接。</string>
     <string name="widget_button_description">一个按钮，点一下即可连接。</string>
     <string name="widget_toggle">连接或断开</string>
+    <string name="group_interface">界面</string>
+    <string name="group_tunnel_settings">隧道</string>
+    <string name="group_advanced">高级</string>
+    <string name="group_other">其他</string>
 </resources>

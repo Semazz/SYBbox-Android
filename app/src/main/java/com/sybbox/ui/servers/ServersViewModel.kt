@@ -96,16 +96,6 @@ class ServersViewModel @Inject constructor(
         viewModelScope.launch {
             if (settingsDataStore.updateOnStart.first()) refreshAll()
         }
-        viewModelScope.launch {
-            if (!settingsDataStore.pingOnStart.first()) return@launch
-            var measured = false
-            profiles.collect { list ->
-                if (!measured && list.isNotEmpty()) {
-                    measured = true
-                    measureAll(list)
-                }
-            }
-        }
     }
 
     fun select(profileId: Long) {

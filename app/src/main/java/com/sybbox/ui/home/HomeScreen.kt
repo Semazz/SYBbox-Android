@@ -136,15 +136,15 @@ fun HomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.statusBarsPadding())
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(SybSpacing.medium))
         Wordmark()
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height(SybSpacing.xlarge))
 
         ConnectButton(state = appState.connectionState, onClick = ::toggle)
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(SybSpacing.large))
 
         StatusLine(appState.connectionState, appState.lastError)
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(SybSpacing.xlarge))
 
         val pingVisibleUntil by viewModel.pingVisibleUntil.collectAsStateWithLifecycle()
         val pingBusy by viewModel.pingTesting.collectAsStateWithLifecycle()
@@ -171,8 +171,8 @@ fun HomeScreen(
             exit = fadeOut(tween(150)),
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                Spacer(Modifier.height(12.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Spacer(Modifier.height(SybSpacing.medium))
+                Row(horizontalArrangement = Arrangement.spacedBy(SybSpacing.medium)) {
                     StatTile(
                         icon = Icons.Rounded.ArrowDownward,
                         label = stringResource(R.string.download),
@@ -186,8 +186,8 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f),
                     )
                 }
-                Spacer(Modifier.height(12.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Spacer(Modifier.height(SybSpacing.medium))
+                Row(horizontalArrangement = Arrangement.spacedBy(SybSpacing.medium)) {
                     StatTile(
                         icon = Icons.Rounded.Schedule,
                         label = stringResource(R.string.uptime),
@@ -213,7 +213,7 @@ fun HomeScreen(
             exit = fadeOut(tween(150)) + shrinkVertically(tween(200)),
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(SybSpacing.regular))
                 release?.let { pending ->
                     UpdateBanner(
                         release = pending,
@@ -226,7 +226,7 @@ fun HomeScreen(
             }
         }
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(SybSpacing.xxlarge))
     }
 }
 
@@ -256,7 +256,7 @@ private fun UpdateBanner(release: Release, onOpen: () -> Unit, onDismiss: () -> 
                 modifier = Modifier.size(17.dp),
             )
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(SybSpacing.medium))
         Text(
             stringResource(R.string.update_banner, release.version),
             style = MaterialTheme.typography.bodySmall,
@@ -377,7 +377,7 @@ private fun StatusLine(state: ConnectionState, error: String?) {
             fontWeight = FontWeight.Bold,
             color = if (state == ConnectionState.FAILED) LatencySlow else MaterialTheme.colorScheme.onSurface,
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(SybSpacing.tight))
         Text(
             text = error?.takeIf { state == ConnectionState.FAILED }
                 ?: stringResource(
@@ -432,7 +432,7 @@ private fun ActiveServerCard(
                 ) { Text(com.sybbox.ui.components.flagEmojiIn(displayNameRaw) ?: "", fontSize = androidx.compose.ui.unit.TextUnit(20f, androidx.compose.ui.unit.TextUnitType.Sp)) }
                 else -> IconTile(Icons.Rounded.Public, tint = pColor, container = pColor.copy(alpha = 0.14f))
             }
-            Spacer(Modifier.width(14.dp))
+            Spacer(Modifier.width(SybSpacing.iconGap))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     stringResource(R.string.active_server),

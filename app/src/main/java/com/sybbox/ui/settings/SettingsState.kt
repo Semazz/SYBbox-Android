@@ -45,11 +45,9 @@ data class SettingsState(
     val allowLan: Boolean = false,
 
     val updateOnStart: Boolean = false,
-    val pingOnStart: Boolean = true,
     val connectOnStart: Boolean = false,
     val probeUrl: String = "https://www.gstatic.com/generate_204",
     val pingTimeout: Int = 3,
-    val sendHwid: Boolean = true,
     val autoUpdateCheck: Boolean = true,
 
     val subAutoUpdate: Boolean = true,

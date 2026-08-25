@@ -261,7 +261,6 @@
     <string name="allow_lan">Permitir conexiones desde la LAN</string>
     <string name="allow_lan_summary">Escucha en todas las interfaces en vez de loopback</string>
     <string name="update_on_start">Actualizar suscripciones</string>
-    <string name="ping_on_start">Medir latencia</string>
     <string name="connect_on_start">Conectar</string>
     <string name="connect_on_start_summary">Solo si el permiso de VPN ya fue concedido</string>
     <string name="probe_url">Direccion de comprobacion</string>
@@ -277,8 +276,6 @@
     <string name="reset_settings_summary">Volver a los valores por defecto; servidores y suscripciones se conservan</string>
     <string name="reset_settings_confirm">Restablecer todos los ajustes? Los servidores y suscripciones se conservan.</string>
     <string name="reset">Restablecer</string>
-    <string name="send_hwid">Enviar id del dispositivo</string>
-    <string name="send_hwid_summary">La peticion de suscripcion llevara un id de dispositivo, la version de Android y el modelo</string>
     <string name="hwid">Id del dispositivo</string>
     <string name="update_banner">La versión %1$s ya está disponible</string>
     <string name="auto_update_check">Buscar actualizaciones solo</string>
@@ -286,5 +283,9 @@
     <string name="widget_switch_description">Un logo y un boton. Toca para conectar.</string>
     <string name="widget_button_description">Un solo boton. Toca para conectar.</string>
     <string name="widget_toggle">Conectar o desconectar</string>
+    <string name="group_interface">Interfaz</string>
+    <string name="group_tunnel_settings">Tunel</string>
+    <string name="group_advanced">Avanzado</string>
+    <string name="group_other">Otros</string>
 </resources>
 

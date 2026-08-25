@@ -263,7 +263,6 @@
     <string name="allow_lan">Allow connections from the LAN</string>
     <string name="allow_lan_summary">Listens on every interface instead of loopback, so other devices on the network can use the proxy</string>
     <string name="update_on_start">Refresh subscriptions</string>
-    <string name="ping_on_start">Test latency</string>
     <string name="connect_on_start">Connect</string>
     <string name="connect_on_start_summary">Only if VPN permission was already granted</string>
     <string name="probe_url">Tunnel check address</string>
@@ -279,8 +278,6 @@
     <string name="reset_settings_summary">Back to defaults; servers and subscriptions are kept</string>
     <string name="reset_settings_confirm">Reset every setting to its default? Servers and subscriptions stay.</string>
     <string name="reset">Reset</string>
-    <string name="send_hwid">Send device id</string>
-    <string name="send_hwid_summary">Subscription requests carry a device id, Android version and model, so a panel that limits devices can count them</string>
     <string name="hwid">Device id</string>
     <string name="update_banner">Version %1$s is out</string>
     <string name="auto_update_check">Look for updates</string>
@@ -288,5 +285,9 @@
     <string name="widget_switch_description">A logo and a button. Tap to connect.</string>
     <string name="widget_button_description">A single button. Tap to connect.</string>
     <string name="widget_toggle">Connect or disconnect</string>
+    <string name="group_interface">Interface</string>
+    <string name="group_tunnel_settings">Tunnel</string>
+    <string name="group_advanced">Advanced</string>
+    <string name="group_other">Other</string>
 </resources>
 

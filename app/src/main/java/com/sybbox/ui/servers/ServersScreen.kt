@@ -215,7 +215,7 @@ fun ServersScreen(
 
         if (manual.isNotEmpty()) {
             item(key = "manual-group") {
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(SybSpacing.tight))
                 SybCard(modifier = Modifier.fillMaxWidth(), onClick = { if (steady()) viewModel.toggleGroup(MANUAL_GROUP) }) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(start = SybSpacing.cardH, top = SybSpacing.cardV, bottom = SybSpacing.cardV, end = SybSpacing.cardEndInset),
@@ -232,7 +232,7 @@ fun ServersScreen(
                                 )
                                 val chosen = manual.firstOrNull { it.id == selectedId }
                                 if (chosen != null && !expandedManual) {
-                                    Spacer(Modifier.height(3.dp))
+                                    Spacer(Modifier.height(SybSpacing.labelGap))
                                     Text(
                                         chosen.displayName(),
                                         style = MaterialTheme.typography.bodySmall,
@@ -261,7 +261,7 @@ fun ServersScreen(
                                     modifier = Modifier.size(20.dp).rotate(rot),
                                 )
                             }
-                            Spacer(Modifier.width(4.dp))
+                            Spacer(Modifier.width(SybSpacing.tight))
                             Box {
                                 IconButton(
                                     onClick = { manualMenu = true },
@@ -295,12 +295,12 @@ fun ServersScreen(
                             }
                         }
                     }
-                if (expandedManual && manual.isNotEmpty()) Spacer(Modifier.height(8.dp))
+                if (expandedManual && manual.isNotEmpty()) Spacer(Modifier.height(SybSpacing.small))
             }
             val manualVisible = if (expandedManual) manual else emptyList()
             items(manualVisible, key = { "m-${it.id}" }) { profile ->
                 val showLatency = nowTick < (pingVisibleUntil[profile.id] ?: 0L)
-                Box(modifier = Modifier.padding(bottom = 8.dp)) {
+                Box(modifier = Modifier.padding(bottom = SybSpacing.small)) {
                     ServerRow(
                         profile = profile,
                         selected = profile.id == selectedId,
@@ -323,7 +323,7 @@ fun ServersScreen(
             val visibleMembers = if (isExpanded) members else emptyList()
             item(key = "sub-${subscription.id}") {
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(SybSpacing.medium))
                 SubscriptionHeader(
                     subscription = subscription,
                     count = members.size,
@@ -352,11 +352,11 @@ fun ServersScreen(
                     onDelete = { viewModel.deleteSubscription(subscription) },
                 )
 
-                if (visibleMembers.isNotEmpty()) Spacer(Modifier.height(8.dp))
+                if (visibleMembers.isNotEmpty()) Spacer(Modifier.height(SybSpacing.small))
             }
             items(visibleMembers, key = { "s${subscription.id}-${it.id}" }) { profile ->
                 val showLatency = nowTick < (pingVisibleUntil[profile.id] ?: 0L)
-                Box(modifier = Modifier.padding(bottom = 8.dp)) {
+                Box(modifier = Modifier.padding(bottom = SybSpacing.small)) {
                     ServerRow(
                         profile = profile,
                         selected = profile.id == selectedId,
@@ -372,7 +372,7 @@ fun ServersScreen(
             }
         }
 
-        item { Spacer(Modifier.height(8.dp)) }
+        item { Spacer(Modifier.height(SybSpacing.small)) }
     }
 
     if (addServerDialog) {
@@ -524,7 +524,7 @@ private fun ServerRow(
                     container = pColor.copy(alpha = 0.14f),
                 )
             }
-            Spacer(Modifier.width(14.dp))
+            Spacer(Modifier.width(SybSpacing.iconGap))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     cleanName,
@@ -536,7 +536,7 @@ private fun ServerRow(
                     softWrap = true,
                     lineHeight = 18.sp,
                 )
-                Spacer(Modifier.height(3.dp))
+                Spacer(Modifier.height(SybSpacing.labelGap))
                 Text(
                     profile.subInfoLine(),
                     style = MaterialTheme.typography.bodySmall,
@@ -621,7 +621,7 @@ private fun SubscriptionHeader(
             Column(modifier = Modifier.fillMaxWidth().padding(start = SybSpacing.cardH, top = SybSpacing.cardV, bottom = SybSpacing.cardV, end = SybSpacing.cardEndInset)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconTile(Icons.Rounded.CloudSync)
-                    Spacer(Modifier.width(14.dp))
+                    Spacer(Modifier.width(SybSpacing.iconGap))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             subscription.name.ifBlank { stringResource(R.string.subscriptions) },
@@ -632,7 +632,7 @@ private fun SubscriptionHeader(
                             overflow = TextOverflow.Ellipsis,
                         )
                         if (selectedName != null && !expanded) {
-                            Spacer(Modifier.height(3.dp))
+                            Spacer(Modifier.height(SybSpacing.labelGap))
                             Text(
                                 selectedName,
                                 style = MaterialTheme.typography.bodySmall,
@@ -669,7 +669,7 @@ private fun SubscriptionHeader(
                             modifier = Modifier.size(20.dp).rotate(rot),
                         )
                     }
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(SybSpacing.tight))
                     Box {
                         IconButton(
                             onClick = { menu = true },
@@ -810,7 +810,7 @@ private fun SubscriptionDialog(onConfirm: (String, String?) -> Unit, onDismiss: 
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(SybSpacing.small))
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -850,7 +850,7 @@ private fun QrShareDialog(profile: ServerProfile, onDismiss: () -> Unit) {
                         .background(Color.White)
                         .padding(12.dp),
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(SybSpacing.medium))
                 Text(
                     link,
                     style = MaterialTheme.typography.bodySmall,
@@ -874,7 +874,7 @@ private fun QrShareDialog(profile: ServerProfile, onDismiss: () -> Unit) {
                     modifier = Modifier.weight(1f),
                 ) {
                     Icon(Icons.Rounded.Link, null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(SybSpacing.tight))
                     Text(stringResource(R.string.copy_link), maxLines = 1, softWrap = false)
                 }
                 TextButton(
@@ -885,7 +885,7 @@ private fun QrShareDialog(profile: ServerProfile, onDismiss: () -> Unit) {
                     modifier = Modifier.weight(1f),
                 ) {
                     Icon(Icons.Rounded.Share, null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(SybSpacing.tight))
                     Text(stringResource(R.string.share), maxLines = 1, softWrap = false)
                 }
             }

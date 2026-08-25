@@ -25,6 +25,19 @@
   per-install id into every request whether or not you wanted one; identity now lives in the
   headers, behind the switch.
 
+### Changed — settings
+- Settings open as a list of pages rather than one long scroll. The root names four areas —
+  interface, tunnel, advanced, other — and each row opens its own screen with a title bar and a
+  way back.
+- The device id always travels with a subscription request; the switch is gone. A panel that
+  limits devices cannot count them if the client may opt out, so the only thing left to do with
+  it is read it, and it is still one tap to copy.
+- Latency is measured when you ask for it. Opening the server list used to test every server on
+  its own, which is a burst of connections nobody asked for; the switch that turned it off went
+  with it.
+- One spacing scale across the screens that had drifted apart — gaps of 10, 12, 16, 28 and 32
+  pixels standing in for the same intent now come from the same handful of named steps.
+
 ### Added — home screen widgets
 - **Two widgets.** A 2×1 with the logo, a state line and a power button, and a 1×1 that is
   nothing but the button. Both use the app's own palette and follow the system between light and

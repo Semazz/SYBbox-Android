@@ -14,6 +14,9 @@ sealed class Screen(val route: String) {
     data object Servers : Screen("servers")
     data object Routing : Screen("routing")
     data object Settings : Screen("settings")
+    data object SettingsSection : Screen("settings/{section}") {
+        fun route(section: String) = "settings/$section"
+    }
     data object Logs : Screen("logs")
     data object PerApp : Screen("per_app")
     data object Scanner : Screen("scanner")

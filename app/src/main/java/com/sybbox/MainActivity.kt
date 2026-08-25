@@ -65,6 +65,8 @@ import com.sybbox.ui.scanner.ScannerScreen
 import com.sybbox.ui.servers.ServersScreen
 import com.sybbox.ui.servers.ServersViewModel
 import com.sybbox.ui.settings.SettingsScreen
+import com.sybbox.ui.settings.SettingsSection
+import com.sybbox.ui.settings.SettingsSectionScreen
 import com.sybbox.ui.settings.SettingsViewModel
 import com.sybbox.ui.theme.LocaleHelper
 import com.sybbox.ui.theme.SYBboxTheme
@@ -286,10 +288,26 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
                     }
                     composable(Screen.Settings.route) {
                         SettingsScreen(
+                            onOpenSection = { navController.navigate(Screen.SettingsSection.route(it.name)) },
                             onOpenLogs = { navController.navigate(Screen.Logs.route) },
                             onOpenPerApp = { navController.navigate(Screen.PerApp.route) },
                             viewModel = settingsViewModel,
                         )
+                    }
+                    composable(Screen.SettingsSection.route) { entry ->
+                        val name = entry.arguments?.getString("section").orEmpty()
+                        val section = runCatching { SettingsSection.valueOf(name) }.getOrNull()
+                        if (section == null) {
+                            navController.popBackStack()
+                        } else {
+                            SettingsSectionScreen(
+                                section = section,
+                                onBack = { navController.popBackStack() },
+                                onOpenLogs = { navController.navigate(Screen.Logs.route) },
+                                onOpenPerApp = { navController.navigate(Screen.PerApp.route) },
+                                viewModel = settingsViewModel,
+                            )
+                        }
                     }
                     composable(Screen.Logs.route) {
                         LogsScreen(onBack = { navController.popBackStack() })

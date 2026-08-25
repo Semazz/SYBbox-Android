@@ -88,15 +88,12 @@ class SettingsViewModel @Inject constructor(
 
     private val startup = combine(
         combine(
-            store.updateOnStart, store.pingOnStart, store.connectOnStart, store.probeUrl, store.pingTimeout,
-        ) { update, ping, connect, probeUrl, pingTimeout ->
-            StartupSlice(update, ping, connect, probeUrl, pingTimeout)
+            store.updateOnStart, store.connectOnStart, store.probeUrl, store.pingTimeout,
+        ) { update, connect, probeUrl, pingTimeout ->
+            StartupSlice(update, connect, probeUrl, pingTimeout)
         },
-        store.sendHwid,
         store.autoUpdateCheck,
-    ) { slice, sendHwid, autoUpdateCheck ->
-        slice.copy(sendHwid = sendHwid, autoUpdateCheck = autoUpdateCheck)
-    }
+    ) { slice, autoUpdateCheck -> slice.copy(autoUpdateCheck = autoUpdateCheck) }
 
     private val advanced = combine(
         store.tcpFastOpen, store.tunnelCheck, store.muxProtocol, store.muxMaxStreams, store.muxPadding,
@@ -159,11 +156,9 @@ class SettingsViewModel @Inject constructor(
             localProxyPort = localProxySlice.port,
             allowLan = localProxySlice.allowLan,
             updateOnStart = startupSlice.updateOnStart,
-            pingOnStart = startupSlice.pingOnStart,
             connectOnStart = startupSlice.connectOnStart,
             probeUrl = startupSlice.probeUrl,
             pingTimeout = startupSlice.pingTimeout,
-            sendHwid = startupSlice.sendHwid,
             autoUpdateCheck = startupSlice.autoUpdateCheck,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsState())
@@ -239,11 +234,9 @@ class SettingsViewModel @Inject constructor(
     fun setLocalProxyPort(value: Int) = edit { setLocalProxyPort(value) }
     fun setAllowLan(value: Boolean) = edit { setAllowLan(value) }
     fun setUpdateOnStart(value: Boolean) = edit { setUpdateOnStart(value) }
-    fun setPingOnStart(value: Boolean) = edit { setPingOnStart(value) }
     fun setConnectOnStart(value: Boolean) = edit { setConnectOnStart(value) }
     fun setProbeUrl(value: String) = edit { setProbeUrl(value) }
     fun setPingTimeout(value: Int) = edit { setPingTimeout(value) }
-    fun setSendHwid(value: Boolean) = edit { setSendHwid(value) }
     fun setAutoUpdateCheck(value: Boolean) = edit { setAutoUpdateCheck(value) }
     fun resetToDefaults() = edit { resetToDefaults() }
 
@@ -330,11 +323,9 @@ class SettingsViewModel @Inject constructor(
 
     private data class StartupSlice(
         val updateOnStart: Boolean,
-        val pingOnStart: Boolean,
         val connectOnStart: Boolean,
         val probeUrl: String,
         val pingTimeout: Int,
-        val sendHwid: Boolean = true,
         val autoUpdateCheck: Boolean = true,
     )
 

@@ -111,6 +111,7 @@ class SybBoxVpnService : VpnService() {
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("strict_route")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("leak_protection")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("block_webrtc")],
+        prefs[androidx.datastore.preferences.core.booleanPreferencesKey("hide_tunnel_address")],
         prefs[androidx.datastore.preferences.core.stringPreferencesKey("routing_mode")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("block_ads")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("block_trackers")],
@@ -176,6 +177,7 @@ class SybBoxVpnService : VpnService() {
         val autoFailover = settingsDataStore.autoFailover.first()
         var currentProfileId = profileId
         var attempts = 0
+        var plainTunAddress = false
         val tried = mutableSetOf<Long>()
         val maxAttempts = if (autoFailover) 5 else 1
         while (attempts < maxAttempts) {
@@ -185,6 +187,7 @@ class SybBoxVpnService : VpnService() {
                 val profile = profileRepository.getProfileById(currentProfileId)
                     ?: throw IllegalStateException("Profile $currentProfileId no longer exists")
                 val settings = readSettings()
+                    .let { if (plainTunAddress) it.copy(hideTunnelAddress = false) else it }
                 val rules = runCatching { routingRepository.getEnabledRules().first() }.getOrDefault(emptyList())
 
                 CoreLog.info("Connecting to ${profile.name.ifBlank { profile.address }} (${profile.protocol})")
@@ -209,7 +212,18 @@ class SybBoxVpnService : VpnService() {
                 updateNotification()
                 CoreLog.info("Connected")
 
-                if (settings.tunnelCheck && !tunnelCarriesTraffic()) {
+                val carriesTraffic = !settings.tunnelCheck || tunnelCarriesTraffic()
+                if (!carriesTraffic && settings.hideTunnelAddress) {
+                    CoreLog.warn(
+                        "No traffic with the hidden tunnel address. Falling back to 172.19.0.1 — " +
+                            "turn the setting off if this keeps happening.",
+                    )
+                    plainTunAddress = true
+                    shutdownCore()
+                    attempts--
+                    continue
+                }
+                if (!carriesTraffic) {
                     CoreLog.error(
                         "Connected, but no traffic is getting through this server. " +
                             "Latency only proves the server answered a TCP handshake, not that it accepted us.",
@@ -234,6 +248,12 @@ class SybBoxVpnService : VpnService() {
             } catch (error: Throwable) {
                 CoreLog.error(describe(error))
                 shutdownCore()
+                if (!plainTunAddress && settingsDataStore.hideTunnelAddress.first()) {
+                    CoreLog.warn("Retrying with the plain tunnel address")
+                    plainTunAddress = true
+                    attempts--
+                    continue
+                }
                 if (attempts < maxAttempts) {
                     val nextId = findNextProfileId(currentProfileId, tried)
                     if (nextId != null) {

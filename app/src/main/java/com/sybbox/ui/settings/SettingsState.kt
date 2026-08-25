@@ -38,6 +38,7 @@ data class SettingsState(
     val strictRoute: Boolean = true,
     val leakProtection: Boolean = true,
     val blockWebRtc: Boolean = false,
+    val hideTunnelAddress: Boolean = true,
 
     val subAutoUpdate: Boolean = true,
     val defaultSubInterval: Int = 12,

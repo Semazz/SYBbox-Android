@@ -29,6 +29,7 @@ object ConfigBuilder {
     private const val TAG_DNS_FAKE = "dns-fake"
 
     private const val TUN_ADDRESS_V4 = "172.19.0.1/30"
+    private const val TUN_ADDRESS_V4_HIDDEN = "169.254.19.1/30"
     private const val TUN_ADDRESS_V6 = "fdfe:dcba:9876::1/126"
 
     private const val GEOSITE_URL = "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-%s.srs"
@@ -318,8 +319,10 @@ object ConfigBuilder {
         }
     }
 
-    private fun tunAddresses(settings: SettingsState): List<String> =
-        if (settings.leakProtection) listOf(TUN_ADDRESS_V4) else listOf(TUN_ADDRESS_V4, TUN_ADDRESS_V6)
+    private fun tunAddresses(settings: SettingsState): List<String> {
+        val v4 = if (settings.hideTunnelAddress) TUN_ADDRESS_V4_HIDDEN else TUN_ADDRESS_V4
+        return if (settings.leakProtection) listOf(v4) else listOf(v4, TUN_ADDRESS_V6)
+    }
 
     private fun buildInbounds(
         settings: SettingsState,

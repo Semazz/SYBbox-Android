@@ -246,5 +246,7 @@
     <string name="no_apps_found">Ничего не найдено</string>
     <string name="block_webrtc">Блокировать WebRTC</string>
     <string name="block_webrtc_summary">Полностью режет STUN и TURN. WebRTC не найдёт никакого адреса, но звонки и видеосвязь перестанут работать.</string>
+    <string name="hide_tunnel_address">Скрывать адрес туннеля</string>
+    <string name="hide_tunnel_address_summary">Выдаёт туннелю link-local адрес — WebRTC такие пропускает, когда перечисляет локальные адреса. Если после подключения ничего не грузится, выключите.</string>
 </resources>
 

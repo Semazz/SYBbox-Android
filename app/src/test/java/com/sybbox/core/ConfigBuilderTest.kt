@@ -325,9 +325,17 @@ class ConfigBuilderTest {
             .getAsJsonArray("address").map { it.asString }
         assertEquals(
             "an ipv6 tunnel address is one more candidate for webrtc to report",
-            listOf("172.19.0.1/30"),
+            listOf("169.254.19.1/30"),
             addresses,
         )
+    }
+
+    @Test
+    fun `the tunnel address falls back to a routable one on request`() {
+        val addresses = parse(ConfigBuilder.build(realityVless, defaults.copy(hideTunnelAddress = false)))
+            .getAsJsonArray("inbounds")[0].asJsonObject
+            .getAsJsonArray("address").map { it.asString }
+        assertEquals(listOf("172.19.0.1/30"), addresses)
     }
 
     @Test

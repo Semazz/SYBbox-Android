@@ -53,8 +53,13 @@ class SettingsViewModel @Inject constructor(
         },
         store.leakProtection,
         store.blockWebRtc,
-    ) { slice, leakProtection, blockWebRtc ->
-        slice.copy(leakProtection = leakProtection, blockWebRtc = blockWebRtc)
+        store.hideTunnelAddress,
+    ) { slice, leakProtection, blockWebRtc, hideTunnelAddress ->
+        slice.copy(
+            leakProtection = leakProtection,
+            blockWebRtc = blockWebRtc,
+            hideTunnelAddress = hideTunnelAddress,
+        )
     }
 
     private val appearance = combine(
@@ -109,6 +114,7 @@ class SettingsViewModel @Inject constructor(
             bypassLocalNetwork = tunnelSlice.bypassLocal,
             leakProtection = tunnelSlice.leakProtection,
             blockWebRtc = tunnelSlice.blockWebRtc,
+            hideTunnelAddress = tunnelSlice.hideTunnelAddress,
             themeMode = appearanceSlice.theme,
             dynamicColor = appearanceSlice.dynamicColor,
             language = appearanceSlice.language,
@@ -164,6 +170,7 @@ class SettingsViewModel @Inject constructor(
     fun setStrictRoute(value: Boolean) = edit { setStrictRoute(value) }
     fun setLeakProtection(value: Boolean) = edit { setLeakProtection(value) }
     fun setBlockWebRtc(value: Boolean) = edit { setBlockWebRtc(value) }
+    fun setHideTunnelAddress(value: Boolean) = edit { setHideTunnelAddress(value) }
 
     fun setSubAutoUpdate(value: Boolean) {
         edit { setSubAutoUpdate(value) }
@@ -222,6 +229,7 @@ class SettingsViewModel @Inject constructor(
         val bypassLocal: Boolean,
         val leakProtection: Boolean = true,
         val blockWebRtc: Boolean = false,
+        val hideTunnelAddress: Boolean = true,
     )
 
     private data class AppearanceSlice(

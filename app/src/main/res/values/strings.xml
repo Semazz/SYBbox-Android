@@ -252,5 +252,7 @@
     <string name="no_apps_found">No apps found</string>
     <string name="block_webrtc">Block WebRTC discovery</string>
     <string name="block_webrtc_summary">Refuses STUN and TURN outright. WebRTC then finds no address at all, and voice and video calls stop working.</string>
+    <string name="hide_tunnel_address">Hide the tunnel address</string>
+    <string name="hide_tunnel_address_summary">Gives the tunnel a link-local address, which WebRTC skips when it lists local addresses. If nothing loads after connecting, turn this off.</string>
 </resources>
 

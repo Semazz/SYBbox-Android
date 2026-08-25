@@ -437,6 +437,14 @@ fun SettingsScreen(
                 )
                 SettingsDivider()
                 SettingsToggle(
+                    title = stringResource(R.string.hide_tunnel_address),
+                    summary = stringResource(R.string.hide_tunnel_address_summary),
+                    checked = state.hideTunnelAddress,
+                    onCheckedChange = viewModel::setHideTunnelAddress,
+                    icon = Icons.Rounded.Route,
+                )
+                SettingsDivider()
+                SettingsToggle(
                     title = stringResource(R.string.block_webrtc),
                     summary = stringResource(R.string.block_webrtc_summary),
                     checked = state.blockWebRtc,

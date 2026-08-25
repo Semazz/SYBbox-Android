@@ -233,4 +233,6 @@
     <string name="no_apps_found">未找到应用</string>
     <string name="block_webrtc">阻止 WebRTC</string>
     <string name="block_webrtc_summary">直接拒绝 STUN 与 TURN。WebRTC 找不到任何地址，通话也将无法使用。</string>
+    <string name="hide_tunnel_address">隐藏隧道地址</string>
+    <string name="hide_tunnel_address_summary">为隧道分配链路本地地址，WebRTC 会跳过这类地址。若连接后无法上网，请关闭。</string>
 </resources>

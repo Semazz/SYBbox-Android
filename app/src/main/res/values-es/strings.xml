@@ -250,5 +250,7 @@
     <string name="no_apps_found">No se encontraron aplicaciones</string>
     <string name="block_webrtc">Bloquear WebRTC</string>
     <string name="block_webrtc_summary">Rechaza STUN y TURN por completo. WebRTC no encuentra ninguna direccion y las llamadas dejan de funcionar.</string>
+    <string name="hide_tunnel_address">Ocultar la direccion del tunel</string>
+    <string name="hide_tunnel_address_summary">Asigna al tunel una direccion link-local, que WebRTC omite. Si no carga nada tras conectar, desactivelo.</string>
 </resources>
 

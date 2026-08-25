@@ -318,19 +318,8 @@ object ConfigBuilder {
         }
     }
 
-    private val tunRandom = java.security.SecureRandom()
-
-    private fun randomTunAddresses(): List<String> {
-        val second = 16 + tunRandom.nextInt(16)
-        val third = tunRandom.nextInt(256)
-        val base = tunRandom.nextInt(64) * 4
-        val v4 = "172.$second.$third.${base + 1}/30"
-        val v6 = "fd%02x:%04x:%04x:%04x::1/126".format(
-            tunRandom.nextInt(0x100), tunRandom.nextInt(0x10000),
-            tunRandom.nextInt(0x10000), tunRandom.nextInt(0x10000),
-        )
-        return listOf(v4, v6)
-    }
+    private fun tunAddresses(settings: SettingsState): List<String> =
+        if (settings.leakProtection) listOf(TUN_ADDRESS_V4) else listOf(TUN_ADDRESS_V4, TUN_ADDRESS_V6)
 
     private fun buildInbounds(
         settings: SettingsState,
@@ -340,7 +329,7 @@ object ConfigBuilder {
         add(JsonObject().apply {
             addProperty("type", "tun")
             addProperty("tag", TAG_TUN)
-            add("address", jsonArrayOf(randomTunAddresses()))
+            add("address", jsonArrayOf(tunAddresses(settings)))
             addProperty("mtu", settings.tunMTU.coerceIn(1280, 1500))
             addProperty("auto_route", settings.autoRoute)
             addProperty("strict_route", settings.strictRoute)

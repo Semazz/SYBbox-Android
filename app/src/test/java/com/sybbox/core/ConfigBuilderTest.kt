@@ -331,6 +331,15 @@ class ConfigBuilderTest {
             parse(ConfigBuilder.build(realityVless, defaults))
                 .getAsJsonObject("dns").get("strategy").asString,
         )
+
+        val addresses = parse(ConfigBuilder.build(realityVless, defaults))
+            .getAsJsonArray("inbounds")[0].asJsonObject
+            .getAsJsonArray("address").map { it.asString }
+        assertEquals(
+            "an ipv6 tunnel address is one more candidate for webrtc to report",
+            listOf("172.19.0.1/30"),
+            addresses,
+        )
     }
 
     @Test
@@ -340,6 +349,10 @@ class ConfigBuilderTest {
             .getAsJsonObject("route").getAsJsonArray("rules").map { it.asJsonObject }
         assertTrue(rules.none { it.get("ip_version") != null })
         assertTrue(rules.none { it.get("action")?.asString == "reject" && it.get("port") != null })
+        val addresses = parse(ConfigBuilder.build(realityVless, off))
+            .getAsJsonArray("inbounds")[0].asJsonObject
+            .getAsJsonArray("address").map { it.asString }
+        assertEquals(2, addresses.size)
     }
 
     private fun parse(json: String): JsonObject = JsonParser.parseString(json).asJsonObject

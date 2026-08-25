@@ -280,7 +280,7 @@
     <string name="auto_update_check">Следить за обновлениями</string>
     <string name="auto_update_check_summary">Раз в сутки смотрит ленту релизов и показывает плашку на главном экране</string>
     <string name="widget_switch_description">Логотип и кнопка. Нажмите, чтобы подключиться.</string>
-    <string name="widget_status_description">Сервер, трафик и время соединения с кнопкой подключения.</string>
+    <string name="widget_button_description">Одна кнопка. Нажмите, чтобы подключиться.</string>
     <string name="widget_toggle">Подключить или отключить</string>
 </resources>
 

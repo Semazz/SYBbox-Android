@@ -267,6 +267,6 @@
     <string name="auto_update_check">自动检查更新</string>
     <string name="auto_update_check_summary">每天查看一次发布列表，并在主页显示提示条</string>
     <string name="widget_switch_description">一个标志与一个按钮，点一下即可连接。</string>
-    <string name="widget_status_description">服务器、流量与连接时长，带连接按钮。</string>
+    <string name="widget_button_description">一个按钮，点一下即可连接。</string>
     <string name="widget_toggle">连接或断开</string>
 </resources>

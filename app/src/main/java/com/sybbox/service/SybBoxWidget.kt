@@ -12,41 +12,39 @@ import com.sybbox.MainActivity
 import com.sybbox.R
 import com.sybbox.domain.model.ConnectionState
 
-abstract class SybBoxWidget(private val layout: Int, private val detailed: Boolean) : AppWidgetProvider() {
+abstract class SybBoxWidget(private val layout: Int, private val labelled: Boolean) : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, widgetIds: IntArray) {
-        widgetIds.forEach { manager.updateAppWidget(it, render(context, layout, detailed)) }
+        widgetIds.forEach { manager.updateAppWidget(it, render(context, layout, labelled)) }
     }
 
-    class Switch : SybBoxWidget(R.layout.widget_switch, detailed = false)
+    class Switch : SybBoxWidget(R.layout.widget_switch, labelled = true)
 
-    class Status : SybBoxWidget(R.layout.widget_status, detailed = true)
+    class Button : SybBoxWidget(R.layout.widget_button, labelled = false)
 
     companion object {
 
+        private val shapes = listOf(
+            Triple(Switch::class.java, R.layout.widget_switch, true),
+            Triple(Button::class.java, R.layout.widget_button, false),
+        )
+
         fun refresh(context: Context) {
             val manager = AppWidgetManager.getInstance(context) ?: return
-            listOf(
-                Switch::class.java to (R.layout.widget_switch to false),
-                Status::class.java to (R.layout.widget_status to true),
-            ).forEach { (provider, shape) ->
+            shapes.forEach { (provider, layout, labelled) ->
                 val ids = runCatching {
                     manager.getAppWidgetIds(ComponentName(context, provider))
                 }.getOrNull() ?: return@forEach
                 if (ids.isEmpty()) return@forEach
-                val views = render(context, shape.first, shape.second)
-                runCatching { manager.updateAppWidget(ids, views) }
+                runCatching { manager.updateAppWidget(ids, render(context, layout, labelled)) }
             }
         }
 
-        private fun render(context: Context, layout: Int, detailed: Boolean): RemoteViews {
-            val state = SybBoxVpnService.appState.value
-            val live = state.connectionState == ConnectionState.CONNECTED ||
-                state.connectionState == ConnectionState.CONNECTING
+        private fun render(context: Context, layout: Int, labelled: Boolean): RemoteViews {
+            val state = SybBoxVpnService.appState.value.connectionState
+            val live = state == ConnectionState.CONNECTED || state == ConnectionState.CONNECTING
 
             return RemoteViews(context.packageName, layout).apply {
-                setInt(R.id.widget_logo, "setColorFilter", color(context, R.color.widget_text))
-                setTextViewText(R.id.widget_state, context.getString(stateLabel(state.connectionState)))
                 setInt(
                     R.id.widget_power,
                     "setBackgroundResource",
@@ -58,26 +56,12 @@ abstract class SybBoxWidget(private val layout: Int, private val detailed: Boole
                     color(context, if (live) R.color.widget_on_accent else R.color.widget_text_dim),
                 )
                 setOnClickPendingIntent(R.id.widget_power, togglePending(context))
+
+                if (!labelled) return@apply
+
+                setInt(R.id.widget_logo, "setColorFilter", color(context, R.color.widget_text))
+                setTextViewText(R.id.widget_state, context.getString(stateLabel(state)))
                 setOnClickPendingIntent(R.id.widget_root, openPending(context))
-
-                if (!detailed) return@apply
-
-                setTextViewText(
-                    R.id.widget_server,
-                    state.activeProfile?.name?.takeIf { it.isNotBlank() }
-                        ?: state.activeProfile?.address
-                        ?: context.getString(R.string.no_server_selected),
-                )
-                setTextViewText(
-                    R.id.widget_traffic,
-                    SybBoxVpnService.formatBytes(state.stats.totalUpload + state.stats.totalDownload),
-                )
-                setTextViewText(R.id.widget_uptime, SybBoxVpnService.formatDuration(state.stats.duration))
-                setInt(
-                    R.id.widget_dot,
-                    "setColorFilter",
-                    color(context, if (live) R.color.widget_accent else R.color.widget_power_idle),
-                )
             }
         }
 

@@ -286,7 +286,7 @@
     <string name="auto_update_check">Look for updates</string>
     <string name="auto_update_check_summary">Checks the release feed once a day and shows a bar on the home screen</string>
     <string name="widget_switch_description">A logo and a button. Tap to connect.</string>
-    <string name="widget_status_description">Server, traffic and uptime, with a connect button.</string>
+    <string name="widget_button_description">A single button. Tap to connect.</string>
     <string name="widget_toggle">Connect or disconnect</string>
 </resources>
 

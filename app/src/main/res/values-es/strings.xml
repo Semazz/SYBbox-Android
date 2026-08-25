@@ -284,7 +284,7 @@
     <string name="auto_update_check">Buscar actualizaciones solo</string>
     <string name="auto_update_check_summary">Consulta las versiones una vez al dia y muestra un aviso en la pantalla principal</string>
     <string name="widget_switch_description">Un logo y un boton. Toca para conectar.</string>
-    <string name="widget_status_description">Servidor, trafico y tiempo de conexion, con un boton.</string>
+    <string name="widget_button_description">Un solo boton. Toca para conectar.</string>
     <string name="widget_toggle">Conectar o desconectar</string>
 </resources>
 

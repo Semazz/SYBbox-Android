@@ -36,14 +36,7 @@ class SybBoxApp : Application(), Configuration.Provider {
     private fun keepWidgetsCurrent() {
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
             SybBoxVpnService.appState
-                .map { state ->
-                    listOf(
-                        state.connectionState,
-                        state.activeProfile?.id,
-                        state.stats.totalUpload + state.stats.totalDownload shr 20,
-                        state.stats.duration / WIDGET_TICK_MILLIS,
-                    ).joinToString("|")
-                }
+                .map { it.connectionState }
                 .distinctUntilChanged()
                 .collect { SybBoxWidget.refresh(this@SybBoxApp) }
         }
@@ -77,7 +70,6 @@ class SybBoxApp : Application(), Configuration.Provider {
     }
 
     companion object {
-        const val WIDGET_TICK_MILLIS = 10_000L
         const val CHANNEL_VPN = "sybbox_vpn"
         const val CHANNEL_UPDATES = "sybbox_updates"
 

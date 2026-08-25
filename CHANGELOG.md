@@ -3,17 +3,18 @@
 ## v2.0.2 (2026-08-25)
 
 ### Fixed — IP leaks
-- **Leak protection**, on by default. WebRTC discovery is refused before it leaves the device:
-  UDP to the STUN and TURN ports, and hostnames that start with `stun` or `turn`, are rejected
-  in both the router and the resolver, so a page can no longer learn an address that way.
-  The match is anchored at the start of the hostname — the blanket `domain_keyword` rule that
-  once caught `saturn`, `return` and `turnitin` is not coming back.
-- IPv6 is rejected while the setting is on, and the resolver is pinned to `ipv4_only`. The tunnel
-  carries IPv4; leaving AAAA answers in play meant an address the tunnel never covered.
-- The tunnel address is fixed at `172.19.0.1/30` again. Randomising it every connect put a
-  different private address in front of every WebRTC probe, and there was nothing to gain.
-  The IPv6 tunnel address is dropped while leak protection is on — one less candidate to report.
-- Voice and video calls rely on STUN, so the setting is switchable in Settings → Tunnel.
+- **Leak protection**, on by default. IPv6 is rejected and the resolver is pinned to `ipv4_only`.
+  The tunnel carries IPv4; leaving AAAA answers in play meant an address the tunnel never covered.
+- The tunnel address is fixed at `172.19.0.1/30` again, and the IPv6 tunnel address is dropped
+  while leak protection is on. Randomising the address every connect put a different private
+  address in front of every WebRTC probe and gained nothing.
+- STUN rides the tunnel. Rejecting it is what made a leak test report the tunnel's own address:
+  with no server-reflexive candidate to show, the page falls back to the local one. Letting STUN
+  through means WebRTC reports the exit address, which is the answer a leak test wants to see.
+- **Block WebRTC discovery** is its own switch, off by default, for anyone who would rather ICE
+  found nothing at all. It refuses STUN and TURN by port, and by hostnames starting with `stun`
+  or `turn` — anchored at the start, so the blanket `domain_keyword` rule that once caught
+  `saturn`, `return` and `turnitin` is not coming back. Voice and video calls stop working.
 
 ### Fixed — latency checks
 - Checking latency no longer raises and drops the tunnel. It used to connect, wait, and
@@ -34,6 +35,13 @@
   had slid under the finger — pick Hysteria, connect to VLESS.
 - Latency shows for ten seconds after the tunnel comes up, without having to ask for it.
 
+### Fixed — switching servers
+- Switching servers quickly no longer lands on the first one in the subscription. Each switch
+  cancels the connection attempt in flight, and the cancellation was caught as a connection
+  failure — which handed it to auto-failover, which walked to the next server and wrapped around
+  to the first. Cancellation now passes through, and failover never revisits a server it has
+  already tried.
+
 ### Changed — server list
 - Row and subscription actions live in the overflow menu. The inline test and refresh buttons
   are gone; the latency badge stays.
@@ -49,6 +57,9 @@
 - Selected apps sort to the top of the list.
 - The empty search result read as a row of question marks. The string had been mangled to
   replacement characters in the source; it is a translated resource now.
+- Reordering waits until you stop toggling. It used to happen mid-tap, so the row that slid under
+  the finger took the press and lit up instead of the one that was tapped, and item animation drew
+  two rows over each other while they swapped.
 
 ## v2.0.1 (2026-08-24)
 

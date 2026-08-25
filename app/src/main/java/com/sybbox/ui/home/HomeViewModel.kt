@@ -46,8 +46,7 @@ class HomeViewModel @Inject constructor(
         settingsDataStore.lastProfileId,
         profiles,
     ) { lastId, profiles ->
-        if (lastId > 0L && profiles.any { it.id == lastId }) lastId
-        else profiles.firstOrNull()?.id ?: -1L
+        if (lastId > 0L) lastId else profiles.firstOrNull()?.id ?: -1L
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), -1L)
 
     private val _latencies = MutableStateFlow<Map<Long, Int>>(emptyMap())

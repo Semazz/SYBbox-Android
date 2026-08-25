@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -381,9 +382,16 @@ class ServersViewModel @Inject constructor(
         viewModelScope.launch {
             val wasActive = SybBoxVpnService.appState.value.activeProfile?.id == profile.id
             profileRepository.deleteProfile(profile)
+            repointSelection(setOf(profile.id))
             if (wasActive) SybBoxVpnService.disconnect(getApplication())
             emit(UiMessage(R.string.msg_server_deleted))
         }
+    }
+
+    private suspend fun repointSelection(removed: Set<Long>) {
+        val current = settingsDataStore.lastProfileId.first()
+        if (current !in removed) return
+        settingsDataStore.setLastProfileId(profileRepository.getAllProfilesOnce().firstOrNull()?.id ?: -1L)
     }
 
     fun deleteAllManualProfiles() {
@@ -393,6 +401,7 @@ class ServersViewModel @Inject constructor(
             if (manual.isEmpty()) return@launch
             val shouldDisconnect = manual.any { it.id == activeId }
             profileRepository.deleteProfilesBySubscription(0L)
+            repointSelection(manual.map { it.id }.toSet())
             if (shouldDisconnect) SybBoxVpnService.disconnect(getApplication())
             emit(UiMessage(R.string.msg_servers_deleted))
         }
@@ -402,8 +411,13 @@ class ServersViewModel @Inject constructor(
         viewModelScope.launch {
             val activeId = SybBoxVpnService.appState.value.activeProfile?.id
             val shouldDisconnect = activeId != null && runCatching { profileRepository.getProfileById(activeId)?.subscriptionId == subscription.id }.getOrDefault(false)
+            val removed = profileRepository.getAllProfilesOnce()
+                .filter { it.subscriptionId == subscription.id }
+                .map { it.id }
+                .toSet()
             profileRepository.deleteProfilesBySubscription(subscription.id)
             subscriptionRepository.deleteSubscription(subscription)
+            repointSelection(removed)
             if (shouldDisconnect) SybBoxVpnService.disconnect(getApplication())
             emit(UiMessage(R.string.msg_subscription_deleted))
         }

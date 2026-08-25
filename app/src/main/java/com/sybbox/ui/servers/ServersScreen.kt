@@ -230,30 +230,18 @@ fun ServersScreen(
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )
-                            }
-                            IconButton(
-                                onClick = {
-                                    expandedManual = true
-                                    viewModel.measureAll(manual)
-                                },
-                                modifier = Modifier.size(36.dp),
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(
-                                        Icons.Rounded.Speed,
-                                        stringResource(R.string.ping_all),
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp),
+                                val chosen = manual.firstOrNull { it.id == selectedId }
+                                if (chosen != null && !expandedManual) {
+                                    Spacer(Modifier.height(3.dp))
+                                    Text(
+                                        chosen.displayName(),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
                                     )
                                 }
                             }
-                            Spacer(Modifier.width(4.dp))
                             IconButton(
                                 onClick = { if (steady()) expandedManual = !expandedManual },
                                 modifier = Modifier.size(36.dp),
@@ -307,18 +295,9 @@ fun ServersScreen(
                             }
                         }
                     }
-                if (when {
-                    expandedManual -> manual.isNotEmpty()
-                    manual.any { it.id == selectedId } -> true
-                    else -> false
-                }) Spacer(Modifier.height(8.dp))
+                if (expandedManual && manual.isNotEmpty()) Spacer(Modifier.height(8.dp))
             }
-            val manualHasSelected = manual.any { it.id == selectedId }
-            val manualVisible = when {
-                expandedManual -> manual
-                manualHasSelected -> manual.filter { it.id == selectedId }
-                else -> emptyList()
-            }
+            val manualVisible = if (expandedManual) manual else emptyList()
             items(manualVisible, key = { "m-${it.id}" }) { profile ->
                 val showLatency = nowTick < (pingVisibleUntil[profile.id] ?: 0L)
                 Box(modifier = Modifier.padding(bottom = 8.dp)) {
@@ -342,13 +321,8 @@ fun ServersScreen(
 
         subscriptions.forEach { subscription ->
             val members = profiles.filter { it.subscriptionId == subscription.id }
-            val isSelectedInside = members.any { it.id == selectedId }
             val isExpanded = expandedSubscription == subscription.id
-            val visibleMembers = when {
-                isExpanded -> members
-                isSelectedInside -> members.filter { it.id == selectedId }
-                else -> emptyList()
-            }
+            val visibleMembers = if (isExpanded) members else emptyList()
             item(key = "sub-${subscription.id}") {
 
                 Spacer(Modifier.height(10.dp))
@@ -358,6 +332,7 @@ fun ServersScreen(
                     expanded = isExpanded,
                     refreshing = subscription.id in refreshing,
                     showPing = true,
+                    selectedName = members.firstOrNull { it.id == selectedId }?.displayName(),
                     onToggle = {
                         if (steady()) {
                             expandedSubscription =
@@ -578,25 +553,7 @@ private fun ServerRow(
             }
             Spacer(Modifier.width(6.dp))
             LatencyBadge(latency, testing)
-            IconButton(
-                onClick = onPing,
-                modifier = Modifier.size(32.dp),
-            ) {
-                if (testing) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                } else {
-                    Icon(
-                        Icons.Rounded.Speed,
-                        stringResource(R.string.check_ping),
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
+            Spacer(Modifier.width(2.dp))
             Box {
                 IconButton(
                     onClick = { menu = true },
@@ -654,6 +611,7 @@ private fun SubscriptionHeader(
     expanded: Boolean,
     refreshing: Boolean,
     showPing: Boolean,
+    selectedName: String?,
     onToggle: () -> Unit,
     onRefresh: () -> Unit,
     onPingAll: () -> Unit,
@@ -679,6 +637,16 @@ private fun SubscriptionHeader(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        if (selectedName != null && !expanded) {
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                selectedName,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                     if (refreshing) {
                         CircularProgressIndicator(
@@ -687,49 +655,6 @@ private fun SubscriptionHeader(
                             color = MaterialTheme.colorScheme.primary,
                         )
                         Spacer(Modifier.width(10.dp))
-                    } else {
-                        if (showPing) {
-                            IconButton(
-                                onClick = onPingAll,
-                                modifier = Modifier.size(36.dp),
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(
-                                        Icons.Rounded.Speed,
-                                        stringResource(R.string.ping_all),
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp),
-                                    )
-                                }
-                            }
-                            Spacer(Modifier.width(4.dp))
-                        }
-                        IconButton(
-                            onClick = onRefresh,
-                            modifier = Modifier.size(36.dp),
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    Icons.Rounded.Refresh,
-                                    stringResource(R.string.cd_refresh),
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                            }
-                        }
-                        Spacer(Modifier.width(4.dp))
                     }
                     IconButton(
                         onClick = onToggle,
@@ -764,6 +689,13 @@ private fun SubscriptionHeader(
                             )
                         }
                         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                            if (showPing) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.ping_all)) },
+                                    leadingIcon = { Icon(Icons.Rounded.Speed, null) },
+                                    onClick = { menu = false; onPingAll() },
+                                )
+                            }
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.update)) },
                                 leadingIcon = { Icon(Icons.Rounded.Refresh, null) },

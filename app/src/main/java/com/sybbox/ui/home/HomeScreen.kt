@@ -1,6 +1,8 @@
 package com.sybbox.ui.home
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.net.VpnService
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,7 +15,9 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,6 +42,8 @@ import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.Power
 import androidx.compose.material.icons.rounded.Public
@@ -47,6 +53,7 @@ import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -72,6 +79,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sybbox.R
+import com.sybbox.data.remote.Release
 import com.sybbox.domain.model.ConnectionState
 import com.sybbox.domain.model.ServerProfile
 import com.sybbox.service.SybBoxVpnService
@@ -198,7 +206,74 @@ fun HomeScreen(
             }
         }
 
+        val release by viewModel.pendingRelease.collectAsStateWithLifecycle()
+        AnimatedVisibility(
+            visible = release != null,
+            enter = fadeIn(tween(400)) + expandVertically(tween(300)),
+            exit = fadeOut(tween(150)) + shrinkVertically(tween(200)),
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Spacer(Modifier.height(16.dp))
+                release?.let { pending ->
+                    UpdateBanner(
+                        release = pending,
+                        onOpen = {
+                            runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(pending.page))) }
+                        },
+                        onDismiss = viewModel::dismissRelease,
+                    )
+                }
+            }
+        }
+
         Spacer(Modifier.height(32.dp))
+    }
+}
+
+@Composable
+private fun UpdateBanner(release: Release, onOpen: () -> Unit, onDismiss: () -> Unit) {
+    val accent = MaterialTheme.colorScheme.primary
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(CardShape)
+            .background(accent.copy(alpha = 0.07f))
+            .clickable(onClick = onOpen)
+            .padding(start = 14.dp, end = 6.dp, top = 10.dp, bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(30.dp)
+                .clip(CircleShape)
+                .background(accent.copy(alpha = 0.16f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Rounded.CloudDownload,
+                null,
+                tint = accent,
+                modifier = Modifier.size(17.dp),
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(
+            stringResource(R.string.update_banner, release.version),
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
+            Icon(
+                Icons.Rounded.Close,
+                stringResource(R.string.close),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp),
+            )
+        }
     }
 }
 

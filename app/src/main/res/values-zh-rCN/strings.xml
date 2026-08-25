@@ -263,4 +263,7 @@
     <string name="send_hwid">发送设备标识</string>
     <string name="send_hwid_summary">订阅请求将携带设备标识、Android 版本与机型，便于面板统计设备数</string>
     <string name="hwid">设备标识</string>
+    <string name="update_banner">已发布 %1$s</string>
+    <string name="auto_update_check">自动检查更新</string>
+    <string name="auto_update_check_summary">每天查看一次发布列表，并在主页显示提示条</string>
 </resources>

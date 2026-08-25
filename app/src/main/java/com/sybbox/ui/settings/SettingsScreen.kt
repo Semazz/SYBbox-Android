@@ -627,6 +627,14 @@ fun SettingsScreen(
                     onClick = viewModel::checkForUpdate,
                 )
                 SettingsDivider()
+                SettingsToggle(
+                    title = stringResource(R.string.auto_update_check),
+                    summary = stringResource(R.string.auto_update_check_summary),
+                    checked = state.autoUpdateCheck,
+                    onCheckedChange = viewModel::setAutoUpdateCheck,
+                    icon = Icons.Rounded.Schedule,
+                )
+                SettingsDivider()
                 SettingsAction(
                     title = stringResource(R.string.reset_settings),
                     summary = stringResource(R.string.reset_settings_summary),

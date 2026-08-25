@@ -280,5 +280,8 @@
     <string name="send_hwid">Enviar id del dispositivo</string>
     <string name="send_hwid_summary">La peticion de suscripcion llevara un id de dispositivo, la version de Android y el modelo</string>
     <string name="hwid">Id del dispositivo</string>
+    <string name="update_banner">La versión %1$s ya está disponible</string>
+    <string name="auto_update_check">Buscar actualizaciones solo</string>
+    <string name="auto_update_check_summary">Consulta las versiones una vez al dia y muestra un aviso en la pantalla principal</string>
 </resources>
 

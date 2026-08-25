@@ -282,5 +282,8 @@
     <string name="send_hwid">Send device id</string>
     <string name="send_hwid_summary">Subscription requests carry a device id, Android version and model, so a panel that limits devices can count them</string>
     <string name="hwid">Device id</string>
+    <string name="update_banner">Version %1$s is out</string>
+    <string name="auto_update_check">Look for updates</string>
+    <string name="auto_update_check_summary">Checks the release feed once a day and shows a bar on the home screen</string>
 </resources>
 

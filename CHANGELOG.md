@@ -12,6 +12,9 @@
 - **Tunnel check address** and **ping timeout** are configurable. The configured address is tried
   first and the built-in ones remain as fallbacks.
 - **Check for updates** reads the GitHub release feed and says what is out and what you are on.
+  It also looks on its own, once a day, and says so with a thin bar at the foot of the home
+  screen rather than a notification or a dialog — tap it to open the release, close it and that
+  version never asks again. The daily look can be turned off.
 - **Reset settings** puts every setting back to its default and leaves servers and subscriptions
   alone.
 - **Send device id.** Subscription requests carry `x-hwid`, `x-device-os`, `x-ver-os` and

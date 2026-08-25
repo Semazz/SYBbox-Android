@@ -50,6 +50,10 @@ class SettingsDataStore @Inject constructor(
     val probeUrl: Flow<String> = dataStore.data.map { it[KEY_PROBE_URL] ?: DEFAULT_PROBE_URL }
     val pingTimeout: Flow<Int> = dataStore.data.map { it[KEY_PING_TIMEOUT] ?: 3 }
     val sendHwid: Flow<Boolean> = dataStore.data.map { it[KEY_SEND_HWID] ?: true }
+    val autoUpdateCheck: Flow<Boolean> = dataStore.data.map { it[KEY_AUTO_UPDATE_CHECK] ?: true }
+    val knownRelease: Flow<String> = dataStore.data.map { it[KEY_KNOWN_RELEASE] ?: "" }
+    val knownReleasePage: Flow<String> = dataStore.data.map { it[KEY_KNOWN_RELEASE_PAGE] ?: "" }
+    val dismissedRelease: Flow<String> = dataStore.data.map { it[KEY_DISMISSED_RELEASE] ?: "" }
     val collapsedGroups: Flow<Set<String>> = dataStore.data.map { it[KEY_COLLAPSED_GROUPS] ?: emptySet() }
 
     val themeMode: Flow<String> = dataStore.data.map { it[KEY_THEME_MODE] ?: "SYSTEM" }
@@ -121,6 +125,7 @@ class SettingsDataStore @Inject constructor(
             probeUrl = p[KEY_PROBE_URL] ?: DEFAULT_PROBE_URL,
             pingTimeout = p[KEY_PING_TIMEOUT] ?: 3,
             sendHwid = p[KEY_SEND_HWID] ?: true,
+            autoUpdateCheck = p[KEY_AUTO_UPDATE_CHECK] ?: true,
             subAutoUpdate = p[KEY_SUB_AUTO_UPDATE] ?: true,
             defaultSubInterval = p[KEY_DEFAULT_SUB_INTERVAL] ?: 12,
             autoFailover = p[KEY_AUTO_FAILOVER] ?: false,
@@ -171,6 +176,19 @@ class SettingsDataStore @Inject constructor(
     suspend fun setProbeUrl(value: String) = dataStore.edit { it[KEY_PROBE_URL] = value }
     suspend fun setPingTimeout(value: Int) = dataStore.edit { it[KEY_PING_TIMEOUT] = value }
     suspend fun setSendHwid(value: Boolean) = dataStore.edit { it[KEY_SEND_HWID] = value }
+    suspend fun setAutoUpdateCheck(value: Boolean) = dataStore.edit { it[KEY_AUTO_UPDATE_CHECK] = value }
+    suspend fun setDismissedRelease(value: String) = dataStore.edit { it[KEY_DISMISSED_RELEASE] = value }
+
+    suspend fun rememberRelease(version: String, page: String) = dataStore.edit {
+        it[KEY_KNOWN_RELEASE] = version
+        it[KEY_KNOWN_RELEASE_PAGE] = page
+        it[KEY_LAST_RELEASE_CHECK] = System.currentTimeMillis()
+    }
+
+    suspend fun releaseCheckDue(intervalMillis: Long): Boolean {
+        val last = dataStore.data.first()[KEY_LAST_RELEASE_CHECK] ?: 0L
+        return System.currentTimeMillis() - last >= intervalMillis
+    }
 
     suspend fun resetToDefaults() {
         val keep = dataStore.data.first()
@@ -236,6 +254,11 @@ class SettingsDataStore @Inject constructor(
         private val KEY_PROBE_URL = stringPreferencesKey("probe_url")
         private val KEY_PING_TIMEOUT = intPreferencesKey("ping_timeout")
         private val KEY_SEND_HWID = booleanPreferencesKey("send_hwid")
+        private val KEY_AUTO_UPDATE_CHECK = booleanPreferencesKey("auto_update_check")
+        private val KEY_KNOWN_RELEASE = stringPreferencesKey("known_release")
+        private val KEY_KNOWN_RELEASE_PAGE = stringPreferencesKey("known_release_page")
+        private val KEY_DISMISSED_RELEASE = stringPreferencesKey("dismissed_release")
+        private val KEY_LAST_RELEASE_CHECK = longPreferencesKey("last_release_check")
         const val DEFAULT_PROBE_URL = "https://www.gstatic.com/generate_204"
         private val KEY_COLLAPSED_GROUPS = stringSetPreferencesKey("collapsed_groups")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")

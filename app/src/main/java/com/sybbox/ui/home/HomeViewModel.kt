@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.sybbox.R
 import com.sybbox.data.datastore.SettingsDataStore
+import com.sybbox.data.remote.Release
+import com.sybbox.data.remote.ReleaseCheck
 import com.sybbox.data.repository.ProfileRepository
 import com.sybbox.domain.model.AppState
 import com.sybbox.domain.model.ConnectionState
@@ -64,9 +66,34 @@ class HomeViewModel @Inject constructor(
     private val _messages = MutableSharedFlow<UiMessage>(extraBufferCapacity = 4)
     val messages: SharedFlow<UiMessage> = _messages
 
+    val pendingRelease: StateFlow<Release?> = combine(
+        settingsDataStore.knownRelease,
+        settingsDataStore.knownReleasePage,
+        settingsDataStore.dismissedRelease,
+    ) { version, page, dismissed ->
+        if (version.isBlank() || version == dismissed) null
+        else if (!ReleaseCheck.isNewer(version)) null
+        else Release(version, page.ifBlank { ReleaseCheck.RELEASES_PAGE })
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     init {
         pingOnConnect()
         connectOnStart()
+        lookForRelease()
+    }
+
+    fun dismissRelease() {
+        val version = pendingRelease.value?.version ?: return
+        viewModelScope.launch { settingsDataStore.setDismissedRelease(version) }
+    }
+
+    private fun lookForRelease() {
+        viewModelScope.launch {
+            if (!settingsDataStore.autoUpdateCheck.first()) return@launch
+            if (!settingsDataStore.releaseCheckDue(RELEASE_CHECK_INTERVAL_MS)) return@launch
+            val release = withContext(Dispatchers.IO) { ReleaseCheck.latest() } ?: return@launch
+            settingsDataStore.rememberRelease(release.version, release.page)
+        }
     }
 
     private fun connectOnStart() {
@@ -149,5 +176,6 @@ class HomeViewModel @Inject constructor(
     private companion object {
         const val PING_VISIBLE_MS = 10_000L
         const val AUTO_CONNECT_WAIT_MS = 5_000L
+        const val RELEASE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000L
     }
 }

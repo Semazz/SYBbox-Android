@@ -110,6 +110,7 @@ class SybBoxVpnService : VpnService() {
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("auto_route")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("strict_route")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("leak_protection")],
+        prefs[androidx.datastore.preferences.core.booleanPreferencesKey("block_webrtc")],
         prefs[androidx.datastore.preferences.core.stringPreferencesKey("routing_mode")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("block_ads")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("block_trackers")],
@@ -175,9 +176,11 @@ class SybBoxVpnService : VpnService() {
         val autoFailover = settingsDataStore.autoFailover.first()
         var currentProfileId = profileId
         var attempts = 0
+        val tried = mutableSetOf<Long>()
         val maxAttempts = if (autoFailover) 5 else 1
         while (attempts < maxAttempts) {
             attempts++
+            tried += currentProfileId
             try {
                 val profile = profileRepository.getProfileById(currentProfileId)
                     ?: throw IllegalStateException("Profile $currentProfileId no longer exists")
@@ -211,8 +214,8 @@ class SybBoxVpnService : VpnService() {
                         "Connected, but no traffic is getting through this server. " +
                             "Latency only proves the server answered a TCP handshake, not that it accepted us.",
                     )
-                    val nextId = if (autoFailover) findNextProfileId(currentProfileId) else null
-                    if (nextId != null && nextId != currentProfileId && attempts < maxAttempts) {
+                    val nextId = if (autoFailover) findNextProfileId(currentProfileId, tried) else null
+                    if (nextId != null && attempts < maxAttempts) {
                         CoreLog.warn("Trying the next server in the subscription")
                         shutdownCore()
                         currentProfileId = nextId
@@ -226,12 +229,14 @@ class SybBoxVpnService : VpnService() {
                     CoreLog.info("Tunnel check passed: traffic is flowing")
                 }
                 return
+            } catch (superseded: kotlinx.coroutines.CancellationException) {
+                throw superseded
             } catch (error: Throwable) {
                 CoreLog.error(describe(error))
                 shutdownCore()
                 if (attempts < maxAttempts) {
-                    val nextId = findNextProfileId(currentProfileId)
-                    if (nextId != null && nextId != currentProfileId) {
+                    val nextId = findNextProfileId(currentProfileId, tried)
+                    if (nextId != null) {
                         CoreLog.warn("Failover: switching from $currentProfileId to $nextId")
                         currentProfileId = nextId
                         continue
@@ -249,21 +254,21 @@ class SybBoxVpnService : VpnService() {
         }
     }
 
-    private suspend fun findNextProfileId(currentId: Long): Long? {
+    private suspend fun findNextProfileId(currentId: Long, tried: Set<Long>): Long? {
         val allProfiles = profileRepository.getAllProfiles().first()
-        if (allProfiles.isEmpty()) return null
         val current = allProfiles.find { it.id == currentId } ?: return null
-
-        if (current.subscriptionId > 0) {
-            val siblings = allProfiles.filter { it.subscriptionId == current.subscriptionId }
-            val idx = siblings.indexOfFirst { it.id == currentId }
-            if (idx >= 0 && idx + 1 < siblings.size) return siblings[idx + 1].id
-            if (siblings.isNotEmpty()) return siblings.first().id
+        val pool = if (current.subscriptionId > 0) {
+            allProfiles.filter { it.subscriptionId == current.subscriptionId }
+        } else {
+            allProfiles
         }
-
-        val idx = allProfiles.indexOfFirst { it.id == currentId }
-        if (idx >= 0 && idx + 1 < allProfiles.size) return allProfiles[idx + 1].id
-        return allProfiles.firstOrNull()?.id
+        val start = pool.indexOfFirst { it.id == currentId }
+        if (start < 0) return null
+        for (step in 1 until pool.size) {
+            val candidate = pool[(start + step) % pool.size]
+            if (candidate.id !in tried) return candidate.id
+        }
+        return null
     }
 
     private fun startCore(

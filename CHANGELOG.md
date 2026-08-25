@@ -2,6 +2,19 @@
 
 ## v2.0.2 (2026-08-25)
 
+### Added — settings
+- **Local proxy.** A SOCKS5 and HTTP inbound on a port of your choosing, so other apps can reach
+  the tunnel without being routed through it. **Allow connections from the LAN** moves it off
+  loopback onto every interface for other devices on the network.
+- **On start.** Refresh subscriptions, test latency, connect. Latency on start was unconditional
+  before, and is now a switch you can turn off. Connecting only happens where VPN permission was
+  already granted — the app never raises the consent dialog on its own.
+- **Tunnel check address** and **ping timeout** are configurable. The configured address is tried
+  first and the built-in ones remain as fallbacks.
+- **Check for updates** reads the GitHub release feed and says what is out and what you are on.
+- **Reset settings** puts every setting back to its default and leaves servers and subscriptions
+  alone.
+
 ### Fixed — IP leaks
 - **Leak protection**, on by default. IPv6 is rejected and the resolver is pinned to `ipv4_only`.
   The tunnel carries IPv4; leaving AAAA answers in play meant an address the tunnel never covered.

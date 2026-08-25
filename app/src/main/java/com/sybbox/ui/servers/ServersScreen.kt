@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.SystemClock
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -134,8 +135,15 @@ fun ServersScreen(
     var expandedManual by remember { mutableStateOf(true) }
     var showQrDialog by remember { mutableStateOf(false) }
     var qrDialogProfile by remember { mutableStateOf<ServerProfile?>(null) }
+    var manualMenu by remember { mutableStateOf(false) }
+    var confirmDeleteAllManual by remember { mutableStateOf(false) }
 
     val manual = profiles.filter { it.subscriptionId == 0L }
+
+    val settledAt = remember(expandedManual, expandedSubscription, selectedId, profiles.size, subscriptions.size) {
+        SystemClock.elapsedRealtime()
+    }
+    fun steady(): Boolean = SystemClock.elapsedRealtime() - settledAt >= MISCLICK_GUARD_MS
 
     val filePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
@@ -208,7 +216,7 @@ fun ServersScreen(
         if (manual.isNotEmpty()) {
             item(key = "manual-group") {
                 Spacer(Modifier.height(4.dp))
-                SybCard(modifier = Modifier.fillMaxWidth(), onClick = { expandedManual = !expandedManual }) {
+                SybCard(modifier = Modifier.fillMaxWidth(), onClick = { if (steady()) expandedManual = !expandedManual }) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(start = SybSpacing.cardH, top = SybSpacing.cardV, bottom = SybSpacing.cardV, end = SybSpacing.cardEndInset),
                             verticalAlignment = Alignment.CenterVertically,
@@ -247,7 +255,7 @@ fun ServersScreen(
                             }
                             Spacer(Modifier.width(4.dp))
                             IconButton(
-                                onClick = { expandedManual = !expandedManual },
+                                onClick = { if (steady()) expandedManual = !expandedManual },
                                 modifier = Modifier.size(36.dp),
                             ) {
                                 val rot by animateFloatAsState(
@@ -264,6 +272,38 @@ fun ServersScreen(
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(20.dp).rotate(rot),
                                 )
+                            }
+                            Spacer(Modifier.width(4.dp))
+                            Box {
+                                IconButton(
+                                    onClick = { manualMenu = true },
+                                    modifier = Modifier.size(36.dp),
+                                ) {
+                                    Icon(
+                                        Icons.Rounded.MoreVert,
+                                        stringResource(R.string.cd_more),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                }
+                                DropdownMenu(expanded = manualMenu, onDismissRequest = { manualMenu = false }) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.ping_all)) },
+                                        leadingIcon = { Icon(Icons.Rounded.Speed, null) },
+                                        onClick = {
+                                            manualMenu = false
+                                            expandedManual = true
+                                            viewModel.measureAll(manual)
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.delete_all_servers)) },
+                                        leadingIcon = {
+                                            Icon(Icons.Rounded.Delete, null, tint = MaterialTheme.colorScheme.error)
+                                        },
+                                        onClick = { manualMenu = false; confirmDeleteAllManual = true },
+                                    )
+                                }
                             }
                         }
                     }
@@ -287,7 +327,7 @@ fun ServersScreen(
                         selected = profile.id == selectedId,
                         latency = if (showLatency) latencies[profile.id] ?: profile.lastLatency else 0,
                         testing = profile.id in testing,
-                        onSelect = { viewModel.select(profile.id) },
+                        onSelect = { if (steady()) viewModel.select(profile.id) },
                         onPing = {
                             expandedManual = true
                             viewModel.measureLatency(profile)
@@ -319,8 +359,10 @@ fun ServersScreen(
                     refreshing = subscription.id in refreshing,
                     showPing = true,
                     onToggle = {
-                        expandedSubscription =
-                            if (expandedSubscription == subscription.id) null else subscription.id
+                        if (steady()) {
+                            expandedSubscription =
+                                if (expandedSubscription == subscription.id) null else subscription.id
+                        }
                     },
                     onRefresh = { viewModel.refreshSubscription(subscription) },
                     onPingAll = {
@@ -350,7 +392,7 @@ fun ServersScreen(
                         selected = profile.id == selectedId,
                         latency = if (showLatency) latencies[profile.id] ?: profile.lastLatency else 0,
                         testing = profile.id in testing,
-                        onSelect = { viewModel.select(profile.id) },
+                        onSelect = { if (steady()) viewModel.select(profile.id) },
                         onPing = {
                             expandedSubscription = subscription.id
                             viewModel.measureLatency(profile)
@@ -389,7 +431,30 @@ fun ServersScreen(
             onDismiss = { showQrDialog = false; qrDialogProfile = null },
         )
     }
+
+    if (confirmDeleteAllManual) {
+        AlertDialog(
+            onDismissRequest = { confirmDeleteAllManual = false },
+            title = { Text(stringResource(R.string.delete_all_servers)) },
+            text = { Text(stringResource(R.string.delete_all_servers_confirm, manual.size)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDeleteAllManual = false
+                    viewModel.deleteAllManualProfiles()
+                }) {
+                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteAllManual = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
+    }
 }
+
+private const val MISCLICK_GUARD_MS = 400L
 
 @Composable
 private fun AddMenu(

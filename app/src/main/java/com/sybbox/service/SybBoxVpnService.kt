@@ -213,10 +213,10 @@ class SybBoxVpnService : VpnService() {
                 CoreLog.info("Connected")
 
                 val carriesTraffic = !settings.tunnelCheck || tunnelCarriesTraffic()
-                if (!carriesTraffic && settings.hideTunnelAddress) {
+                if ((!carriesTraffic || !resolverReachedApps()) && settings.hideTunnelAddress) {
                     CoreLog.warn(
-                        "No traffic with the hidden tunnel address. Falling back to 172.19.0.1 — " +
-                            "turn the setting off if this keeps happening.",
+                        "The hidden tunnel address did not carry traffic or left apps without a " +
+                            "resolver. Falling back to 172.19.0.1.",
                     )
                     plainTunAddress = true
                     shutdownCore()
@@ -272,6 +272,18 @@ class SybBoxVpnService : VpnService() {
                 return
             }
         }
+    }
+
+    private fun resolverReachedApps(): Boolean {
+        val manager = getSystemService(android.net.ConnectivityManager::class.java) ?: return true
+        val vpn = manager.allNetworks.firstOrNull { network ->
+            manager.getNetworkCapabilities(network)
+                ?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN) == true
+        } ?: return true
+        val servers = manager.getLinkProperties(vpn)?.dnsServers.orEmpty()
+        if (servers.isNotEmpty()) return true
+        CoreLog.warn("Android kept no resolver for the tunnel, so name lookups would fail")
+        return false
     }
 
     private suspend fun findNextProfileId(currentId: Long, tried: Set<Long>): Long? {

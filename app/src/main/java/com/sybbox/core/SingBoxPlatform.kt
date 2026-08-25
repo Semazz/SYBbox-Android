@@ -42,7 +42,7 @@ class SingBoxPlatform(
         }
 
         if (options.autoRoute) {
-            options.dnsAddr().takeIf { it.isNotBlank() }?.let { builder.addDnsServer(it) }
+            advertisedDns(options).takeIf { it.isNotBlank() }?.let { builder.addDnsServer(it) }
             addRoutes(builder, options)
         }
 
@@ -66,6 +66,13 @@ class SingBoxPlatform(
         onTunOpened(descriptor)
         CoreLog.info("Tunnel established, mtu ${options.mtu}, stack fd ${descriptor.fd}")
         return descriptor.fd
+    }
+
+    private fun advertisedDns(options: TunOptions): String {
+        val linkLocal = options.inet4().any { it.substringBefore('/').startsWith(LINK_LOCAL_PREFIX) }
+        if (!linkLocal) return options.dnsAddr()
+
+        return ROUTED_DNS_SERVER
     }
 
     private fun addRoutes(builder: VpnService.Builder, options: TunOptions) {
@@ -304,6 +311,9 @@ class SingBoxPlatform(
 
     private companion object {
         const val SESSION_NAME = "SYBbox"
+        const val LINK_LOCAL_PREFIX = "169.254."
+
+        const val ROUTED_DNS_SERVER = "172.19.0.53"
         const val IFF_UP = 0x1L
         const val IFF_BROADCAST = 0x2L
         const val IFF_LOOPBACK = 0x8L

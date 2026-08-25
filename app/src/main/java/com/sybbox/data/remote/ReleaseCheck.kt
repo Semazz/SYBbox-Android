@@ -24,7 +24,7 @@ object ReleaseCheck {
         val request = Request.Builder()
             .url(RELEASES_API)
             .header("Accept", "application/vnd.github+json")
-            .header("User-Agent", SubscriptionIdentity.userAgent())
+            .header("User-Agent", "SYBbox/${BuildConfig.VERSION_NAME}")
             .build()
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) return null

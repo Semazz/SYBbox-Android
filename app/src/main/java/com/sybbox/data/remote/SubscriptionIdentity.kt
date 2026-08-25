@@ -10,7 +10,8 @@ object SubscriptionIdentity {
 
     const val PLATFORM = "Android"
 
-    fun userAgent(): String = "SYBbox/${BuildConfig.VERSION_NAME}/$PLATFORM/${BuildConfig.VERSION_CODE}"
+    suspend fun userAgent(store: SettingsDataStore): String =
+        "SYBbox/${BuildConfig.VERSION_NAME}/$PLATFORM/${store.getOrCreateClientKey()}"
 
     suspend fun apply(builder: Request.Builder, store: SettingsDataStore, userAgent: String): Request.Builder {
         builder.header("User-Agent", userAgent)

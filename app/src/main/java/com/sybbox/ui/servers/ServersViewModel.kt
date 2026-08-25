@@ -212,7 +212,7 @@ class ServersViewModel @Inject constructor(
         lastRefreshAt[subscriptionId] = now
         _refreshing.update { it + subscriptionId }
         try {
-            val primaryUa = com.sybbox.data.remote.SubscriptionIdentity.userAgent()
+            val primaryUa = com.sybbox.data.remote.SubscriptionIdentity.userAgent(settingsDataStore)
 
             val fallbackUas = listOf(primaryUa, "Mozilla/5.0").distinct()
 

@@ -141,6 +141,16 @@ class SettingsDataStore @Inject constructor(
         )
     }
 
+    suspend fun getOrCreateClientKey(): String {
+        val existing = dataStore.data.first()[KEY_CLIENT_KEY]
+        if (!existing.isNullOrBlank()) return existing
+        val random = java.security.SecureRandom()
+        val tail = (1..7).joinToString("") { random.nextInt(10).toString() }
+        val generated = "${System.currentTimeMillis()}$tail"
+        dataStore.edit { it[KEY_CLIENT_KEY] = generated }
+        return generated
+    }
+
     suspend fun getOrCreateHwid(): String {
         val existing = dataStore.data.first()[KEY_HWID]
         if (!existing.isNullOrBlank()) return existing
@@ -194,10 +204,12 @@ class SettingsDataStore @Inject constructor(
         val keep = dataStore.data.first()
         val profileId = keep[KEY_LAST_PROFILE_ID]
         val hwid = keep[KEY_HWID]
+        val clientKey = keep[KEY_CLIENT_KEY]
         dataStore.edit { prefs ->
             prefs.clear()
             if (profileId != null) prefs[KEY_LAST_PROFILE_ID] = profileId
             if (hwid != null) prefs[KEY_HWID] = hwid
+            if (clientKey != null) prefs[KEY_CLIENT_KEY] = clientKey
         }
     }
     suspend fun setCollapsedGroups(value: Set<String>) = dataStore.edit { it[KEY_COLLAPSED_GROUPS] = value }
@@ -286,5 +298,6 @@ class SettingsDataStore @Inject constructor(
         private val KEY_INCLUDED_APPS = stringSetPreferencesKey("included_apps")
         private val KEY_EXCLUDED_APPS = stringSetPreferencesKey("excluded_apps")
         private val KEY_HWID = stringPreferencesKey("hwid")
+        private val KEY_CLIENT_KEY = stringPreferencesKey("client_key")
     }
 }

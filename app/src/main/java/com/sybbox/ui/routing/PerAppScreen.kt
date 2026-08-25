@@ -327,10 +327,7 @@ fun PerAppScreen(
                         modifier = Modifier.animateItem(
                             fadeInSpec = spring(stiffness = Spring.StiffnessMedium),
                             fadeOutSpec = spring(stiffness = Spring.StiffnessMedium),
-                            placementSpec = spring(
-                                stiffness = Spring.StiffnessMedium,
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                            ),
+                            placementSpec = null,
                         ),
                     )
                 }

@@ -5,9 +5,13 @@
 ### Fixed — IP leaks
 - **Leak protection**, on by default. IPv6 is rejected and the resolver is pinned to `ipv4_only`.
   The tunnel carries IPv4; leaving AAAA answers in play meant an address the tunnel never covered.
-- The tunnel address is fixed at `172.19.0.1/30` again, and the IPv6 tunnel address is dropped
-  while leak protection is on. Randomising the address every connect put a different private
-  address in front of every WebRTC probe and gained nothing.
+- The tunnel address is fixed rather than randomised every connect, and the IPv6 tunnel address
+  is dropped while leak protection is on.
+- **Hide the tunnel address**, on by default. The tunnel takes a link-local address
+  (`169.254.19.1/30`), which WebRTC skips when it lists local addresses — a full-tunnel VPN
+  otherwise hands the probe its own tunnel address to report. Link-local source addresses are
+  unusual enough that the tunnel check now falls back to `172.19.0.1/30` and says so in the log
+  if nothing gets through, and the setting can be turned off outright.
 - STUN rides the tunnel. Rejecting it is what made a leak test report the tunnel's own address:
   with no server-reflexive candidate to show, the page falls back to the local one. Letting STUN
   through means WebRTC reports the exit address, which is the answer a leak test wants to see.
@@ -43,6 +47,8 @@
   already tried.
 
 ### Changed — server list
+- Groups start open and remember being closed. Which subscriptions are collapsed survives leaving
+  the screen and restarting the app, and more than one can be open at a time.
 - Row and subscription actions live in the overflow menu. The inline test and refresh buttons
   are gone; the latency badge stays.
 - A collapsed group shows no rows at all. It used to keep the selected one visible, so choosing

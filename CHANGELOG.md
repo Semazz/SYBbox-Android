@@ -1,5 +1,38 @@
 # Changelog
 
+## v2.0.2 (2026-08-25)
+
+### Fixed — IP leaks
+- **Leak protection**, on by default. WebRTC discovery is refused before it leaves the device:
+  UDP to the STUN and TURN ports, and hostnames that start with `stun` or `turn`, are rejected
+  in both the router and the resolver, so a page can no longer learn an address that way.
+  The match is anchored at the start of the hostname — the blanket `domain_keyword` rule that
+  once caught `saturn`, `return` and `turnitin` is not coming back.
+- IPv6 is rejected while the setting is on, and the resolver is pinned to `ipv4_only`. The tunnel
+  carries IPv4; leaving AAAA answers in play meant an address the tunnel never covered.
+- Voice and video calls rely on STUN, so the setting is switchable in Settings → Tunnel.
+
+### Fixed — latency checks
+- Checking latency no longer raises and drops the tunnel. It used to connect, wait, and
+  disconnect purely to take the VPN slot away from another app, which looked like the VPN
+  flickering on and off.
+- A foreign VPN is now evicted by a service that claims the VPN slot and closes it immediately.
+  The other app stops, the tunnel is never built, and the measurement runs over the physical
+  network as before.
+
+### Fixed — servers
+- The standalone servers card has an overflow menu: test all, and delete all behind a
+  confirmation.
+- Taps are ignored for 400 ms after the list re-lays out. Selecting a server collapses its
+  group and moves every row below it, so a second quick tap used to land on whichever server
+  had slid under the finger — pick Hysteria, connect to VLESS.
+- Latency shows for ten seconds after the tunnel comes up, without having to ask for it.
+
+### Fixed — per-app routing
+- Selected apps sort to the top of the list.
+- The empty search result read as a row of question marks. The string had been mangled to
+  replacement characters in the source; it is a translated resource now.
+
 ## v2.0.1 (2026-08-24)
 
 ### Fixed — tunnel connected but no traffic

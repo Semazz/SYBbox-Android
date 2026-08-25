@@ -273,5 +273,8 @@
     <string name="reset_settings_summary">Вернуть значения по умолчанию; серверы и подписки останутся</string>
     <string name="reset_settings_confirm">Сбросить все настройки к значениям по умолчанию? Серверы и подписки останутся.</string>
     <string name="reset">Сбросить</string>
+    <string name="send_hwid">Передавать HWID</string>
+    <string name="send_hwid_summary">Запрос подписки понесёт идентификатор устройства, версию Android и модель — панель с лимитом устройств сможет их считать</string>
+    <string name="hwid">HWID</string>
 </resources>
 

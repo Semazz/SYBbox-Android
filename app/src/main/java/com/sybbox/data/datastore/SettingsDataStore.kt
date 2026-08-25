@@ -49,6 +49,7 @@ class SettingsDataStore @Inject constructor(
     val connectOnStart: Flow<Boolean> = dataStore.data.map { it[KEY_CONNECT_ON_START] ?: false }
     val probeUrl: Flow<String> = dataStore.data.map { it[KEY_PROBE_URL] ?: DEFAULT_PROBE_URL }
     val pingTimeout: Flow<Int> = dataStore.data.map { it[KEY_PING_TIMEOUT] ?: 3 }
+    val sendHwid: Flow<Boolean> = dataStore.data.map { it[KEY_SEND_HWID] ?: true }
     val collapsedGroups: Flow<Set<String>> = dataStore.data.map { it[KEY_COLLAPSED_GROUPS] ?: emptySet() }
 
     val themeMode: Flow<String> = dataStore.data.map { it[KEY_THEME_MODE] ?: "SYSTEM" }
@@ -119,6 +120,7 @@ class SettingsDataStore @Inject constructor(
             connectOnStart = p[KEY_CONNECT_ON_START] ?: false,
             probeUrl = p[KEY_PROBE_URL] ?: DEFAULT_PROBE_URL,
             pingTimeout = p[KEY_PING_TIMEOUT] ?: 3,
+            sendHwid = p[KEY_SEND_HWID] ?: true,
             subAutoUpdate = p[KEY_SUB_AUTO_UPDATE] ?: true,
             defaultSubInterval = p[KEY_DEFAULT_SUB_INTERVAL] ?: 12,
             autoFailover = p[KEY_AUTO_FAILOVER] ?: false,
@@ -134,11 +136,12 @@ class SettingsDataStore @Inject constructor(
         )
     }
 
-    suspend fun getOrCreateClientId(): String {
-        val existing = dataStore.data.first()[KEY_CLIENT_ID]
+    suspend fun getOrCreateHwid(): String {
+        val existing = dataStore.data.first()[KEY_HWID]
         if (!existing.isNullOrBlank()) return existing
-        val generated = "${System.currentTimeMillis()}${(100..999).random()}"
-        dataStore.edit { it[KEY_CLIENT_ID] = generated }
+        val bytes = ByteArray(8).also { java.security.SecureRandom().nextBytes(it) }
+        val generated = bytes.joinToString("") { "%02x".format(it) }
+        dataStore.edit { it[KEY_HWID] = generated }
         return generated
     }
 
@@ -167,15 +170,16 @@ class SettingsDataStore @Inject constructor(
     suspend fun setConnectOnStart(value: Boolean) = dataStore.edit { it[KEY_CONNECT_ON_START] = value }
     suspend fun setProbeUrl(value: String) = dataStore.edit { it[KEY_PROBE_URL] = value }
     suspend fun setPingTimeout(value: Int) = dataStore.edit { it[KEY_PING_TIMEOUT] = value }
+    suspend fun setSendHwid(value: Boolean) = dataStore.edit { it[KEY_SEND_HWID] = value }
 
     suspend fun resetToDefaults() {
         val keep = dataStore.data.first()
         val profileId = keep[KEY_LAST_PROFILE_ID]
-        val clientId = keep[KEY_CLIENT_ID]
+        val hwid = keep[KEY_HWID]
         dataStore.edit { prefs ->
             prefs.clear()
             if (profileId != null) prefs[KEY_LAST_PROFILE_ID] = profileId
-            if (clientId != null) prefs[KEY_CLIENT_ID] = clientId
+            if (hwid != null) prefs[KEY_HWID] = hwid
         }
     }
     suspend fun setCollapsedGroups(value: Set<String>) = dataStore.edit { it[KEY_COLLAPSED_GROUPS] = value }
@@ -231,6 +235,7 @@ class SettingsDataStore @Inject constructor(
         private val KEY_CONNECT_ON_START = booleanPreferencesKey("connect_on_start")
         private val KEY_PROBE_URL = stringPreferencesKey("probe_url")
         private val KEY_PING_TIMEOUT = intPreferencesKey("ping_timeout")
+        private val KEY_SEND_HWID = booleanPreferencesKey("send_hwid")
         const val DEFAULT_PROBE_URL = "https://www.gstatic.com/generate_204"
         private val KEY_COLLAPSED_GROUPS = stringSetPreferencesKey("collapsed_groups")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
@@ -257,6 +262,6 @@ class SettingsDataStore @Inject constructor(
         private val KEY_MUX_PADDING = booleanPreferencesKey("mux_padding")
         private val KEY_INCLUDED_APPS = stringSetPreferencesKey("included_apps")
         private val KEY_EXCLUDED_APPS = stringSetPreferencesKey("excluded_apps")
-        private val KEY_CLIENT_ID = stringPreferencesKey("client_id")
+        private val KEY_HWID = stringPreferencesKey("hwid")
     }
 }

@@ -279,5 +279,8 @@
     <string name="reset_settings_summary">Back to defaults; servers and subscriptions are kept</string>
     <string name="reset_settings_confirm">Reset every setting to its default? Servers and subscriptions stay.</string>
     <string name="reset">Reset</string>
+    <string name="send_hwid">Send device id</string>
+    <string name="send_hwid_summary">Subscription requests carry a device id, Android version and model, so a panel that limits devices can count them</string>
+    <string name="hwid">Device id</string>
 </resources>
 

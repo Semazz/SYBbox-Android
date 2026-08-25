@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -90,10 +91,13 @@ class SettingsViewModel @Inject constructor(
     }
 
     private val startup = combine(
-        store.updateOnStart, store.pingOnStart, store.connectOnStart, store.probeUrl, store.pingTimeout,
-    ) { update, ping, connect, probeUrl, pingTimeout ->
-        StartupSlice(update, ping, connect, probeUrl, pingTimeout)
-    }
+        combine(
+            store.updateOnStart, store.pingOnStart, store.connectOnStart, store.probeUrl, store.pingTimeout,
+        ) { update, ping, connect, probeUrl, pingTimeout ->
+            StartupSlice(update, ping, connect, probeUrl, pingTimeout)
+        },
+        store.sendHwid,
+    ) { slice, sendHwid -> slice.copy(sendHwid = sendHwid) }
 
     private val advanced = combine(
         store.tcpFastOpen, store.tunnelCheck, store.muxProtocol, store.muxMaxStreams, store.muxPadding,
@@ -160,8 +164,12 @@ class SettingsViewModel @Inject constructor(
             connectOnStart = startupSlice.connectOnStart,
             probeUrl = startupSlice.probeUrl,
             pingTimeout = startupSlice.pingTimeout,
+            sendHwid = startupSlice.sendHwid,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsState())
+
+    val hwid: StateFlow<String> = flow { emit(store.getOrCreateHwid()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
 
     private val _updateCheck = MutableStateFlow<UpdateCheck>(UpdateCheck.Idle)
     val updateCheck: StateFlow<UpdateCheck> = _updateCheck.asStateFlow()
@@ -252,6 +260,7 @@ class SettingsViewModel @Inject constructor(
     fun setConnectOnStart(value: Boolean) = edit { setConnectOnStart(value) }
     fun setProbeUrl(value: String) = edit { setProbeUrl(value) }
     fun setPingTimeout(value: Int) = edit { setPingTimeout(value) }
+    fun setSendHwid(value: Boolean) = edit { setSendHwid(value) }
     fun resetToDefaults() = edit { resetToDefaults() }
 
     fun setSubAutoUpdate(value: Boolean) {
@@ -353,6 +362,7 @@ class SettingsViewModel @Inject constructor(
         val connectOnStart: Boolean,
         val probeUrl: String,
         val pingTimeout: Int,
+        val sendHwid: Boolean = true,
     )
 
     private data class SubscriptionSlice(

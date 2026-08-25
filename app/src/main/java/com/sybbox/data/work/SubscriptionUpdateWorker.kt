@@ -35,7 +35,7 @@ class SubscriptionUpdateWorker @AssistedInject constructor(
             .filter { it.enabled && it.autoUpdate }
         if (subscriptions.isEmpty()) return Result.success()
 
-        val userAgent = com.sybbox.data.remote.SubscriptionUserAgent.value(settingsDataStore)
+        val userAgent = com.sybbox.data.remote.SubscriptionIdentity.userAgent()
         val client = OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -45,9 +45,8 @@ class SubscriptionUpdateWorker @AssistedInject constructor(
         var failures = 0
         subscriptions.forEach { subscription ->
             runCatching {
-                val request = Request.Builder()
-                    .url(subscription.url)
-                    .header("User-Agent", userAgent)
+                val request = com.sybbox.data.remote.SubscriptionIdentity
+                    .apply(Request.Builder().url(subscription.url), settingsDataStore, userAgent)
                     .build()
                 val body = client.newCall(request).execute().use { it.body?.string().orEmpty() }
                 val parsed = SubscriptionParser.parse(body, SubType.STANDARD)

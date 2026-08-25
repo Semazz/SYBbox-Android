@@ -17,6 +17,8 @@ import androidx.compose.material.icons.rounded.AltRoute
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Article
 import androidx.compose.material.icons.rounded.CloudDownload
+import androidx.compose.material.icons.rounded.Fingerprint
+import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Router
 import androidx.compose.material.icons.rounded.Speed
@@ -88,6 +90,7 @@ fun SettingsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val updateCheck by viewModel.updateCheck.collectAsStateWithLifecycle()
+    val hwid by viewModel.hwid.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var confirmReset by remember { mutableStateOf(false) }
 
@@ -543,6 +546,26 @@ fun SettingsScreen(
                     label = { stringResource(R.string.hours_value, it) },
                     icon = Icons.Rounded.Schedule,
                 )
+                SettingsDivider()
+                SettingsToggle(
+                    title = stringResource(R.string.send_hwid),
+                    summary = stringResource(R.string.send_hwid_summary),
+                    checked = state.sendHwid,
+                    onCheckedChange = viewModel::setSendHwid,
+                    icon = Icons.Rounded.PhoneAndroid,
+                )
+                if (state.sendHwid) {
+                    SettingsDivider()
+                    SettingsAction(
+                        title = stringResource(R.string.hwid),
+                        value = hwid,
+                        icon = Icons.Rounded.Fingerprint,
+                        onClick = {
+                            val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
+                            clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("hwid", hwid))
+                        },
+                    )
+                }
             }
         }
 

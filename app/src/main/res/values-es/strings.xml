@@ -277,5 +277,8 @@
     <string name="reset_settings_summary">Volver a los valores por defecto; servidores y suscripciones se conservan</string>
     <string name="reset_settings_confirm">Restablecer todos los ajustes? Los servidores y suscripciones se conservan.</string>
     <string name="reset">Restablecer</string>
+    <string name="send_hwid">Enviar id del dispositivo</string>
+    <string name="send_hwid_summary">La peticion de suscripcion llevara un id de dispositivo, la version de Android y el modelo</string>
+    <string name="hwid">Id del dispositivo</string>
 </resources>
 

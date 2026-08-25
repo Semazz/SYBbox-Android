@@ -212,7 +212,7 @@ class ServersViewModel @Inject constructor(
         lastRefreshAt[subscriptionId] = now
         _refreshing.update { it + subscriptionId }
         try {
-            val primaryUa = com.sybbox.data.remote.SubscriptionUserAgent.value(settingsDataStore)
+            val primaryUa = com.sybbox.data.remote.SubscriptionIdentity.userAgent()
 
             val fallbackUas = listOf(primaryUa, "Mozilla/5.0").distinct()
 
@@ -220,7 +220,7 @@ class ServersViewModel @Inject constructor(
             var trimmedBody = ""
             var parsed: List<ServerProfile> = emptyList()
             for ((index, ua) in fallbackUas.withIndex()) {
-                val resp = withContext(Dispatchers.IO) { runCatching { fetch(url, ua) }.getOrNull() }
+                val resp = runCatching { fetch(url, ua) }.getOrNull()
                 if (resp == null) {
 
                     if (index == 0) continue else break
@@ -288,14 +288,19 @@ class ServersViewModel @Inject constructor(
         }
     }
 
-    private fun fetch(url: String, userAgent: String): SubscriptionResponse {
+    private suspend fun fetch(url: String, userAgent: String): SubscriptionResponse {
         val client = httpClient
-        val request = Request.Builder()
+        val builder = Request.Builder()
             .url(url)
-            .header("User-Agent", userAgent)
             .header("Accept", "application/json, text/plain, */*")
             .header("Cache-Control", "no-cache")
+        val request = com.sybbox.data.remote.SubscriptionIdentity
+            .apply(builder, settingsDataStore, userAgent)
             .build()
+        return withContext(Dispatchers.IO) { read(client, request) }
+    }
+
+    private fun read(client: OkHttpClient, request: Request): SubscriptionResponse {
         client.newCall(request).execute().use { response ->
             val body = response.body?.string().orEmpty()
             val info = response.header("subscription-userinfo").orEmpty()

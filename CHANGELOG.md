@@ -14,6 +14,13 @@
 - **Check for updates** reads the GitHub release feed and says what is out and what you are on.
 - **Reset settings** puts every setting back to its default and leaves servers and subscriptions
   alone.
+- **Send device id.** Subscription requests carry `x-hwid`, `x-device-os`, `x-ver-os` and
+  `x-device-model`, which is what a panel reads to enforce a device limit. The id is random and
+  made once per install — no hardware identifier is read. It shows in Settings and copies on tap,
+  and the switch turns the headers off.
+- The subscription User-Agent no longer carries an identifier of its own. It was smuggling a
+  per-install id into every request whether or not you wanted one; identity now lives in the
+  headers, behind the switch.
 
 ### Fixed — IP leaks
 - **Leak protection**, on by default. IPv6 is rejected and the resolver is pinned to `ipv4_only`.

@@ -252,5 +252,30 @@
     <string name="block_webrtc_summary">Rechaza STUN y TURN por completo. WebRTC no encuentra ninguna direccion y las llamadas dejan de funcionar.</string>
     <string name="hide_tunnel_address">Ocultar la direccion del tunel</string>
     <string name="hide_tunnel_address_summary">Asigna al tunel una direccion link-local, que WebRTC omite. Si no carga nada tras conectar, desactivelo.</string>
+    <string name="group_local_proxy">Proxy local</string>
+    <string name="group_startup">Al iniciar</string>
+    <string name="group_maintenance">Mantenimiento</string>
+    <string name="local_proxy">Proxy SOCKS5 y HTTP local</string>
+    <string name="local_proxy_summary">Permite que otras apps usen el tunel sin enrutarlas por el</string>
+    <string name="local_proxy_port">Puerto del proxy</string>
+    <string name="allow_lan">Permitir conexiones desde la LAN</string>
+    <string name="allow_lan_summary">Escucha en todas las interfaces en vez de loopback</string>
+    <string name="update_on_start">Actualizar suscripciones</string>
+    <string name="ping_on_start">Medir latencia</string>
+    <string name="connect_on_start">Conectar</string>
+    <string name="connect_on_start_summary">Solo si el permiso de VPN ya fue concedido</string>
+    <string name="probe_url">Direccion de comprobacion</string>
+    <string name="probe_url_summary">Se solicita a traves del tunel para confirmar que el trafico fluye</string>
+    <string name="ping_timeout">Tiempo de espera del ping</string>
+    <string name="check_update">Buscar actualizaciones</string>
+    <string name="checking">Comprobando…</string>
+    <string name="update_available">Actualizacion disponible</string>
+    <string name="update_available_body">La version %1$s ya esta disponible. Tienes la %2$s.</string>
+    <string name="update_none">Tienes la ultima version (%1$s).</string>
+    <string name="update_failed">No se pudo consultar la lista de versiones.</string>
+    <string name="reset_settings">Restablecer ajustes</string>
+    <string name="reset_settings_summary">Volver a los valores por defecto; servidores y suscripciones se conservan</string>
+    <string name="reset_settings_confirm">Restablecer todos los ajustes? Los servidores y suscripciones se conservan.</string>
+    <string name="reset">Restablecer</string>
 </resources>
 

@@ -248,5 +248,30 @@
     <string name="block_webrtc_summary">Полностью режет STUN и TURN. WebRTC не найдёт никакого адреса, но звонки и видеосвязь перестанут работать.</string>
     <string name="hide_tunnel_address">Скрывать адрес туннеля</string>
     <string name="hide_tunnel_address_summary">Выдаёт туннелю link-local адрес — WebRTC такие пропускает, когда перечисляет локальные адреса. Если после подключения ничего не грузится, выключите.</string>
+    <string name="group_local_proxy">Локальный прокси</string>
+    <string name="group_startup">При запуске</string>
+    <string name="group_maintenance">Обслуживание</string>
+    <string name="local_proxy">Локальный SOCKS5 и HTTP прокси</string>
+    <string name="local_proxy_summary">Даёт другим приложениям выход через туннель, не заворачивая их в него</string>
+    <string name="local_proxy_port">Порт прокси</string>
+    <string name="allow_lan">Разрешить подключения из LAN</string>
+    <string name="allow_lan_summary">Слушает все интерфейсы вместо loopback — прокси станет доступен другим устройствам в сети</string>
+    <string name="update_on_start">Обновлять подписки</string>
+    <string name="ping_on_start">Проверять пинг</string>
+    <string name="connect_on_start">Подключаться</string>
+    <string name="connect_on_start_summary">Только если разрешение на VPN уже выдано</string>
+    <string name="probe_url">Адрес проверки туннеля</string>
+    <string name="probe_url_summary">Запрашивается через туннель, чтобы убедиться, что трафик реально идёт</string>
+    <string name="ping_timeout">Таймаут пинга</string>
+    <string name="check_update">Проверить обновление</string>
+    <string name="checking">Проверяю…</string>
+    <string name="update_available">Есть обновление</string>
+    <string name="update_available_body">Вышла версия %1$s. У вас %2$s.</string>
+    <string name="update_none">У вас последняя версия (%1$s).</string>
+    <string name="update_failed">Не удалось получить список релизов.</string>
+    <string name="reset_settings">Сбросить настройки</string>
+    <string name="reset_settings_summary">Вернуть значения по умолчанию; серверы и подписки останутся</string>
+    <string name="reset_settings_confirm">Сбросить все настройки к значениям по умолчанию? Серверы и подписки останутся.</string>
+    <string name="reset">Сбросить</string>
 </resources>
 

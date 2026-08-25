@@ -254,5 +254,30 @@
     <string name="block_webrtc_summary">Refuses STUN and TURN outright. WebRTC then finds no address at all, and voice and video calls stop working.</string>
     <string name="hide_tunnel_address">Hide the tunnel address</string>
     <string name="hide_tunnel_address_summary">Gives the tunnel a link-local address, which WebRTC skips when it lists local addresses. If nothing loads after connecting, turn this off.</string>
+    <string name="group_local_proxy">Local proxy</string>
+    <string name="group_startup">On start</string>
+    <string name="group_maintenance">Maintenance</string>
+    <string name="local_proxy">Local SOCKS5 and HTTP proxy</string>
+    <string name="local_proxy_summary">Lets other apps on the device reach the tunnel without routing them through it</string>
+    <string name="local_proxy_port">Proxy port</string>
+    <string name="allow_lan">Allow connections from the LAN</string>
+    <string name="allow_lan_summary">Listens on every interface instead of loopback, so other devices on the network can use the proxy</string>
+    <string name="update_on_start">Refresh subscriptions</string>
+    <string name="ping_on_start">Test latency</string>
+    <string name="connect_on_start">Connect</string>
+    <string name="connect_on_start_summary">Only if VPN permission was already granted</string>
+    <string name="probe_url">Tunnel check address</string>
+    <string name="probe_url_summary">Fetched through the tunnel to prove traffic really flows</string>
+    <string name="ping_timeout">Ping timeout</string>
+    <string name="check_update">Check for updates</string>
+    <string name="checking">Checking…</string>
+    <string name="update_available">Update available</string>
+    <string name="update_available_body">Version %1$s is out. You are on %2$s.</string>
+    <string name="update_none">You are on the latest version (%1$s).</string>
+    <string name="update_failed">Could not reach the release feed.</string>
+    <string name="reset_settings">Reset settings</string>
+    <string name="reset_settings_summary">Back to defaults; servers and subscriptions are kept</string>
+    <string name="reset_settings_confirm">Reset every setting to its default? Servers and subscriptions stay.</string>
+    <string name="reset">Reset</string>
 </resources>
 

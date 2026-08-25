@@ -41,6 +41,14 @@ class SettingsDataStore @Inject constructor(
     val leakProtection: Flow<Boolean> = dataStore.data.map { it[KEY_LEAK_PROTECTION] ?: true }
     val blockWebRtc: Flow<Boolean> = dataStore.data.map { it[KEY_BLOCK_WEBRTC] ?: false }
     val hideTunnelAddress: Flow<Boolean> = dataStore.data.map { it[KEY_HIDE_TUNNEL_ADDRESS] ?: true }
+    val localProxy: Flow<Boolean> = dataStore.data.map { it[KEY_LOCAL_PROXY] ?: false }
+    val localProxyPort: Flow<Int> = dataStore.data.map { it[KEY_LOCAL_PROXY_PORT] ?: 10808 }
+    val allowLan: Flow<Boolean> = dataStore.data.map { it[KEY_ALLOW_LAN] ?: false }
+    val updateOnStart: Flow<Boolean> = dataStore.data.map { it[KEY_UPDATE_ON_START] ?: false }
+    val pingOnStart: Flow<Boolean> = dataStore.data.map { it[KEY_PING_ON_START] ?: true }
+    val connectOnStart: Flow<Boolean> = dataStore.data.map { it[KEY_CONNECT_ON_START] ?: false }
+    val probeUrl: Flow<String> = dataStore.data.map { it[KEY_PROBE_URL] ?: DEFAULT_PROBE_URL }
+    val pingTimeout: Flow<Int> = dataStore.data.map { it[KEY_PING_TIMEOUT] ?: 3 }
     val collapsedGroups: Flow<Set<String>> = dataStore.data.map { it[KEY_COLLAPSED_GROUPS] ?: emptySet() }
 
     val themeMode: Flow<String> = dataStore.data.map { it[KEY_THEME_MODE] ?: "SYSTEM" }
@@ -103,6 +111,14 @@ class SettingsDataStore @Inject constructor(
             leakProtection = p[KEY_LEAK_PROTECTION] ?: true,
             blockWebRtc = p[KEY_BLOCK_WEBRTC] ?: false,
             hideTunnelAddress = p[KEY_HIDE_TUNNEL_ADDRESS] ?: true,
+            localProxy = p[KEY_LOCAL_PROXY] ?: false,
+            localProxyPort = p[KEY_LOCAL_PROXY_PORT] ?: 10808,
+            allowLan = p[KEY_ALLOW_LAN] ?: false,
+            updateOnStart = p[KEY_UPDATE_ON_START] ?: false,
+            pingOnStart = p[KEY_PING_ON_START] ?: true,
+            connectOnStart = p[KEY_CONNECT_ON_START] ?: false,
+            probeUrl = p[KEY_PROBE_URL] ?: DEFAULT_PROBE_URL,
+            pingTimeout = p[KEY_PING_TIMEOUT] ?: 3,
             subAutoUpdate = p[KEY_SUB_AUTO_UPDATE] ?: true,
             defaultSubInterval = p[KEY_DEFAULT_SUB_INTERVAL] ?: 12,
             autoFailover = p[KEY_AUTO_FAILOVER] ?: false,
@@ -143,6 +159,25 @@ class SettingsDataStore @Inject constructor(
     suspend fun setLeakProtection(value: Boolean) = dataStore.edit { it[KEY_LEAK_PROTECTION] = value }
     suspend fun setBlockWebRtc(value: Boolean) = dataStore.edit { it[KEY_BLOCK_WEBRTC] = value }
     suspend fun setHideTunnelAddress(value: Boolean) = dataStore.edit { it[KEY_HIDE_TUNNEL_ADDRESS] = value }
+    suspend fun setLocalProxy(value: Boolean) = dataStore.edit { it[KEY_LOCAL_PROXY] = value }
+    suspend fun setLocalProxyPort(value: Int) = dataStore.edit { it[KEY_LOCAL_PROXY_PORT] = value }
+    suspend fun setAllowLan(value: Boolean) = dataStore.edit { it[KEY_ALLOW_LAN] = value }
+    suspend fun setUpdateOnStart(value: Boolean) = dataStore.edit { it[KEY_UPDATE_ON_START] = value }
+    suspend fun setPingOnStart(value: Boolean) = dataStore.edit { it[KEY_PING_ON_START] = value }
+    suspend fun setConnectOnStart(value: Boolean) = dataStore.edit { it[KEY_CONNECT_ON_START] = value }
+    suspend fun setProbeUrl(value: String) = dataStore.edit { it[KEY_PROBE_URL] = value }
+    suspend fun setPingTimeout(value: Int) = dataStore.edit { it[KEY_PING_TIMEOUT] = value }
+
+    suspend fun resetToDefaults() {
+        val keep = dataStore.data.first()
+        val profileId = keep[KEY_LAST_PROFILE_ID]
+        val clientId = keep[KEY_CLIENT_ID]
+        dataStore.edit { prefs ->
+            prefs.clear()
+            if (profileId != null) prefs[KEY_LAST_PROFILE_ID] = profileId
+            if (clientId != null) prefs[KEY_CLIENT_ID] = clientId
+        }
+    }
     suspend fun setCollapsedGroups(value: Set<String>) = dataStore.edit { it[KEY_COLLAPSED_GROUPS] = value }
     suspend fun setThemeMode(value: String) = dataStore.edit { it[KEY_THEME_MODE] = value }
     suspend fun setDynamicColor(value: Boolean) = dataStore.edit { it[KEY_DYNAMIC_COLOR] = value }
@@ -188,6 +223,15 @@ class SettingsDataStore @Inject constructor(
         private val KEY_LEAK_PROTECTION = booleanPreferencesKey("leak_protection")
         private val KEY_BLOCK_WEBRTC = booleanPreferencesKey("block_webrtc")
         private val KEY_HIDE_TUNNEL_ADDRESS = booleanPreferencesKey("hide_tunnel_address")
+        private val KEY_LOCAL_PROXY = booleanPreferencesKey("local_proxy")
+        private val KEY_LOCAL_PROXY_PORT = intPreferencesKey("local_proxy_port")
+        private val KEY_ALLOW_LAN = booleanPreferencesKey("allow_lan")
+        private val KEY_UPDATE_ON_START = booleanPreferencesKey("update_on_start")
+        private val KEY_PING_ON_START = booleanPreferencesKey("ping_on_start")
+        private val KEY_CONNECT_ON_START = booleanPreferencesKey("connect_on_start")
+        private val KEY_PROBE_URL = stringPreferencesKey("probe_url")
+        private val KEY_PING_TIMEOUT = intPreferencesKey("ping_timeout")
+        const val DEFAULT_PROBE_URL = "https://www.gstatic.com/generate_204"
         private val KEY_COLLAPSED_GROUPS = stringSetPreferencesKey("collapsed_groups")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         private val KEY_DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")

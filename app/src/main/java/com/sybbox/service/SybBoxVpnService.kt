@@ -112,6 +112,9 @@ class SybBoxVpnService : VpnService() {
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("leak_protection")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("block_webrtc")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("hide_tunnel_address")],
+        prefs[androidx.datastore.preferences.core.booleanPreferencesKey("local_proxy")],
+        prefs[androidx.datastore.preferences.core.intPreferencesKey("local_proxy_port")],
+        prefs[androidx.datastore.preferences.core.booleanPreferencesKey("allow_lan")],
         prefs[androidx.datastore.preferences.core.stringPreferencesKey("routing_mode")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("block_ads")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("block_trackers")],
@@ -220,7 +223,7 @@ class SybBoxVpnService : VpnService() {
                     continue
                 }
 
-                val carriesTraffic = !settings.tunnelCheck || tunnelCarriesTraffic()
+                val carriesTraffic = !settings.tunnelCheck || tunnelCarriesTraffic(settings.probeUrl)
                 if (!carriesTraffic) {
                     CoreLog.error(
                         "Connected, but no traffic is getting through this server. " +
@@ -337,7 +340,7 @@ class SybBoxVpnService : VpnService() {
             .getOrDefault(0)
     }
 
-    private suspend fun tunnelCarriesTraffic(): Boolean {
+    private suspend fun tunnelCarriesTraffic(probeUrl: String): Boolean {
         if (probePort == 0) return true
         val client = okhttp3.OkHttpClient.Builder()
             .proxy(java.net.Proxy(java.net.Proxy.Type.SOCKS, java.net.InetSocketAddress("127.0.0.1", probePort)))
@@ -347,7 +350,7 @@ class SybBoxVpnService : VpnService() {
             .build()
         return withContext(Dispatchers.IO) {
 
-            for (url in PROBE_URLS) {
+            for (url in probeUrls(probeUrl)) {
                 val request = okhttp3.Request.Builder().url(url).header("User-Agent", "SYBbox").build()
                 val reached = runCatching {
                     client.newCall(request).execute().use { it.code in 200..399 }
@@ -358,6 +361,11 @@ class SybBoxVpnService : VpnService() {
             }
             false
         }
+    }
+
+    private fun probeUrls(configured: String): List<String> {
+        val chosen = configured.trim().takeIf { it.startsWith("http://") || it.startsWith("https://") }
+        return (listOfNotNull(chosen) + PROBE_URLS).distinct()
     }
 
     private fun resolveServerAddress(address: String): String? {

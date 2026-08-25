@@ -7,12 +7,21 @@ import com.sybbox.data.datastore.SettingsDataStore
 import com.sybbox.data.work.SubscriptionUpdateWorker
 import com.sybbox.ui.theme.LocaleHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import com.google.gson.JsonParser
+import com.sybbox.BuildConfig
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltViewModel
@@ -74,6 +83,18 @@ class SettingsViewModel @Inject constructor(
         SubscriptionSlice(autoUpdate, interval, perApp, included, excluded)
     }
 
+    private val localProxy = combine(
+        store.localProxy, store.localProxyPort, store.allowLan,
+    ) { enabled, port, lan ->
+        LocalProxySlice(enabled, port, lan)
+    }
+
+    private val startup = combine(
+        store.updateOnStart, store.pingOnStart, store.connectOnStart, store.probeUrl, store.pingTimeout,
+    ) { update, ping, connect, probeUrl, pingTimeout ->
+        StartupSlice(update, ping, connect, probeUrl, pingTimeout)
+    }
+
     private val advanced = combine(
         store.tcpFastOpen, store.tunnelCheck, store.muxProtocol, store.muxMaxStreams, store.muxPadding,
     ) { tfo, check, muxProtocol, muxStreams, muxPadding ->
@@ -81,7 +102,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     val state: StateFlow<SettingsState> = combine(
-        connection, routing, dns, tls, tunnel, appearance, subscriptions, advanced,
+        connection, routing, dns, tls, tunnel, appearance, subscriptions, advanced, localProxy, startup,
     ) { values ->
         val base = values[0] as SettingsState
         val routingSlice = values[1] as RoutingSlice
@@ -91,6 +112,8 @@ class SettingsViewModel @Inject constructor(
         val appearanceSlice = values[5] as AppearanceSlice
         val subscriptionSlice = values[6] as SubscriptionSlice
         val advancedSlice = values[7] as AdvancedSlice
+        val localProxySlice = values[8] as LocalProxySlice
+        val startupSlice = values[9] as StartupSlice
         base.copy(
             routingMode = routingSlice.mode,
             blockAds = routingSlice.blockAds,
@@ -129,8 +152,58 @@ class SettingsViewModel @Inject constructor(
             muxProtocol = advancedSlice.muxProtocol,
             muxMaxStreams = advancedSlice.muxMaxStreams,
             muxPadding = advancedSlice.muxPadding,
+            localProxy = localProxySlice.enabled,
+            localProxyPort = localProxySlice.port,
+            allowLan = localProxySlice.allowLan,
+            updateOnStart = startupSlice.updateOnStart,
+            pingOnStart = startupSlice.pingOnStart,
+            connectOnStart = startupSlice.connectOnStart,
+            probeUrl = startupSlice.probeUrl,
+            pingTimeout = startupSlice.pingTimeout,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsState())
+
+    private val _updateCheck = MutableStateFlow<UpdateCheck>(UpdateCheck.Idle)
+    val updateCheck: StateFlow<UpdateCheck> = _updateCheck.asStateFlow()
+
+    fun checkForUpdate() {
+        if (_updateCheck.value is UpdateCheck.Checking) return
+        viewModelScope.launch {
+            _updateCheck.value = UpdateCheck.Checking
+            _updateCheck.value = withContext(Dispatchers.IO) { fetchLatestRelease() }
+        }
+    }
+
+    fun dismissUpdateCheck() {
+        _updateCheck.value = UpdateCheck.Idle
+    }
+
+    private fun fetchLatestRelease(): UpdateCheck = runCatching {
+        val request = Request.Builder()
+            .url(RELEASES_API)
+            .header("Accept", "application/vnd.github+json")
+            .header("User-Agent", "SYBbox")
+            .build()
+        updateClient.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) return UpdateCheck.Failed
+            val json = JsonParser.parseString(response.body?.string().orEmpty()).asJsonObject
+            val tag = json.get("tag_name")?.asString?.removePrefix("v") ?: return UpdateCheck.Failed
+            val page = json.get("html_url")?.asString ?: RELEASES_PAGE
+            if (isNewer(tag, BuildConfig.VERSION_NAME)) UpdateCheck.Available(tag, page) else UpdateCheck.UpToDate
+        }
+    }.getOrDefault(UpdateCheck.Failed)
+
+    private fun isNewer(candidate: String, current: String): Boolean {
+        fun parts(value: String) = value.split('.', '-').mapNotNull { it.takeWhile(Char::isDigit).toIntOrNull() }
+        val left = parts(candidate)
+        val right = parts(current)
+        for (index in 0 until maxOf(left.size, right.size)) {
+            val a = left.getOrElse(index) { 0 }
+            val b = right.getOrElse(index) { 0 }
+            if (a != b) return a > b
+        }
+        return false
+    }
 
     private fun edit(block: suspend SettingsDataStore.() -> Unit) {
         viewModelScope.launch { store.block() }
@@ -171,6 +244,15 @@ class SettingsViewModel @Inject constructor(
     fun setLeakProtection(value: Boolean) = edit { setLeakProtection(value) }
     fun setBlockWebRtc(value: Boolean) = edit { setBlockWebRtc(value) }
     fun setHideTunnelAddress(value: Boolean) = edit { setHideTunnelAddress(value) }
+    fun setLocalProxy(value: Boolean) = edit { setLocalProxy(value) }
+    fun setLocalProxyPort(value: Int) = edit { setLocalProxyPort(value) }
+    fun setAllowLan(value: Boolean) = edit { setAllowLan(value) }
+    fun setUpdateOnStart(value: Boolean) = edit { setUpdateOnStart(value) }
+    fun setPingOnStart(value: Boolean) = edit { setPingOnStart(value) }
+    fun setConnectOnStart(value: Boolean) = edit { setConnectOnStart(value) }
+    fun setProbeUrl(value: String) = edit { setProbeUrl(value) }
+    fun setPingTimeout(value: Int) = edit { setPingTimeout(value) }
+    fun resetToDefaults() = edit { resetToDefaults() }
 
     fun setSubAutoUpdate(value: Boolean) {
         edit { setSubAutoUpdate(value) }
@@ -247,6 +329,32 @@ class SettingsViewModel @Inject constructor(
         val muxPadding: Boolean,
     )
 
+    private companion object {
+        const val RELEASES_API = "https://api.github.com/repos/Semazz/SYBbox-Android/releases/latest"
+        const val RELEASES_PAGE = "https://github.com/Semazz/SYBbox-Android/releases/latest"
+
+        val updateClient: OkHttpClient by lazy {
+            OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .callTimeout(20, TimeUnit.SECONDS)
+                .build()
+        }
+    }
+
+    private data class LocalProxySlice(
+        val enabled: Boolean,
+        val port: Int,
+        val allowLan: Boolean,
+    )
+
+    private data class StartupSlice(
+        val updateOnStart: Boolean,
+        val pingOnStart: Boolean,
+        val connectOnStart: Boolean,
+        val probeUrl: String,
+        val pingTimeout: Int,
+    )
+
     private data class SubscriptionSlice(
         val autoUpdate: Boolean,
         val interval: Int,
@@ -254,4 +362,12 @@ class SettingsViewModel @Inject constructor(
         val included: List<String>,
         val excluded: List<String>,
     )
+}
+
+sealed interface UpdateCheck {
+    data object Idle : UpdateCheck
+    data object Checking : UpdateCheck
+    data object UpToDate : UpdateCheck
+    data object Failed : UpdateCheck
+    data class Available(val version: String, val page: String) : UpdateCheck
 }

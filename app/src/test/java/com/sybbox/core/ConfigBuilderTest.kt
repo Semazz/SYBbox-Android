@@ -371,5 +371,22 @@ class ConfigBuilderTest {
         assertEquals(2, addresses.size)
     }
 
+    @Test
+    fun `the local proxy inbound only appears when asked for`() {
+        assertEquals(1, parse(ConfigBuilder.build(realityVless, defaults)).getAsJsonArray("inbounds").size())
+
+        val local = parse(ConfigBuilder.build(realityVless, defaults.copy(localProxy = true, localProxyPort = 10808)))
+            .getAsJsonArray("inbounds").map { it.asJsonObject }
+            .first { it.get("tag").asString == ConfigBuilder.TAG_LOCAL }
+        assertEquals("mixed", local.get("type").asString)
+        assertEquals("127.0.0.1", local.get("listen").asString)
+        assertEquals(10808, local.get("listen_port").asInt)
+
+        val lan = parse(ConfigBuilder.build(realityVless, defaults.copy(localProxy = true, allowLan = true)))
+            .getAsJsonArray("inbounds").map { it.asJsonObject }
+            .first { it.get("tag").asString == ConfigBuilder.TAG_LOCAL }
+        assertEquals("0.0.0.0", lan.get("listen").asString)
+    }
+
     private fun parse(json: String): JsonObject = JsonParser.parseString(json).asJsonObject
 }

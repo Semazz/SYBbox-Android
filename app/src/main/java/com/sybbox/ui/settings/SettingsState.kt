@@ -40,6 +40,16 @@ data class SettingsState(
     val blockWebRtc: Boolean = false,
     val hideTunnelAddress: Boolean = true,
 
+    val localProxy: Boolean = false,
+    val localProxyPort: Int = 10808,
+    val allowLan: Boolean = false,
+
+    val updateOnStart: Boolean = false,
+    val pingOnStart: Boolean = true,
+    val connectOnStart: Boolean = false,
+    val probeUrl: String = "https://www.gstatic.com/generate_204",
+    val pingTimeout: Int = 3,
+
     val subAutoUpdate: Boolean = true,
     val defaultSubInterval: Int = 12,
 

@@ -1,6 +1,7 @@
 package com.sybbox.ui.settings
 
 import android.content.Intent
+import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,6 +16,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AltRoute
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Article
+import androidx.compose.material.icons.rounded.CloudDownload
+import androidx.compose.material.icons.rounded.RestartAlt
+import androidx.compose.material.icons.rounded.Router
+import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.BugReport
@@ -42,10 +48,15 @@ import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -76,7 +87,9 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val updateCheck by viewModel.updateCheck.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var confirmReset by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -455,6 +468,65 @@ fun SettingsScreen(
         }
 
         item {
+            SettingsGroup(stringResource(R.string.group_local_proxy)) {
+                SettingsToggle(
+                    title = stringResource(R.string.local_proxy),
+                    summary = stringResource(R.string.local_proxy_summary),
+                    checked = state.localProxy,
+                    onCheckedChange = viewModel::setLocalProxy,
+                    icon = Icons.Rounded.Router,
+                )
+                if (state.localProxy) {
+                    SettingsDivider()
+                    SettingsText(
+                        title = stringResource(R.string.local_proxy_port),
+                        value = state.localProxyPort.toString(),
+                        onValueChange = { entered ->
+                            entered.trim().toIntOrNull()?.takeIf { it in 1024..65535 }
+                                ?.let(viewModel::setLocalProxyPort)
+                        },
+                        placeholder = "10808",
+                        icon = Icons.Rounded.SettingsEthernet,
+                    )
+                    SettingsDivider()
+                    SettingsToggle(
+                        title = stringResource(R.string.allow_lan),
+                        summary = stringResource(R.string.allow_lan_summary),
+                        checked = state.allowLan,
+                        onCheckedChange = viewModel::setAllowLan,
+                        icon = Icons.Rounded.Wifi,
+                    )
+                }
+            }
+        }
+
+        item {
+            SettingsGroup(stringResource(R.string.group_startup)) {
+                SettingsToggle(
+                    title = stringResource(R.string.update_on_start),
+                    checked = state.updateOnStart,
+                    onCheckedChange = viewModel::setUpdateOnStart,
+                    icon = Icons.Rounded.Sync,
+                )
+                SettingsDivider()
+                SettingsToggle(
+                    title = stringResource(R.string.ping_on_start),
+                    checked = state.pingOnStart,
+                    onCheckedChange = viewModel::setPingOnStart,
+                    icon = Icons.Rounded.Speed,
+                )
+                SettingsDivider()
+                SettingsToggle(
+                    title = stringResource(R.string.connect_on_start),
+                    summary = stringResource(R.string.connect_on_start_summary),
+                    checked = state.connectOnStart,
+                    onCheckedChange = viewModel::setConnectOnStart,
+                    icon = Icons.Rounded.Bolt,
+                )
+            }
+        }
+
+        item {
             SettingsGroup(stringResource(R.string.group_subscriptions)) {
                 SettingsToggle(
                     title = stringResource(R.string.sub_auto_update),
@@ -484,6 +556,24 @@ fun SettingsScreen(
                     icon = Icons.Rounded.Shield,
                 )
                 SettingsDivider()
+                SettingsText(
+                    title = stringResource(R.string.probe_url),
+                    summary = stringResource(R.string.probe_url_summary),
+                    value = state.probeUrl,
+                    onValueChange = viewModel::setProbeUrl,
+                    placeholder = "https://www.gstatic.com/generate_204",
+                    icon = Icons.Rounded.Public,
+                )
+                SettingsDivider()
+                SettingsChoice(
+                    title = stringResource(R.string.ping_timeout),
+                    options = listOf(2, 3, 5, 10),
+                    selected = state.pingTimeout,
+                    onSelect = viewModel::setPingTimeout,
+                    label = { stringResource(R.string.seconds_value, it) },
+                    icon = Icons.Rounded.Timer,
+                )
+                SettingsDivider()
                 SettingsChoice(
                     title = stringResource(R.string.log_level),
                     options = listOf("error", "warn", "info", "debug", "trace"),
@@ -497,6 +587,28 @@ fun SettingsScreen(
                     title = stringResource(R.string.open_logs),
                     icon = Icons.Rounded.Article,
                     onClick = onOpenLogs,
+                )
+            }
+        }
+
+        item {
+            SettingsGroup(stringResource(R.string.group_maintenance)) {
+                SettingsAction(
+                    title = stringResource(R.string.check_update),
+                    value = when (val check = updateCheck) {
+                        is UpdateCheck.Checking -> stringResource(R.string.checking)
+                        is UpdateCheck.Available -> check.version
+                        else -> null
+                    },
+                    icon = Icons.Rounded.CloudDownload,
+                    onClick = viewModel::checkForUpdate,
+                )
+                SettingsDivider()
+                SettingsAction(
+                    title = stringResource(R.string.reset_settings),
+                    summary = stringResource(R.string.reset_settings_summary),
+                    icon = Icons.Rounded.RestartAlt,
+                    onClick = { confirmReset = true },
                 )
             }
         }
@@ -528,5 +640,57 @@ fun SettingsScreen(
                 )
             }
         }
+    }
+
+    if (confirmReset) {
+        AlertDialog(
+            onDismissRequest = { confirmReset = false },
+            title = { Text(stringResource(R.string.reset_settings)) },
+            text = { Text(stringResource(R.string.reset_settings_confirm)) },
+            confirmButton = {
+                TextButton(onClick = { confirmReset = false; viewModel.resetToDefaults() }) {
+                    Text(stringResource(R.string.reset), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmReset = false }) { Text(stringResource(R.string.cancel)) }
+            },
+        )
+    }
+
+    when (val check = updateCheck) {
+        is UpdateCheck.Available -> AlertDialog(
+            onDismissRequest = viewModel::dismissUpdateCheck,
+            title = { Text(stringResource(R.string.update_available)) },
+            text = { Text(stringResource(R.string.update_available_body, check.version, BuildConfig.VERSION_NAME)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.dismissUpdateCheck()
+                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(check.page))) }
+                }) {
+                    Text(stringResource(R.string.open_link))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissUpdateCheck) { Text(stringResource(R.string.close)) }
+            },
+        )
+        is UpdateCheck.UpToDate -> AlertDialog(
+            onDismissRequest = viewModel::dismissUpdateCheck,
+            title = { Text(stringResource(R.string.check_update)) },
+            text = { Text(stringResource(R.string.update_none, BuildConfig.VERSION_NAME)) },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissUpdateCheck) { Text(stringResource(R.string.ok)) }
+            },
+        )
+        is UpdateCheck.Failed -> AlertDialog(
+            onDismissRequest = viewModel::dismissUpdateCheck,
+            title = { Text(stringResource(R.string.check_update)) },
+            text = { Text(stringResource(R.string.update_failed)) },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissUpdateCheck) { Text(stringResource(R.string.ok)) }
+            },
+        )
+        else -> {}
     }
 }

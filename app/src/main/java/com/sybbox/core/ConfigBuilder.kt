@@ -22,6 +22,7 @@ object ConfigBuilder {
     const val MODE_CUSTOM = "CUSTOM"
     private const val TAG_TUN = "tun-in"
     const val TAG_PROBE = "probe-in"
+    const val TAG_LOCAL = "local-in"
     private const val TAG_DNS_REMOTE = "dns-remote"
     private const val TAG_DNS_DIRECT = "dns-direct"
     private const val TAG_DNS_LOCAL = "dns-local"
@@ -353,6 +354,15 @@ object ConfigBuilder {
                 addProperty("tag", TAG_PROBE)
                 addProperty("listen", "127.0.0.1")
                 addProperty("listen_port", probePort)
+            })
+        }
+
+        if (settings.localProxy && settings.localProxyPort in 1..65535 && settings.localProxyPort != probePort) {
+            add(JsonObject().apply {
+                addProperty("type", "mixed")
+                addProperty("tag", TAG_LOCAL)
+                addProperty("listen", if (settings.allowLan) "0.0.0.0" else "127.0.0.1")
+                addProperty("listen_port", settings.localProxyPort)
             })
         }
     }

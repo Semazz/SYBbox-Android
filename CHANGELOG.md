@@ -187,6 +187,12 @@
   about every ten seconds while connected, so speed and uptime stay honest without redrawing
   every second.
 
+### Fixed — navigation
+- A tab opens on the first tap. Tapping one tab and another straight after it dropped the second
+  tap — the bar ignored anything pressed while a screen was still animating in, so the second tab
+  simply did not open and had to be pressed again. Taps are taken whenever they come, and a page
+  opened twice in a row no longer stacks a second copy of itself.
+
 ### Fixed — opening the app from outside
 - A widget, the notification or the quick tile no longer opens onto a black screen you had to
   minimise and reopen to get past. They started the app on a fresh task and cleared it on the way

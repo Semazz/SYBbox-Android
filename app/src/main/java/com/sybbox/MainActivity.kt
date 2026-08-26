@@ -51,7 +51,6 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.lifecycle.Lifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -126,6 +125,9 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
         val currentRoute = backStackEntry?.destination?.route
         val snackbarHost = remember { SnackbarHostState() }
         val context = LocalContext.current
+        val open: (String) -> Unit = { route ->
+            navController.navigate(route) { launchSingleTop = true }
+        }
 
         val fullScreenRoutes = setOf(
             Screen.Logs.route,
@@ -160,9 +162,6 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
                                     selected = selected,
                                     onClick = {
                                         if (root) return@NavigationBarItem
-                                        val settled = backStackEntry?.lifecycle?.currentState
-                                            ?.isAtLeast(Lifecycle.State.RESUMED) == true
-                                        if (!settled) return@NavigationBarItem
                                         val popped = selected &&
                                             navController.popBackStack(item.screen.route, inclusive = false)
                                         if (!popped) {
@@ -299,15 +298,15 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
                             viewModel.messages.collect { snackbarHost.showSnackbar(it.resolve(context)) }
                         }
                         ServersScreen(
-                            onScanQr = { navController.navigate(Screen.Scanner.route) },
+                            onScanQr = { open(Screen.Scanner.route) },
                             viewModel = viewModel,
                         )
                     }
                     composable(Screen.Settings.route) {
                         SettingsScreen(
-                            onOpenSection = { navController.navigate(Screen.SettingsSection.route(it.name)) },
-                            onOpenLogs = { navController.navigate(Screen.Logs.route) },
-                            onOpenPerApp = { navController.navigate(Screen.PerApp.route) },
+                            onOpenSection = { open(Screen.SettingsSection.route(it.name)) },
+                            onOpenLogs = { open(Screen.Logs.route) },
+                            onOpenPerApp = { open(Screen.PerApp.route) },
                             viewModel = settingsViewModel,
                         )
                     }
@@ -320,14 +319,14 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
                             SettingsSectionScreen(
                                 section = section,
                                 onBack = { navController.popBackStack() },
-                                onOpenPerApp = { navController.navigate(Screen.PerApp.route) },
+                                onOpenPerApp = { open(Screen.PerApp.route) },
                                 viewModel = settingsViewModel,
                             )
                         }
                     }
                     composable(Screen.Logs.route) {
                         LogsIndexScreen(
-                            onOpen = { navController.navigate(Screen.LogView.route(it)) },
+                            onOpen = { open(Screen.LogView.route(it)) },
                             onBack = { navController.popBackStack() },
                         )
                     }

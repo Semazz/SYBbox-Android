@@ -278,7 +278,7 @@
     <string name="device_model">设备</string>
     <string name="source_code">源代码</string>
     <string name="log_limit">日志大小上限</string>
-    <string name="log_limit_summary">超过后丢弃较旧的日志行</string>
+    <string name="log_limit_summary">超过后丢弃较旧的日志行，且保留不超过一天</string>
     <string name="megabytes_value">%1$d MB</string>
     <string name="log_usage">%1$s / %2$s</string>
     <string name="settings_search">搜索设置</string>

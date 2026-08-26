@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -57,6 +58,8 @@ fun LogsIndexScreen(onOpen: (String?) -> Unit, onBack: () -> Unit) {
     val used by CoreLog.used.collectAsStateWithLifecycle()
     val limit by CoreLog.limit.collectAsStateWithLifecycle()
     val entries by CoreLog.entries.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) { CoreLog.prune() }
 
     Scaffold(
         topBar = {

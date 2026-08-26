@@ -295,7 +295,7 @@
     <string name="device_model">Dispositivo</string>
     <string name="source_code">Codigo fuente</string>
     <string name="log_limit">Limite del registro</string>
-    <string name="log_limit_summary">Al superarlo, las lineas mas antiguas se descartan</string>
+    <string name="log_limit_summary">Al superarlo, las lineas mas antiguas se descartan; nada se guarda mas de un dia</string>
     <string name="megabytes_value">%1$d MB</string>
     <string name="log_usage">%1$s de %2$s</string>
     <string name="settings_search">Buscar ajustes</string>

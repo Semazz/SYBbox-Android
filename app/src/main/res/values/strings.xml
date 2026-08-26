@@ -297,7 +297,7 @@
     <string name="device_model">Device</string>
     <string name="source_code">Source code</string>
     <string name="log_limit">Log size limit</string>
-    <string name="log_limit_summary">Older lines are dropped once the log passes this</string>
+    <string name="log_limit_summary">Older lines are dropped once the log passes this, and nothing is kept longer than a day</string>
     <string name="megabytes_value">%1$d MB</string>
     <string name="log_usage">%1$s of %2$s</string>
     <string name="settings_search">Search settings</string>

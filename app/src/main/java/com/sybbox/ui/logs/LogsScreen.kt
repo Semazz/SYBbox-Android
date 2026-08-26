@@ -73,6 +73,8 @@ fun LogsScreen(server: String?, onBack: () -> Unit) {
     val limit by CoreLog.limit.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var filter by remember { mutableStateOf<LogLevel?>(null) }
+
+    LaunchedEffect(Unit) { CoreLog.prune() }
     val listState = rememberLazyListState()
 
     val visible = remember(entries, filter, server) {

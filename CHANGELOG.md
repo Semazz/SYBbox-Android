@@ -187,6 +187,11 @@
   about every ten seconds while connected, so speed and uptime stay honest without redrawing
   every second.
 
+### Changed — logs
+- Nothing is kept longer than a day. Lines past twenty-four hours are dropped as new ones
+  arrive and whenever the logs are opened, so the log is what happened today rather than
+  everything since the app was last started. The size limit still applies on top of that.
+
 ### Fixed — navigation
 - A tab opens on the first tap. Tapping one tab and another straight after it dropped the second
   tap — the bar ignored anything pressed while a screen was still animating in, so the second tab

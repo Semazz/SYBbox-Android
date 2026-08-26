@@ -26,7 +26,11 @@ object CoreLog {
     const val DEFAULT_LIMIT_MB = 30
 
     private const val MAX_ENTRIES = 20_000
+    private const val RETENTION_MILLIS = 24L * 60 * 60 * 1000
     private const val ENTRY_OVERHEAD_BYTES = 48L
+
+    @Volatile
+    internal var clock: () -> Long = { System.currentTimeMillis() }
 
     private val buffer = ArrayDeque<LogEntry>()
     private var nextId = 0L
@@ -87,6 +91,14 @@ object CoreLog {
 
     fun error(message: String) = append(LogLevel.ERROR, message)
 
+    fun prune() {
+        synchronized(buffer) {
+            val before = buffer.size
+            expire()
+            if (buffer.size != before) publish()
+        }
+    }
+
     fun clear() {
         synchronized(buffer) {
             buffer.clear()
@@ -99,7 +111,7 @@ object CoreLog {
     private fun append(level: LogLevel, message: String) {
         if (message.isBlank()) return
         synchronized(buffer) {
-            val entry = LogEntry(level, message.trimEnd(), server = server, id = nextId++)
+            val entry = LogEntry(level, message.trimEnd(), clock(), server, nextId++)
             buffer.addLast(entry)
             usedBytes += weigh(entry)
             trim()
@@ -108,10 +120,22 @@ object CoreLog {
     }
 
     private fun trim() {
+        expire()
         while (buffer.isNotEmpty() && (usedBytes > limitBytes || buffer.size > MAX_ENTRIES)) {
             usedBytes -= weigh(buffer.removeFirst())
         }
         if (buffer.isEmpty()) usedBytes = 0
+    }
+
+    private fun expire() {
+        val cutoff = clock() - RETENTION_MILLIS
+        while (buffer.isNotEmpty() && buffer.first().timestamp < cutoff) {
+            usedBytes -= weigh(buffer.removeFirst())
+        }
+        if (buffer.isEmpty()) {
+            usedBytes = 0
+            explained.clear()
+        }
     }
 
     private fun publish() {

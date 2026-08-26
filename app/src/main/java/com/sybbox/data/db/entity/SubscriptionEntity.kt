@@ -10,7 +10,7 @@ data class SubscriptionEntity(
     val url: String = "",
     val type: String = "STANDARD",
     val autoUpdate: Boolean = true,
-    val updateInterval: Int = 6,
+    val updateInterval: Int = 0,
     val lastUpdate: Long = 0,
     val profileCount: Int = 0,
     val upload: Long = 0,

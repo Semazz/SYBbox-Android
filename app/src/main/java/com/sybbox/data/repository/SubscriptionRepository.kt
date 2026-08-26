@@ -57,14 +57,13 @@ class SubscriptionRepository @Inject constructor(
                 download = download,
                 total = total,
                 expire = expire,
-                updateInterval = if (updateInterval > 0) updateInterval else sub.updateInterval,
+                updateInterval = updateInterval,
             ),
         )
     }
 
     suspend fun markUpdated(id: Long, profileCount: Int, updateInterval: Int) {
         subscriptionDao.updateSubscriptionStats(id, System.currentTimeMillis(), profileCount)
-        if (updateInterval <= 0) return
         val sub = subscriptionDao.getSubscriptionById(id) ?: return
         subscriptionDao.updateSubscription(sub.copy(updateInterval = updateInterval))
     }

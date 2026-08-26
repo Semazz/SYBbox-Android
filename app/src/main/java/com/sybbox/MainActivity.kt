@@ -146,16 +146,22 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
                             modifier = Modifier.navigationBarsPadding(),
                         ) {
                             bottomNavItems.forEach { item ->
-                                val selected = currentRoute == item.screen.route
+                                val root = currentRoute == item.screen.route
+                                val selected = root ||
+                                    currentRoute?.startsWith("${item.screen.route}/") == true
                                 NavigationBarItem(
                                     selected = selected,
                                     onClick = {
-                                        navController.navigate(item.screen.route) {
-                                            popUpTo(navController.graph.findStartDestination().id) {
-                                                saveState = true
+                                        val popped = selected && !root &&
+                                            navController.popBackStack(item.screen.route, inclusive = false)
+                                        if (!popped) {
+                                            navController.navigate(item.screen.route) {
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = item.screen != Screen.Settings
                                             }
-                                            launchSingleTop = true
-                                            restoreState = true
                                         }
                                     },
                                     icon = {

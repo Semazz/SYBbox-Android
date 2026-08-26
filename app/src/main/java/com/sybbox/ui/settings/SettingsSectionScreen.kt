@@ -132,7 +132,7 @@ fun SettingsSectionScreen(
                         when (section) {
                             SettingsSection.APPEARANCE -> AppearanceSettings(state, viewModel)
                             SettingsSection.CONNECTION -> ConnectionSettings(state, viewModel)
-                            SettingsSection.ROUTING -> RoutingSettings(state, viewModel, onOpenPerApp)
+                            SettingsSection.ROUTING -> RoutingSettings(state, viewModel)
                             SettingsSection.DNS -> DnsSettings(state, viewModel)
                             SettingsSection.TRANSPORT -> TransportSettings(state, viewModel)
                             SettingsSection.TUNNEL -> TunnelSettings(state, viewModel)
@@ -251,11 +251,7 @@ private fun ConnectionSettings(state: SettingsState, viewModel: SettingsViewMode
 }
 
 @Composable
-private fun RoutingSettings(
-    state: SettingsState,
-    viewModel: SettingsViewModel,
-    onOpenPerApp: () -> Unit,
-) {
+private fun RoutingSettings(state: SettingsState, viewModel: SettingsViewModel) {
     SettingsChoice(
         title = stringResource(R.string.routing_mode),
         options = listOf("BALANCED", "GLOBAL", "DIRECT_ONLY", "CUSTOM"),
@@ -296,21 +292,6 @@ private fun RoutingSettings(
         checked = state.blockTrackers,
         onCheckedChange = viewModel::setBlockTrackers,
         icon = Icons.Rounded.VisibilityOff,
-    )
-    SettingsDivider()
-    SettingsAction(
-        title = stringResource(R.string.per_app_routing),
-        summary = stringResource(R.string.per_app_summary),
-        value = if (state.perAppProxy) {
-            stringResource(
-                R.string.apps_selected,
-                state.includedApps.size + state.excludedApps.size,
-            )
-        } else {
-            null
-        },
-        icon = Icons.Rounded.Apps,
-        onClick = onOpenPerApp,
     )
 }
 

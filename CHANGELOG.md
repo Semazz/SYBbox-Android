@@ -35,6 +35,12 @@
 - Latency is measured when you ask for it. Opening the server list used to test every server on
   its own, which is a burst of connections nobody asked for; the switch that turned it off went
   with it.
+- Per-app routing is listed once. It sat both on the settings root and inside routing.
+- The settings tab returns to the settings root. It used to leave the row unhighlighted while a
+  page was open, and tapping it from there could land you on the home screen.
+- The halo behind the connect button is a hairline ring rather than a radial gradient. Gradients
+  that fade to nothing band into visible steps on a dark background, which read as grain laid
+  over the whole screen.
 - One spacing scale across the screens that had drifted apart — gaps of 10, 12, 16, 28 and 32
   pixels standing in for the same intent now come from the same handful of named steps.
 

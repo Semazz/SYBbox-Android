@@ -757,6 +757,9 @@ private fun subscriptionDetail(subscription: Subscription): String? {
             val date = DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(subscription.expire * 1000))
             add(stringResource(R.string.expires_on, date))
         }
+        if (subscription.updateInterval > 0) {
+            add(stringResource(R.string.updates_every, subscription.updateInterval))
+        }
     }
     return parts.takeIf { it.isNotEmpty() }?.joinToString("  \u00B7  ")
 }

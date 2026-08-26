@@ -35,6 +35,8 @@
   the slack an hourly subscription would be skipped by a tick landing a minute early and wait
   another hour, turning one hour into two. The interval in Settings is now the
   fallback for subscriptions that do not state one, and says so.
+- A subscription's card says how often it refreshes, beside the traffic and the expiry date,
+  whenever it stated an interval of its own.
 - A subscription that states its own interval refreshes on it no matter what. The switch in
   Settings governs only the subscriptions that state nothing; it used to cancel the background
   job outright, which silenced every subscription including the ones that had asked to be kept

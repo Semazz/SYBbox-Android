@@ -35,6 +35,11 @@
   the slack an hourly subscription would be skipped by a tick landing a minute early and wait
   another hour, turning one hour into two. The interval in Settings is now the
   fallback for subscriptions that do not state one, and says so.
+- A new subscription is named the moment it is added. It went in nameless and read as
+  “Subscriptions” until the fetch came back with a title, and stayed that way for good where the
+  panel sent none. It now takes the host from the URL to begin with, then the panel's title if
+  one arrives, then the filename the response offers — and a name you typed yourself is never
+  overwritten.
 - A subscription's card says how often it refreshes, beside the traffic and the expiry date,
   whenever it stated an interval of its own.
 - A subscription that states its own interval refreshes on it no matter what. The switch in

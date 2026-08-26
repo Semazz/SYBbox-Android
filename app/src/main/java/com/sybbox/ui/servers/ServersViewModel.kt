@@ -171,7 +171,10 @@ class ServersViewModel @Inject constructor(
                 subscriptionRepository.deleteSubscription(existing)
             }
             val subscriptionId = subscriptionRepository.insertSubscription(
-                Subscription(name = customName?.takeIf { it.isNotBlank() }.orEmpty(), url = trimmed),
+                Subscription(
+                    name = customName?.takeIf { it.isNotBlank() } ?: hostOf(trimmed),
+                    url = trimmed,
+                ),
             )
             val added = refresh(subscriptionId, trimmed)
             if (added > 0) emit(UiMessage(R.string.msg_subscription_updated))
@@ -251,10 +254,13 @@ class ServersViewModel @Inject constructor(
                 finalResponse.updateInterval,
             )
 
-            finalResponse.profileTitle?.let { title ->
+            val announced = finalResponse.profileTitle?.takeIf { it.isNotBlank() }
+                ?: finalResponse.headerName?.let(::cleanFileName)?.takeIf { it.isNotBlank() }
+            if (announced != null) {
                 val sub = subscriptionRepository.getSubscriptionById(subscriptionId)
-                if (sub != null && sub.name != title) {
-                    subscriptionRepository.updateSubscription(sub.copy(name = title))
+                val derived = sub != null && (sub.name.isBlank() || sub.name == hostOf(sub.url))
+                if (sub != null && derived && sub.name != announced) {
+                    subscriptionRepository.updateSubscription(sub.copy(name = announced))
                 }
             }
 
@@ -324,6 +330,16 @@ class ServersViewModel @Inject constructor(
             )
         }
     }
+
+    private fun hostOf(url: String): String = runCatching {
+        java.net.URI(url).host?.removePrefix("www.").orEmpty()
+    }.getOrDefault("")
+
+    private fun cleanFileName(name: String): String = name
+        .substringAfterLast('/')
+        .substringBeforeLast('.')
+        .replace('_', ' ')
+        .trim()
 
     private fun extractFilename(header: String): String? {
         if (header.isBlank()) return null

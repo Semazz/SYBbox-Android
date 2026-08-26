@@ -138,13 +138,6 @@
   pixels standing in for the same intent now come from the same handful of named steps.
 
 ### Changed — speed
-- Resolving the server address before the tunnel starts is capped at two seconds. It is there to
-  save the core a lookup, and it was allowed to take as long as the network wanted — on a slow
-  resolver that wait was the whole delay before the tunnel came up. Past the cap the core dials
-  by name, as it already did when resolving failed.
-- The tunnel check asks its endpoints at once rather than one after another, and waits five
-  seconds instead of seven. A server that carries nothing used to take up to twenty-one seconds
-  to say so; now it takes five.
 - Scheduling the subscription job moved off the startup path. It reaches into WorkManager, which
   is not work for the moment the first frame is waiting to be drawn.
 - A row in the server list keeps its protocol line rather than rebuilding it on every tick of the

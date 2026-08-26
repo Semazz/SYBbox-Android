@@ -32,6 +32,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -67,6 +69,8 @@ class SybBoxVpnService : VpnService() {
     private var activeProfileId = -1L
 
     private var appliedConfigSignature = ""
+
+    private val coreMutex = kotlinx.coroutines.sync.Mutex()
 
     override fun onCreate() {
         super.onCreate()
@@ -172,10 +176,13 @@ class SybBoxVpnService : VpnService() {
 
     private fun connect(profileId: Long, forceRestart: Boolean = false) {
         if (!forceRestart && _appState.value.connectionState == ConnectionState.CONNECTING) return
-        connectionJob?.cancel()
-        monitorJob?.cancel()
-        shutdownCore()
-        connectionJob = serviceScope.launch { startConnection(profileId) }
+        val previous = connectionJob
+        connectionJob = serviceScope.launch {
+            previous?.cancelAndJoin()
+            monitorJob?.cancelAndJoin()
+            stopCore()
+            startConnection(profileId)
+        }
     }
 
     private suspend fun startConnection(profileId: Long) {
@@ -200,7 +207,7 @@ class SybBoxVpnService : VpnService() {
                 CoreLog.info("Connecting to ${profile.name.ifBlank { profile.address }} (${profile.protocol})")
                 Core.setup(filesDir.absolutePath, filesDir.absolutePath, cacheDir.absolutePath)
 
-                val (platform, service) = startCore(profile, settings, rules)
+                val (platform, service) = coreMutex.withLock { startCore(profile, settings, rules) }
                 this@SybBoxVpnService.platform = platform
                 this@SybBoxVpnService.boxService = service
                 activeProfileId = currentProfileId
@@ -222,7 +229,7 @@ class SybBoxVpnService : VpnService() {
                 if (settings.hideTunnelAddress && !resolverReachedApps()) {
                     CoreLog.warn("The hidden tunnel address left apps without a resolver. Falling back to 172.19.0.1.")
                     plainTunAddress = true
-                    shutdownCore()
+                    stopCore()
                     attempts--
                     continue
                 }
@@ -236,7 +243,7 @@ class SybBoxVpnService : VpnService() {
                     val nextId = if (autoFailover) findNextProfileId(currentProfileId, tried) else null
                     if (nextId != null && attempts < maxAttempts) {
                         CoreLog.warn("Trying the next server in the subscription")
-                        shutdownCore()
+                        stopCore()
                         currentProfileId = nextId
                         continue
                     }
@@ -252,7 +259,7 @@ class SybBoxVpnService : VpnService() {
                 throw superseded
             } catch (error: Throwable) {
                 CoreLog.error(describe(error))
-                shutdownCore()
+                stopCore()
                 if (attempts < maxAttempts) {
                     val nextId = findNextProfileId(currentProfileId, tried)
                     if (nextId != null) {
@@ -501,16 +508,22 @@ class SybBoxVpnService : VpnService() {
     }
 
     private fun disconnect() {
-        monitorJob?.cancel()
-        connectionJob?.cancel()
-        shutdownCore()
+        val previous = connectionJob
+        connectionJob = null
         activeProfileId = -1L
         appliedConfigSignature = ""
         _appState.value = AppState()
         liveInstance = null
-        CoreLog.info("Disconnected")
+        serviceScope.launch {
+            previous?.cancelAndJoin()
+            monitorJob?.cancelAndJoin()
+            stopCore()
+            CoreLog.info("Disconnected")
+        }
         stopSelfSafely()
     }
+
+    private suspend fun stopCore() = coreMutex.withLock { shutdownCore() }
 
     private fun shutdownCore() {
         platform?.runCatching { closeInterfaceMonitor() }

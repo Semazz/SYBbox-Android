@@ -137,6 +137,15 @@
 - One spacing scale across the screens that had drifted apart — gaps of 10, 12, 16, 28 and 32
   pixels standing in for the same intent now come from the same handful of named steps.
 
+### Fixed — switching servers
+- Tapping a server no longer stalls the screen. Switching shut the core down from the thread that
+  draws the interface, and shutting a core down is native work that takes as long as it takes.
+  It happens off that thread now, so the tap answers at once.
+- Switching repeatedly no longer leaves the tunnel up but carrying nothing. A switch cancelled the
+  running attempt without waiting for it to stop, then tore the core down underneath it and built
+  another — two of them in the same core at once. Each switch now waits for the previous attempt
+  to finish, and starting and stopping the core are held apart so they can never overlap.
+
 ### Changed — speed
 - Scheduling the subscription job moved off the startup path. It reaches into WorkManager, which
   is not work for the moment the first frame is waiting to be drawn.

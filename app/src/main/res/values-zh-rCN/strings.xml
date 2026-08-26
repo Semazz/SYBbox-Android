@@ -294,4 +294,9 @@
     <plurals name="subscriptions_refreshed">
         <item quantity="other">已更新 %1$d 个订阅</item>
     </plurals>
+    <string name="logs_by_server">按服务器</string>
+    <string name="all_logs">全部日志</string>
+    <plurals name="log_lines">
+        <item quantity="other">%1$d 行</item>
+    </plurals>
 </resources>

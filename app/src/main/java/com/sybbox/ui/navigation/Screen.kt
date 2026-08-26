@@ -18,6 +18,10 @@ sealed class Screen(val route: String) {
         fun route(section: String) = "settings/$section"
     }
     data object Logs : Screen("logs")
+    data object LogView : Screen("logs/{server}") {
+        const val ALL = "all"
+        fun route(server: String?) = "logs/${server?.takeIf { it.isNotBlank() } ?: ALL}"
+    }
     data object PerApp : Screen("per_app")
     data object Scanner : Screen("scanner")
 }

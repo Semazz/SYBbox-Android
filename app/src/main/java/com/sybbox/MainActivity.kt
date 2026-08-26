@@ -51,12 +51,14 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sybbox.ui.home.HomeScreen
 import com.sybbox.ui.home.HomeViewModel
+import com.sybbox.ui.logs.LogsIndexScreen
 import com.sybbox.ui.logs.LogsScreen
 import com.sybbox.ui.navigation.Screen
 import com.sybbox.ui.navigation.bottomNavItems
@@ -125,7 +127,12 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
         val snackbarHost = remember { SnackbarHostState() }
         val context = LocalContext.current
 
-        val fullScreenRoutes = setOf(Screen.Logs.route, Screen.PerApp.route, Screen.Scanner.route)
+        val fullScreenRoutes = setOf(
+            Screen.Logs.route,
+            Screen.LogView.route,
+            Screen.PerApp.route,
+            Screen.Scanner.route,
+        )
         val showBottomBar = currentRoute !in fullScreenRoutes
 
         Scaffold(
@@ -153,6 +160,9 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
                                     selected = selected,
                                     onClick = {
                                         if (root) return@NavigationBarItem
+                                        val settled = backStackEntry?.lifecycle?.currentState
+                                            ?.isAtLeast(Lifecycle.State.RESUMED) == true
+                                        if (!settled) return@NavigationBarItem
                                         val popped = selected &&
                                             navController.popBackStack(item.screen.route, inclusive = false)
                                         if (!popped) {
@@ -316,7 +326,17 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
                         }
                     }
                     composable(Screen.Logs.route) {
-                        LogsScreen(onBack = { navController.popBackStack() })
+                        LogsIndexScreen(
+                            onOpen = { navController.navigate(Screen.LogView.route(it)) },
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable(Screen.LogView.route) { entry ->
+                        val name = entry.arguments?.getString("server").orEmpty()
+                        LogsScreen(
+                            server = name.takeIf { it != Screen.LogView.ALL },
+                            onBack = { navController.popBackStack() },
+                        )
                     }
                     composable(Screen.PerApp.route) {
                         PerAppScreen(onBack = { navController.popBackStack() })

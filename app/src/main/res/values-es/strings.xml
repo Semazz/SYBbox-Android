@@ -312,5 +312,11 @@
         <item quantity="one">%1$d suscripcion actualizada</item>
         <item quantity="other">%1$d suscripciones actualizadas</item>
     </plurals>
+    <string name="logs_by_server">Por servidor</string>
+    <string name="all_logs">Todos los registros</string>
+    <plurals name="log_lines">
+        <item quantity="one">%1$d linea</item>
+        <item quantity="other">%1$d lineas</item>
+    </plurals>
 </resources>
 

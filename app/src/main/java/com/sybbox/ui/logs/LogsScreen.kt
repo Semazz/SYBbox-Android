@@ -67,17 +67,13 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LogsScreen(onBack: () -> Unit) {
+fun LogsScreen(server: String?, onBack: () -> Unit) {
     val entries by CoreLog.entries.collectAsStateWithLifecycle()
     val used by CoreLog.used.collectAsStateWithLifecycle()
     val limit by CoreLog.limit.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var filter by remember { mutableStateOf<LogLevel?>(null) }
     val listState = rememberLazyListState()
-
-    val servers by CoreLog.servers.collectAsStateWithLifecycle()
-    var server by remember { mutableStateOf<String?>(null) }
-    if (server != null && server !in servers) server = null
 
     val visible = remember(entries, filter, server) {
         entries.filter { entry ->
@@ -96,7 +92,7 @@ fun LogsScreen(onBack: () -> Unit) {
             TopAppBar(
                 title = {
                     androidx.compose.foundation.layout.Column {
-                        Text(stringResource(R.string.logs))
+                        Text(server ?: stringResource(R.string.logs), maxLines = 1)
                         Text(
                             stringResource(
                                 R.string.log_usage,
@@ -139,35 +135,6 @@ fun LogsScreen(onBack: () -> Unit) {
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            if (servers.size > 1) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                        .padding(horizontal = SybSpacing.screen),
-                    horizontalArrangement = Arrangement.spacedBy(SybSpacing.small),
-                ) {
-                    FilterChip(
-                        selected = server == null,
-                        onClick = { server = null },
-                        label = { Text(stringResource(R.string.filter_all_servers)) },
-                    )
-                    servers.forEach { name ->
-                        FilterChip(
-                            selected = server == name,
-                            onClick = { server = name },
-                            label = {
-                                Text(
-                                    name,
-                                    maxLines = 1,
-                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                )
-                            },
-                        )
-                    }
-                }
-                Spacer(Modifier.height(SybSpacing.small))
-            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

@@ -53,10 +53,16 @@
   what the panel said this time — including that it said nothing.
 
 ### Added — settings
-- **Logs by server.** Every line records which server was connected when it was written, and the
-  logs screen filters by server as well as by level. The log is no longer wiped on each connect,
-  so what one server did is still there after switching to another — the size limit keeps that
-  from growing without end.
+- **Logs by server.** Every line records which server was connected when it was written. Logs
+  open on a page listing what has been written and by whom — each server with its size, its line
+  count and when it last wrote, above a bar showing the whole log against its limit — and picking
+  one opens just that server's lines. The log is no longer wiped on each connect, so what one
+  server did is still there after switching to another; the size limit keeps that from growing
+  without end.
+- Screens no longer reserve a strip at the foot of the list for the navigation bar. The bar is
+  already inset out of the content area, so that strip was empty space below everything.
+- Tapping through the navigation quickly no longer wedges it. Taps arriving mid-transition were
+  queued rather than dropped, and enough of them left the bar unresponsive.
 - **A user and password on the local proxy**, for anyone who would rather not leave an open
   proxy on the device. Both empty means no authentication, as before.
 - **Resolve the server up front**, on by default, now switchable. The address is looked up before

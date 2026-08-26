@@ -314,5 +314,11 @@
         <item quantity="one">%1$d subscription refreshed</item>
         <item quantity="other">%1$d subscriptions refreshed</item>
     </plurals>
+    <string name="logs_by_server">By server</string>
+    <string name="all_logs">All logs</string>
+    <plurals name="log_lines">
+        <item quantity="one">%1$d line</item>
+        <item quantity="other">%1$d lines</item>
+    </plurals>
 </resources>
 

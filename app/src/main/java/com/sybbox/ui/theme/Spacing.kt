@@ -31,5 +31,5 @@ object SybSpacing {
     val xlarge = 24.dp
     val xxlarge = 32.dp
 
-    val listBottom = 96.dp
+    val listBottom = 24.dp
 }

@@ -310,5 +310,13 @@
         <item quantity="many">Обновлено %1$d подписок</item>
         <item quantity="other">Обновлено %1$d подписки</item>
     </plurals>
+    <string name="logs_by_server">По серверам</string>
+    <string name="all_logs">Все логи</string>
+    <plurals name="log_lines">
+        <item quantity="one">%1$d строка</item>
+        <item quantity="few">%1$d строки</item>
+        <item quantity="many">%1$d строк</item>
+        <item quantity="other">%1$d строки</item>
+    </plurals>
 </resources>
 

@@ -14,6 +14,13 @@ data class LogEntry(
     val id: Long = 0,
 )
 
+data class LogSource(
+    val name: String,
+    val lines: Int,
+    val bytes: Long,
+    val lastAt: Long,
+)
+
 object CoreLog {
 
     const val DEFAULT_LIMIT_MB = 10
@@ -50,8 +57,8 @@ object CoreLog {
     @Volatile
     private var server = ""
 
-    private val _servers = MutableStateFlow<List<String>>(emptyList())
-    val servers: StateFlow<List<String>> = _servers.asStateFlow()
+    private val _sources = MutableStateFlow<List<LogSource>>(emptyList())
+    val sources: StateFlow<List<LogSource>> = _sources.asStateFlow()
 
     fun setServer(name: String) {
         synchronized(buffer) { server = name.trim() }
@@ -111,7 +118,18 @@ object CoreLog {
         val snapshot = buffer.toList()
         _entries.value = snapshot
         _used.value = usedBytes
-        _servers.value = snapshot.mapNotNull { it.server.takeIf(String::isNotBlank) }.distinct()
+        _sources.value = snapshot
+            .filter { it.server.isNotBlank() }
+            .groupBy { it.server }
+            .map { (name, rows) ->
+                LogSource(
+                    name = name,
+                    lines = rows.size,
+                    bytes = rows.sumOf { weigh(it) },
+                    lastAt = rows.maxOf { it.timestamp },
+                )
+            }
+            .sortedByDescending { it.lastAt }
     }
 
     private fun weigh(entry: LogEntry): Long = entry.message.length * 2L + ENTRY_OVERHEAD_BYTES

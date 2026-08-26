@@ -48,14 +48,13 @@ class RoutingViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val perApp: StateFlow<PerAppState> = combine(
-        store.perAppProxy, store.includedApps, store.excludedApps,
-    ) { enabled, included, excluded ->
-
-        if (included.isNotEmpty()) {
-            PerAppState(enabled, includeMode = true, selected = included.toSet())
-        } else {
-            PerAppState(enabled, includeMode = false, selected = excluded.toSet())
-        }
+        store.perAppProxy, store.perAppIncludeMode, store.includedApps, store.excludedApps,
+    ) { enabled, includeMode, included, excluded ->
+        PerAppState(
+            enabled = enabled,
+            includeMode = includeMode,
+            selected = (if (includeMode) included else excluded).toSet(),
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PerAppState())
 
     private val _apps = MutableStateFlow<List<InstalledApp>>(emptyList())
@@ -91,12 +90,13 @@ class RoutingViewModel @Inject constructor(
     fun setIncludeMode(include: Boolean) {
         viewModelScope.launch {
             val current = perApp.value.selected.toList()
+            store.setPerAppIncludeMode(include)
             if (include) {
-                store.setExcludedApps(emptyList())
                 store.setIncludedApps(current)
+                store.setExcludedApps(emptyList())
             } else {
-                store.setIncludedApps(emptyList())
                 store.setExcludedApps(current)
+                store.setIncludedApps(emptyList())
             }
         }
     }

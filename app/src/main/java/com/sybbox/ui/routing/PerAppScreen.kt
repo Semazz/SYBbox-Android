@@ -170,8 +170,8 @@ fun PerAppScreen(
                                 )
                                 Text(
                                     if (perApp.enabled) {
-                                        if (perApp.includeMode) stringResource(R.string.mode_include)
-                                        else stringResource(R.string.mode_exclude)
+                                        if (perApp.includeMode) stringResource(R.string.mode_include_hint)
+                                        else stringResource(R.string.mode_exclude_hint)
                                     } else stringResource(R.string.per_app_summary),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,

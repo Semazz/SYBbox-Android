@@ -183,25 +183,25 @@ class ServersViewModel @Inject constructor(
 
     fun refreshSubscription(subscription: Subscription) {
         viewModelScope.launch {
-            val added = refresh(subscription.id, subscription.url)
+            val added = refresh(subscription.id, subscription.url, force = true)
             if (added > 0) emit(UiMessage(R.string.msg_subscription_updated))
         }
     }
 
-    fun refreshAll() {
+    fun refreshAll(force: Boolean = false) {
         viewModelScope.launch {
             subscriptions.value
-                .map { sub -> async { refresh(sub.id, sub.url) } }
+                .map { sub -> async { refresh(sub.id, sub.url, force) } }
                 .awaitAll()
         }
     }
 
-    private suspend fun refresh(subscriptionId: Long, url: String): Int {
+    private suspend fun refresh(subscriptionId: Long, url: String, force: Boolean = false): Int {
 
         if (subscriptionId in _refreshing.value) return 0
         val last = lastRefreshAt[subscriptionId] ?: 0L
         val now = System.currentTimeMillis()
-        if (now - last < REFRESH_COOLDOWN_MS) return 0
+        if (!force && now - last < REFRESH_COOLDOWN_MS) return 0
         lastRefreshAt[subscriptionId] = now
         _refreshing.update { it + subscriptionId }
         try {

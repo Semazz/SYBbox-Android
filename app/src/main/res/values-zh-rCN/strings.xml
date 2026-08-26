@@ -71,8 +71,8 @@
     <string name="per_app_routing">分应用代理</string>
     <string name="per_app_summary">选择哪些应用走隧道</string>
     <string name="apps_selected">已选 %1$d 个</string>
-    <string name="mode_include">仅限选中应用</string>
-    <string name="mode_exclude">除选中外的所有应用</string>
+    <string name="mode_include">仅所选应用</string>
+    <string name="mode_exclude">除所选之外的全部</string>
     <string name="search_apps">搜索应用</string>
     <string name="show_system_apps">显示系统应用</string>
 
@@ -299,4 +299,6 @@
     <plurals name="log_lines">
         <item quantity="other">%1$d 行</item>
     </plurals>
+    <string name="mode_include_hint">只有所选应用经隧道出网，其余直连。</string>
+    <string name="mode_exclude_hint">所选应用直连、绕过隧道，其流量不受保护。</string>
 </resources>

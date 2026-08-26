@@ -340,10 +340,12 @@ object ConfigBuilder {
             addProperty("stack", settings.tunStack.lowercase().ifBlank { "gvisor" })
 
             if (settings.perAppProxy) {
-                if (settings.includedApps.isNotEmpty()) {
-                    add("include_package", jsonArrayOf(settings.includedApps))
-                } else if (settings.excludedApps.isNotEmpty()) {
-                    add("exclude_package", jsonArrayOf(settings.excludedApps))
+                val chosen = if (settings.perAppIncludeMode) settings.includedApps else settings.excludedApps
+                if (chosen.isNotEmpty()) {
+                    add(
+                        if (settings.perAppIncludeMode) "include_package" else "exclude_package",
+                        jsonArrayOf(chosen),
+                    )
                 }
             }
         })

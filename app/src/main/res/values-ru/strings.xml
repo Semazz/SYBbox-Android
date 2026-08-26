@@ -77,7 +77,7 @@
     <string name="per_app_routing">Приложения</string>
     <string name="per_app_summary">Выберите, какие приложения идут через туннель</string>
     <string name="apps_selected">Выбрано: %1$d</string>
-    <string name="mode_include">Только выбранные приложения</string>
+    <string name="mode_include">Только выбранные</string>
     <string name="mode_exclude">Все, кроме выбранных</string>
     <string name="search_apps">Поиск приложений</string>
     <string name="show_system_apps">Показать системные</string>
@@ -318,5 +318,7 @@
         <item quantity="many">%1$d строк</item>
         <item quantity="other">%1$d строки</item>
     </plurals>
+    <string name="mode_include_hint">Через туннель идут только выбранные приложения. Остальные — напрямую.</string>
+    <string name="mode_exclude_hint">Выбранные приложения идут напрямую, мимо туннеля. Их трафик не защищён.</string>
 </resources>
 

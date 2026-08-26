@@ -102,5 +102,6 @@ data class ServerProfile(
 
     val lastLatency: Int = 0,
     val enabled: Boolean = true,
+    val sortOrder: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
 )

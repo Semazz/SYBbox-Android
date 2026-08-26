@@ -7,19 +7,19 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ProfileDao {
 
-    @Query("SELECT * FROM profiles ORDER BY id ASC")
+    @Query("SELECT * FROM profiles ORDER BY sortOrder ASC, id ASC")
     fun getAllProfiles(): Flow<List<ProfileEntity>>
 
-    @Query("SELECT * FROM profiles WHERE subscriptionId = :subId ORDER BY id ASC")
+    @Query("SELECT * FROM profiles WHERE subscriptionId = :subId ORDER BY sortOrder ASC, id ASC")
     fun getProfilesBySubscription(subId: Long): Flow<List<ProfileEntity>>
 
-    @Query("SELECT * FROM profiles WHERE subscriptionId = :subId ORDER BY id ASC")
+    @Query("SELECT * FROM profiles WHERE subscriptionId = :subId ORDER BY sortOrder ASC, id ASC")
     suspend fun getProfilesBySubscriptionOnce(subId: Long): List<ProfileEntity>
 
     @Query("SELECT * FROM profiles WHERE id = :id")
     suspend fun getProfileById(id: Long): ProfileEntity?
 
-    @Query("SELECT * FROM profiles WHERE enabled = 1 ORDER BY id ASC")
+    @Query("SELECT * FROM profiles WHERE enabled = 1 ORDER BY sortOrder ASC, id ASC")
     fun getEnabledProfiles(): Flow<List<ProfileEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

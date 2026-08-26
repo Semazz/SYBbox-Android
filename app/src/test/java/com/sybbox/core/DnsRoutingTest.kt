@@ -225,13 +225,39 @@ class DnsRoutingTest {
     }
 
     @Test
-    fun `per app proxy reaches the config`() {
-        val inbound = JsonParser.parseString(
-            ConfigBuilder.build(
-                vlessReality,
-                SettingsState(perAppProxy = true, includedApps = listOf("org.telegram.messenger")),
+    fun `per app proxy follows the chosen mode, not whichever list has something in it`() {
+        fun inboundFor(settings: SettingsState) = JsonParser.parseString(ConfigBuilder.build(vlessReality, settings))
+            .asJsonObject.getAsJsonArray("inbounds")[0].asJsonObject
+
+        val included = inboundFor(
+            SettingsState(
+                perAppProxy = true,
+                perAppIncludeMode = true,
+                includedApps = listOf("org.telegram.messenger"),
+                excludedApps = listOf("com.android.chrome"),
             ),
+        )
+        assertEquals("org.telegram.messenger", included.getAsJsonArray("include_package").first().asString)
+        assertNull(included.get("exclude_package"))
+
+        val excluded = inboundFor(
+            SettingsState(
+                perAppProxy = true,
+                perAppIncludeMode = false,
+                includedApps = listOf("org.telegram.messenger"),
+                excludedApps = listOf("com.android.chrome"),
+            ),
+        )
+        assertEquals("com.android.chrome", excluded.getAsJsonArray("exclude_package").first().asString)
+        assertNull(excluded.get("include_package"))
+    }
+
+    @Test
+    fun `an empty selection tunnels everything rather than nothing`() {
+        val inbound = JsonParser.parseString(
+            ConfigBuilder.build(vlessReality, SettingsState(perAppProxy = true, perAppIncludeMode = true)),
         ).asJsonObject.getAsJsonArray("inbounds")[0].asJsonObject
-        assertEquals("org.telegram.messenger", inbound.getAsJsonArray("include_package").first().asString)
+        assertNull(inbound.get("include_package"))
+        assertNull(inbound.get("exclude_package"))
     }
 }

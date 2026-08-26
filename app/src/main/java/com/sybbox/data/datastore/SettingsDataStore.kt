@@ -74,6 +74,7 @@ class SettingsDataStore @Inject constructor(
     val bypassChina: Flow<Boolean> = dataStore.data.map { it[KEY_BYPASS_CHINA] ?: false }
     val bypassRussia: Flow<Boolean> = dataStore.data.map { it[KEY_BYPASS_RUSSIA] ?: false }
     val perAppProxy: Flow<Boolean> = dataStore.data.map { it[KEY_PER_APP_PROXY] ?: false }
+    val perAppIncludeMode: Flow<Boolean> = dataStore.data.map { it[KEY_PER_APP_INCLUDE] ?: false }
     val enableMux: Flow<Boolean> = dataStore.data.map { it[KEY_ENABLE_MUX] ?: false }
     val fragmentEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_FRAGMENT_ENABLED] ?: true }
     val fragmentSleep: Flow<String> = dataStore.data.map { it[KEY_FRAGMENT_SLEEP] ?: "10" }
@@ -100,6 +101,7 @@ class SettingsDataStore @Inject constructor(
             bypassChina = p[KEY_BYPASS_CHINA] ?: false,
             bypassLocalNetwork = p[KEY_BYPASS_LOCAL_NETWORK] ?: false,
             perAppProxy = p[KEY_PER_APP_PROXY] ?: false,
+            perAppIncludeMode = p[KEY_PER_APP_INCLUDE] ?: false,
             includedApps = (p[KEY_INCLUDED_APPS] ?: emptySet()).toList(),
             excludedApps = (p[KEY_EXCLUDED_APPS] ?: emptySet()).toList(),
             remoteDns = p[KEY_REMOTE_DNS] ?: "https://1.1.1.1/dns-query",
@@ -235,6 +237,7 @@ class SettingsDataStore @Inject constructor(
     suspend fun setBypassChina(value: Boolean) = dataStore.edit { it[KEY_BYPASS_CHINA] = value }
     suspend fun setBypassRussia(value: Boolean) = dataStore.edit { it[KEY_BYPASS_RUSSIA] = value }
     suspend fun setPerAppProxy(value: Boolean) = dataStore.edit { it[KEY_PER_APP_PROXY] = value }
+    suspend fun setPerAppIncludeMode(value: Boolean) = dataStore.edit { it[KEY_PER_APP_INCLUDE] = value }
     suspend fun setEnableMux(value: Boolean) = dataStore.edit { it[KEY_ENABLE_MUX] = value }
     suspend fun setFragmentEnabled(value: Boolean) = dataStore.edit { it[KEY_FRAGMENT_ENABLED] = value }
     suspend fun setFragmentSleep(value: String) = dataStore.edit { it[KEY_FRAGMENT_SLEEP] = value }
@@ -297,6 +300,7 @@ class SettingsDataStore @Inject constructor(
         private val KEY_BYPASS_CHINA = booleanPreferencesKey("bypass_china")
         private val KEY_BYPASS_RUSSIA = booleanPreferencesKey("bypass_russia")
         private val KEY_PER_APP_PROXY = booleanPreferencesKey("per_app_proxy")
+        private val KEY_PER_APP_INCLUDE = booleanPreferencesKey("per_app_include")
         private val KEY_ENABLE_MUX = booleanPreferencesKey("enable_mux")
         private val KEY_FRAGMENT_ENABLED = booleanPreferencesKey("fragment_enabled")
         private val KEY_FRAGMENT_SLEEP = stringPreferencesKey("fragment_sleep")

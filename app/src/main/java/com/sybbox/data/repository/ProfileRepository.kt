@@ -72,15 +72,15 @@ class ProfileRepository @Inject constructor(
         val toInsert = ArrayList<ServerProfile>()
         val toUpdate = ArrayList<ProfileEntity>()
 
-        for (profile in incoming) {
-            val entity = profile.copy(subscriptionId = subscriptionId).toEntity()
+        for ((position, profile) in incoming.withIndex()) {
+            val entity = profile.copy(subscriptionId = subscriptionId, sortOrder = position).toEntity()
             val match = byKey[mergeKey(entity)]
             if (match != null && keptIds.add(match.id)) {
 
                 toUpdate += entity.copy(id = match.id, createdAt = match.createdAt, lastLatency = match.lastLatency)
                 resultIds += match.id
             } else {
-                toInsert += profile
+                toInsert += profile.copy(sortOrder = position)
             }
         }
         val insertedIds = if (toInsert.isEmpty()) emptyList() else insertProfiles(toInsert)
@@ -140,7 +140,7 @@ private fun ProfileEntity.toDomain() = ServerProfile(
     recordFragment = recordFragment, echEnabled = echEnabled,
     tlsSpoof = tlsSpoof, tlsSpoofMethod = tlsSpoofMethod,
     disableSni = disableSni, lastLatency = lastLatency,
-    enabled = enabled, createdAt = createdAt,
+    enabled = enabled, sortOrder = sortOrder, createdAt = createdAt,
 )
 
 private fun ServerProfile.toEntity() = ProfileEntity(
@@ -173,5 +173,5 @@ private fun ServerProfile.toEntity() = ProfileEntity(
     bypassPreset = bypassPreset.name, recordFragment = recordFragment,
     echEnabled = echEnabled, tlsSpoof = tlsSpoof,
     tlsSpoofMethod = tlsSpoofMethod, disableSni = disableSni,
-    lastLatency = lastLatency, enabled = enabled, createdAt = createdAt,
+    lastLatency = lastLatency, enabled = enabled, sortOrder = sortOrder, createdAt = createdAt,
 )

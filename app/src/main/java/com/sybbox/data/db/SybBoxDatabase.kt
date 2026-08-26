@@ -12,7 +12,7 @@ import com.sybbox.data.db.entity.SubscriptionEntity
         SubscriptionEntity::class,
         RoutingRuleEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 abstract class SybBoxDatabase : RoomDatabase() {

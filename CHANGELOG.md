@@ -25,7 +25,25 @@
   per-install id into every request whether or not you wanted one; identity now lives in the
   headers, behind the switch.
 
+### Fixed — per-app routing
+- The chosen mode is remembered rather than guessed. It was inferred from whichever of the two
+  lists held something, so picking “only the selected” before selecting anything flipped straight
+  back, and clearing the last app in that mode silently flipped it too. The config follows the
+  mode now, not whichever list happens to be filled.
+- An empty selection tunnels everything rather than nothing.
+- Both modes say what they do: only the selected go through the tunnel and the rest go straight
+  out, or the selected go straight out past the tunnel and their traffic is not covered.
+
 ### Fixed — subscriptions
+- **Refresh** refreshes. The button shared a thirty-second cooldown meant for automatic updates,
+  so pressing it soon after one did nothing at all and looked broken. Asking for it by hand
+  always refreshes; the cooldown still guards the automatic path.
+- Servers keep the order the subscription lists them in. They were ordered by row id, so a server
+  deleted and brought back by a refresh reappeared at the bottom instead of its own place. The
+  order the subscription gave is stored with each server, and the database carries a migration
+  so nothing already added is lost.
+
+
 - A subscription's own update interval is honoured. Panels send it as `profile-update-interval`;
   the app read the traffic counters and the title from the same response and threw this one away,
   so a subscription that asked to be refreshed every twelve hours was refreshed on whatever the

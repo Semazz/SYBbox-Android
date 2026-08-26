@@ -2,6 +2,8 @@ package com.sybbox.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.sybbox.data.db.ProfileDao
 import com.sybbox.data.db.RoutingRuleDao
 import com.sybbox.data.db.SubscriptionDao
@@ -24,7 +26,7 @@ object DatabaseModule {
             context,
             SybBoxDatabase::class.java,
             "sybbox.db"
-        ).fallbackToDestructiveMigration().build()
+        ).addMigrations(MIGRATION_4_5).fallbackToDestructiveMigration().build()
     }
 
     @Provides
@@ -35,4 +37,10 @@ object DatabaseModule {
 
     @Provides
     fun provideRoutingRuleDao(db: SybBoxDatabase): RoutingRuleDao = db.routingRuleDao()
+}
+
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE profiles ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 0")
+    }
 }

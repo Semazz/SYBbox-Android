@@ -124,6 +124,7 @@ class SybBoxVpnService : VpnService() {
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("bypass_china")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("bypass_russia")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("per_app_proxy")],
+        prefs[androidx.datastore.preferences.core.booleanPreferencesKey("per_app_include")],
         prefs[androidx.datastore.preferences.core.stringSetPreferencesKey("included_apps")],
         prefs[androidx.datastore.preferences.core.stringSetPreferencesKey("excluded_apps")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("enable_mux")],

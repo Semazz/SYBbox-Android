@@ -78,8 +78,8 @@
     <string name="per_app_routing">Enrutamiento por app</string>
     <string name="per_app_summary">Elige qué apps usan el túnel</string>
     <string name="apps_selected">%1$d seleccionadas</string>
-    <string name="mode_include">Solo apps seleccionadas</string>
-    <string name="mode_exclude">Todas excepto las seleccionadas</string>
+    <string name="mode_include">Solo las seleccionadas</string>
+    <string name="mode_exclude">Todas menos las seleccionadas</string>
     <string name="search_apps">Buscar apps</string>
     <string name="show_system_apps">Mostrar apps del sistema</string>
 
@@ -318,5 +318,7 @@
         <item quantity="one">%1$d linea</item>
         <item quantity="other">%1$d lineas</item>
     </plurals>
+    <string name="mode_include_hint">Solo las apps seleccionadas pasan por el tunel. El resto sale directo.</string>
+    <string name="mode_exclude_hint">Las apps seleccionadas salen directo, fuera del tunel. Su trafico queda sin proteger.</string>
 </resources>
 

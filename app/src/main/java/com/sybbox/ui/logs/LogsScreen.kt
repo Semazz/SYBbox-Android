@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sybbox.R
 import com.sybbox.core.CoreLog
+import com.sybbox.service.SybBoxVpnService
 import com.sybbox.core.LogEntry
 import com.sybbox.core.LogLevel
 import com.sybbox.ui.components.EmptyState
@@ -68,6 +69,8 @@ import java.util.Locale
 @Composable
 fun LogsScreen(onBack: () -> Unit) {
     val entries by CoreLog.entries.collectAsStateWithLifecycle()
+    val used by CoreLog.used.collectAsStateWithLifecycle()
+    val limit by CoreLog.limit.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var filter by remember { mutableStateOf<LogLevel?>(null) }
     val listState = rememberLazyListState()
@@ -85,7 +88,20 @@ fun LogsScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.logs)) },
+                title = {
+                    androidx.compose.foundation.layout.Column {
+                        Text(stringResource(R.string.logs))
+                        Text(
+                            stringResource(
+                                R.string.log_usage,
+                                SybBoxVpnService.formatBytes(used),
+                                SybBoxVpnService.formatBytes(limit),
+                            ),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.cd_back))

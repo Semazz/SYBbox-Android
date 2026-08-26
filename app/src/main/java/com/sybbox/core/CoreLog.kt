@@ -16,12 +16,36 @@ data class LogEntry(
 
 object CoreLog {
 
-    private const val CAPACITY = 300
+    const val DEFAULT_LIMIT_MB = 10
 
-    private val buffer = ArrayDeque<LogEntry>(CAPACITY)
+    private const val MAX_ENTRIES = 20_000
+    private const val ENTRY_OVERHEAD_BYTES = 48L
+
+    private val buffer = ArrayDeque<LogEntry>()
     private var nextId = 0L
+    private var usedBytes = 0L
+
+    @Volatile
+    private var limitBytes = DEFAULT_LIMIT_MB * BYTES_PER_MB
+
     private val _entries = MutableStateFlow<List<LogEntry>>(emptyList())
     val entries: StateFlow<List<LogEntry>> = _entries.asStateFlow()
+
+    private val _used = MutableStateFlow(0L)
+    val used: StateFlow<Long> = _used.asStateFlow()
+
+    private val _limit = MutableStateFlow(limitBytes)
+    val limit: StateFlow<Long> = _limit.asStateFlow()
+
+    fun setLimit(megabytes: Int) {
+        val bytes = megabytes.coerceIn(1, 100) * BYTES_PER_MB
+        synchronized(buffer) {
+            limitBytes = bytes
+            _limit.value = bytes
+            trim()
+            publish()
+        }
+    }
 
     private val explained = HashSet<String>()
 
@@ -50,16 +74,35 @@ object CoreLog {
         synchronized(buffer) {
             buffer.clear()
             explained.clear()
-            _entries.value = emptyList()
+            usedBytes = 0
+            publish()
         }
     }
 
     private fun append(level: LogLevel, message: String) {
         if (message.isBlank()) return
         synchronized(buffer) {
-            while (buffer.size >= CAPACITY) buffer.removeFirst()
-            buffer.addLast(LogEntry(level, message.trimEnd(), id = nextId++))
-            _entries.value = buffer.toList()
+            val entry = LogEntry(level, message.trimEnd(), id = nextId++)
+            buffer.addLast(entry)
+            usedBytes += weigh(entry)
+            trim()
+            publish()
         }
     }
+
+    private fun trim() {
+        while (buffer.isNotEmpty() && (usedBytes > limitBytes || buffer.size > MAX_ENTRIES)) {
+            usedBytes -= weigh(buffer.removeFirst())
+        }
+        if (buffer.isEmpty()) usedBytes = 0
+    }
+
+    private fun publish() {
+        _entries.value = buffer.toList()
+        _used.value = usedBytes
+    }
+
+    private fun weigh(entry: LogEntry): Long = entry.message.length * 2L + ENTRY_OVERHEAD_BYTES
+
+    private const val BYTES_PER_MB = 1024L * 1024L
 }

@@ -2,6 +2,7 @@ package com.sybbox.ui.settings
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,9 +26,11 @@ import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Layers
+import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.MergeType
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.RestartAlt
@@ -70,6 +73,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sybbox.BuildConfig
 import com.sybbox.R
+import com.sybbox.core.Core
+import com.sybbox.data.remote.ReleaseCheck
 import com.sybbox.ui.components.SettingsAction
 import com.sybbox.ui.components.SettingsChoice
 import com.sybbox.ui.components.SettingsDivider
@@ -141,6 +146,7 @@ fun SettingsSectionScreen(
                             SettingsSection.STARTUP -> StartupSettings(state, viewModel)
                             SettingsSection.DIAGNOSTICS -> DiagnosticsSettings(state, viewModel, onOpenLogs)
                             SettingsSection.MAINTENANCE -> MaintenanceSettings(state, viewModel)
+                            SettingsSection.ABOUT -> AboutSettings(viewModel)
                         }
                     }
                 }
@@ -609,6 +615,16 @@ private fun DiagnosticsSettings(
     )
     SettingsDivider()
     SettingsChoice(
+        title = stringResource(R.string.log_limit),
+        summary = stringResource(R.string.log_limit_summary),
+        options = listOf(1, 5, 10, 25),
+        selected = state.logLimitMb,
+        onSelect = viewModel::setLogLimitMb,
+        label = { stringResource(R.string.megabytes_value, it) },
+        icon = Icons.Rounded.Storage,
+    )
+    SettingsDivider()
+    SettingsChoice(
         title = stringResource(R.string.log_level),
         options = listOf("error", "warn", "info", "debug", "trace"),
         selected = state.logLevel.lowercase(),
@@ -706,4 +722,62 @@ private fun MaintenanceSettings(state: SettingsState, viewModel: SettingsViewMod
         )
         else -> {}
     }
+}
+
+@Composable
+private fun AboutSettings(viewModel: SettingsViewModel) {
+    val context = LocalContext.current
+    val hwid by viewModel.hwid.collectAsStateWithLifecycle()
+
+    SettingsAction(
+        title = stringResource(R.string.app_version),
+        value = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+        icon = Icons.Rounded.Bolt,
+        onClick = { copy(context, "version", BuildConfig.VERSION_NAME) },
+    )
+    SettingsDivider()
+    SettingsAction(
+        title = stringResource(R.string.core_version),
+        value = "sing-box ${runCatching { Core.version() }.getOrDefault("—")}",
+        icon = Icons.Rounded.Layers,
+        onClick = { copy(context, "core", runCatching { Core.version() }.getOrDefault("")) },
+    )
+    SettingsDivider()
+    SettingsAction(
+        title = stringResource(R.string.android_version),
+        value = "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})",
+        icon = Icons.Rounded.PhoneAndroid,
+        onClick = {},
+    )
+    SettingsDivider()
+    SettingsAction(
+        title = stringResource(R.string.device_model),
+        value = Build.MODEL,
+        icon = Icons.Rounded.PhoneAndroid,
+        onClick = { copy(context, "model", Build.MODEL) },
+    )
+    SettingsDivider()
+    SettingsAction(
+        title = stringResource(R.string.hwid),
+        value = hwid,
+        icon = Icons.Rounded.Fingerprint,
+        onClick = { copy(context, "hwid", hwid) },
+    )
+    SettingsDivider()
+    SettingsAction(
+        title = stringResource(R.string.source_code),
+        value = "GitHub",
+        icon = Icons.Rounded.Link,
+        onClick = {
+            runCatching {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ReleaseCheck.RELEASES_PAGE)))
+            }
+        },
+    )
+}
+
+private fun copy(context: android.content.Context, label: String, value: String) {
+    if (value.isBlank()) return
+    val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
+    clipboard?.setPrimaryClip(android.content.ClipData.newPlainText(label, value))
 }

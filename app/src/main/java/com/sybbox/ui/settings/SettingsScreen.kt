@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,21 +16,33 @@ import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Article
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Dns
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Router
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -41,6 +54,7 @@ import com.sybbox.R
 import com.sybbox.core.Core
 import com.sybbox.ui.components.SettingsAction
 import com.sybbox.ui.components.SettingsGroup
+import com.sybbox.ui.components.PillShape
 import com.sybbox.ui.theme.SybSpacing
 
 enum class SettingsSection(val titleRes: Int, val icon: ImageVector) {
@@ -55,6 +69,7 @@ enum class SettingsSection(val titleRes: Int, val icon: ImageVector) {
     STARTUP(R.string.group_startup, Icons.Rounded.PowerSettingsNew),
     DIAGNOSTICS(R.string.group_diagnostics, Icons.Rounded.BugReport),
     MAINTENANCE(R.string.group_maintenance, Icons.Rounded.RestartAlt),
+    ABOUT(R.string.group_about, Icons.Rounded.Info),
 }
 
 @Composable
@@ -65,6 +80,24 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var query by remember { mutableStateOf("") }
+
+    val results = remember(query) {
+        val needle = query.trim()
+        if (needle.isBlank()) {
+            emptyList()
+        } else {
+            settingsIndex.filter { entry ->
+                context.getString(entry.titleRes).contains(needle, ignoreCase = true) ||
+                    entry.summaryRes?.let {
+                        context.getString(it).contains(needle, ignoreCase = true)
+                    } == true ||
+                    context.getString(entry.section.titleRes).contains(needle, ignoreCase = true)
+            }
+        }
+    }
+    val searching = query.isNotBlank()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -84,6 +117,46 @@ fun SettingsScreen(
                     .statusBarsPadding()
                     .padding(top = SybSpacing.small, bottom = SybSpacing.medium),
             )
+        }
+
+        item {
+            SearchField(
+                query = query,
+                onQueryChange = { query = it },
+                modifier = Modifier.padding(bottom = SybSpacing.small),
+            )
+        }
+
+        if (searching) {
+            if (results.isEmpty()) {
+                item {
+                    Text(
+                        stringResource(R.string.nothing_found),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = SybSpacing.xlarge),
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            } else {
+                item {
+                    SettingsGroup(stringResource(R.string.settings_search)) {
+                        results.forEachIndexed { index, entry ->
+                            if (index > 0) SettingsDividerRow()
+                            SettingsAction(
+                                title = stringResource(entry.titleRes),
+                                summary = stringResource(entry.section.titleRes),
+                                icon = entry.section.icon,
+                                onClick = { onOpenSection(entry.section) },
+                            )
+                        }
+                    }
+                }
+            }
+            item { Spacer(Modifier.height(SybSpacing.xlarge)) }
+            return@LazyColumn
         }
 
         item {
@@ -141,6 +214,8 @@ fun SettingsScreen(
                 )
                 SettingsDividerRow()
                 SectionRow(SettingsSection.MAINTENANCE, onOpenSection)
+                SettingsDividerRow()
+                SectionRow(SettingsSection.ABOUT, onOpenSection)
             }
         }
 
@@ -186,4 +261,49 @@ private fun SectionRow(section: SettingsSection, onOpen: (SettingsSection) -> Un
 @Composable
 private fun SettingsDividerRow() {
     com.sybbox.ui.components.SettingsDivider()
+}
+
+@Composable
+private fun SearchField(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
+    TextField(
+        value = query,
+        onValueChange = onQueryChange,
+        singleLine = true,
+        placeholder = {
+            Text(
+                stringResource(R.string.settings_search),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        },
+        leadingIcon = {
+            Icon(
+                Icons.Rounded.Search,
+                null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp),
+            )
+        },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(
+                        Icons.Rounded.Clear,
+                        stringResource(R.string.cancel),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+        },
+        shape = PillShape,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+        ),
+        modifier = modifier.fillMaxWidth().height(52.dp),
+    )
 }

@@ -720,7 +720,8 @@ private fun SubscriptionHeader(
                         detail,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
+                        lineHeight = 15.sp,
+                        maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }

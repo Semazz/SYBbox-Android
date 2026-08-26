@@ -286,5 +286,15 @@
     <string name="sub_interval_summary">Используется только там, где подписка не задаёт свой интервал</string>
     <string name="sub_auto_update_summary">Не распространяется на подписки со своим интервалом — они обновляются по нему всегда</string>
     <string name="updates_every">обновляется каждые %1$d ч</string>
+    <string name="app_version">Версия приложения</string>
+    <string name="android_version">Android</string>
+    <string name="device_model">Устройство</string>
+    <string name="source_code">Исходный код</string>
+    <string name="log_limit">Ограничение журнала</string>
+    <string name="log_limit_summary">Когда журнал перерастаёт этот размер, старые строки отбрасываются</string>
+    <string name="megabytes_value">%1$d МБ</string>
+    <string name="log_usage">%1$s из %2$s</string>
+    <string name="settings_search">Поиск по настройкам</string>
+    <string name="nothing_found">Ничего не найдено</string>
 </resources>
 

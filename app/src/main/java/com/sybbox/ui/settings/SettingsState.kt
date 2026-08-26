@@ -49,6 +49,7 @@ data class SettingsState(
     val probeUrl: String = "https://www.gstatic.com/generate_204",
     val pingTimeout: Int = 3,
     val autoUpdateCheck: Boolean = true,
+    val logLimitMb: Int = 10,
 
     val subAutoUpdate: Boolean = true,
     val defaultSubInterval: Int = 12,

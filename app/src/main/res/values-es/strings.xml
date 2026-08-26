@@ -290,5 +290,15 @@
     <string name="sub_interval_summary">Se usa solo cuando la suscripcion no indica su propio intervalo</string>
     <string name="sub_auto_update_summary">No afecta a las suscripciones con su propio intervalo, que siempre se actualizan por el</string>
     <string name="updates_every">se actualiza cada %1$d h</string>
+    <string name="app_version">Version de la app</string>
+    <string name="android_version">Android</string>
+    <string name="device_model">Dispositivo</string>
+    <string name="source_code">Codigo fuente</string>
+    <string name="log_limit">Limite del registro</string>
+    <string name="log_limit_summary">Al superarlo, las lineas mas antiguas se descartan</string>
+    <string name="megabytes_value">%1$d MB</string>
+    <string name="log_usage">%1$s de %2$s</string>
+    <string name="settings_search">Buscar ajustes</string>
+    <string name="nothing_found">Sin resultados</string>
 </resources>
 

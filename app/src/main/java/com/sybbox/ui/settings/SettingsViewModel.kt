@@ -93,7 +93,10 @@ class SettingsViewModel @Inject constructor(
             StartupSlice(update, connect, probeUrl, pingTimeout)
         },
         store.autoUpdateCheck,
-    ) { slice, autoUpdateCheck -> slice.copy(autoUpdateCheck = autoUpdateCheck) }
+        store.logLimitMb,
+    ) { slice, autoUpdateCheck, logLimitMb ->
+        slice.copy(autoUpdateCheck = autoUpdateCheck, logLimitMb = logLimitMb)
+    }
 
     private val advanced = combine(
         store.tcpFastOpen, store.tunnelCheck, store.muxProtocol, store.muxMaxStreams, store.muxPadding,
@@ -160,6 +163,7 @@ class SettingsViewModel @Inject constructor(
             probeUrl = startupSlice.probeUrl,
             pingTimeout = startupSlice.pingTimeout,
             autoUpdateCheck = startupSlice.autoUpdateCheck,
+            logLimitMb = startupSlice.logLimitMb,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsState())
 
@@ -238,6 +242,11 @@ class SettingsViewModel @Inject constructor(
     fun setProbeUrl(value: String) = edit { setProbeUrl(value) }
     fun setPingTimeout(value: Int) = edit { setPingTimeout(value) }
     fun setAutoUpdateCheck(value: Boolean) = edit { setAutoUpdateCheck(value) }
+
+    fun setLogLimitMb(value: Int) {
+        edit { setLogLimitMb(value) }
+        com.sybbox.core.CoreLog.setLimit(value)
+    }
     fun resetToDefaults() = edit { resetToDefaults() }
 
     fun setSubAutoUpdate(value: Boolean) {
@@ -325,6 +334,7 @@ class SettingsViewModel @Inject constructor(
         val probeUrl: String,
         val pingTimeout: Int,
         val autoUpdateCheck: Boolean = true,
+        val logLimitMb: Int = 10,
     )
 
     private data class SubscriptionSlice(

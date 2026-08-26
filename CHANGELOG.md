@@ -41,7 +41,8 @@
   one arrives, then the filename the response offers — and a name you typed yourself is never
   overwritten.
 - A subscription's card says how often it refreshes, beside the traffic and the expiry date,
-  whenever it stated an interval of its own.
+  whenever it stated an interval of its own. The line wraps to three lines rather than one — with
+  traffic, an expiry date and an interval on it, everything past the traffic was being cut off.
 - A subscription that states its own interval refreshes on it no matter what. The switch in
   Settings governs only the subscriptions that state nothing; it used to cancel the background
   job outright, which silenced every subscription including the ones that had asked to be kept
@@ -50,6 +51,16 @@
   life at six hours rather than empty, so every subscription looked as though it had asked for
   six and the setting never applied to anything. It starts empty now, and each refresh records
   what the panel said this time — including that it said nothing.
+
+### Added — settings
+- **Search.** A field at the top of settings finds a setting by its name, its description or the
+  page it lives on, and the result takes you there. The index is generated from the pages
+  themselves, so it cannot drift out of step with them.
+- **About.** App version and build, sing-box version, Android version, device model and the
+  device id, each copied on tap, with a link to the source.
+- **Log size limit**, 10 MB by default. The log is held in memory and was bounded only by a
+  count of lines, which says nothing about how much it holds; it is bounded by size now, oldest
+  lines first, and the logs screen shows what it is using against the limit.
 
 ### Changed — settings
 - Settings open as a list of pages rather than one long scroll. The root names four areas —

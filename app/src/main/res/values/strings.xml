@@ -292,5 +292,15 @@
     <string name="sub_interval_summary">Used only where a subscription does not state its own interval</string>
     <string name="sub_auto_update_summary">Does not apply to subscriptions that state their own interval, which always refresh on it</string>
     <string name="updates_every">refreshes every %1$d h</string>
+    <string name="app_version">App version</string>
+    <string name="android_version">Android</string>
+    <string name="device_model">Device</string>
+    <string name="source_code">Source code</string>
+    <string name="log_limit">Log size limit</string>
+    <string name="log_limit_summary">Older lines are dropped once the log passes this</string>
+    <string name="megabytes_value">%1$d MB</string>
+    <string name="log_usage">%1$s of %2$s</string>
+    <string name="settings_search">Search settings</string>
+    <string name="nothing_found">Nothing found</string>
 </resources>
 

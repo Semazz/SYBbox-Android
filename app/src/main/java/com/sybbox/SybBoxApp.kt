@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.sybbox.core.CoreLog
 import com.sybbox.data.work.SubscriptionUpdateWorker
 import com.sybbox.service.SybBoxVpnService
 import com.sybbox.service.SybBoxWidget
@@ -16,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -25,6 +27,8 @@ class SybBoxApp : Application(), Configuration.Provider {
 
     @Inject lateinit var workerFactory: HiltWorkerFactory
 
+    @Inject lateinit var settingsDataStore: com.sybbox.data.datastore.SettingsDataStore
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 
@@ -33,6 +37,13 @@ class SybBoxApp : Application(), Configuration.Provider {
         createNotificationChannels()
         keepWidgetsCurrent()
         SubscriptionUpdateWorker.schedule(this)
+        applyLogLimit()
+    }
+
+    private fun applyLogLimit() {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            CoreLog.setLimit(settingsDataStore.logLimitMb.first())
+        }
     }
 
     private fun keepWidgetsCurrent() {

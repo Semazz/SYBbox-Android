@@ -49,6 +49,7 @@ class SettingsDataStore @Inject constructor(
     val probeUrl: Flow<String> = dataStore.data.map { it[KEY_PROBE_URL] ?: DEFAULT_PROBE_URL }
     val pingTimeout: Flow<Int> = dataStore.data.map { it[KEY_PING_TIMEOUT] ?: 3 }
     val autoUpdateCheck: Flow<Boolean> = dataStore.data.map { it[KEY_AUTO_UPDATE_CHECK] ?: true }
+    val logLimitMb: Flow<Int> = dataStore.data.map { it[KEY_LOG_LIMIT_MB] ?: 10 }
     val knownRelease: Flow<String> = dataStore.data.map { it[KEY_KNOWN_RELEASE] ?: "" }
     val knownReleasePage: Flow<String> = dataStore.data.map { it[KEY_KNOWN_RELEASE_PAGE] ?: "" }
     val dismissedRelease: Flow<String> = dataStore.data.map { it[KEY_DISMISSED_RELEASE] ?: "" }
@@ -122,6 +123,7 @@ class SettingsDataStore @Inject constructor(
             probeUrl = p[KEY_PROBE_URL] ?: DEFAULT_PROBE_URL,
             pingTimeout = p[KEY_PING_TIMEOUT] ?: 3,
             autoUpdateCheck = p[KEY_AUTO_UPDATE_CHECK] ?: true,
+            logLimitMb = p[KEY_LOG_LIMIT_MB] ?: 10,
             subAutoUpdate = p[KEY_SUB_AUTO_UPDATE] ?: true,
             defaultSubInterval = p[KEY_DEFAULT_SUB_INTERVAL] ?: 12,
             autoFailover = p[KEY_AUTO_FAILOVER] ?: false,
@@ -181,6 +183,7 @@ class SettingsDataStore @Inject constructor(
     suspend fun setProbeUrl(value: String) = dataStore.edit { it[KEY_PROBE_URL] = value }
     suspend fun setPingTimeout(value: Int) = dataStore.edit { it[KEY_PING_TIMEOUT] = value }
     suspend fun setAutoUpdateCheck(value: Boolean) = dataStore.edit { it[KEY_AUTO_UPDATE_CHECK] = value }
+    suspend fun setLogLimitMb(value: Int) = dataStore.edit { it[KEY_LOG_LIMIT_MB] = value }
     suspend fun setDismissedRelease(value: String) = dataStore.edit { it[KEY_DISMISSED_RELEASE] = value }
 
     suspend fun rememberRelease(version: String, page: String) = dataStore.edit {
@@ -259,6 +262,7 @@ class SettingsDataStore @Inject constructor(
         private val KEY_PROBE_URL = stringPreferencesKey("probe_url")
         private val KEY_PING_TIMEOUT = intPreferencesKey("ping_timeout")
         private val KEY_AUTO_UPDATE_CHECK = booleanPreferencesKey("auto_update_check")
+        private val KEY_LOG_LIMIT_MB = intPreferencesKey("log_limit_mb")
         private val KEY_KNOWN_RELEASE = stringPreferencesKey("known_release")
         private val KEY_KNOWN_RELEASE_PAGE = stringPreferencesKey("known_release_page")
         private val KEY_DISMISSED_RELEASE = stringPreferencesKey("dismissed_release")

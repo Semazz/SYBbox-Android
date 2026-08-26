@@ -25,6 +25,12 @@
   per-install id into every request whether or not you wanted one; identity now lives in the
   headers, behind the switch.
 
+### Changed — latency
+- Latency cannot be measured for ten seconds after a connect is asked for. Measuring reaches the
+  network on its own while the tunnel is being built, and the two together were producing the
+  wrong server; keeping them apart removes the interaction. Asking for it during those seconds
+  says so rather than doing nothing.
+
 ### Fixed — switching servers
 - Picking a server while the tunnel is up stores the choice before it asks for the switch, so
   the two can never disagree about which server was meant. Every other way in — the tile, the

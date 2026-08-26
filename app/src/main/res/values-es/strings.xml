@@ -323,5 +323,6 @@
     <string name="widget_square_description">El boton con el servidor actual.</string>
     <string name="widget_panel_description">Servidor, cuota, velocidad y tiempo, con un boton.</string>
     <string name="no_quota">Sin limite</string>
+    <string name="msg_ping_while_connecting">Espere a que el tunel se estabilice antes de medir</string>
 </resources>
 

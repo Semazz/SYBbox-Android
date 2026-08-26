@@ -323,5 +323,6 @@
     <string name="widget_square_description">Кнопка и сервер, на котором вы сейчас.</string>
     <string name="widget_panel_description">Сервер, остаток по подписке, скорость и время соединения с кнопкой.</string>
     <string name="no_quota">Без лимита</string>
+    <string name="msg_ping_while_connecting">Дождитесь, пока туннель поднимется, потом меряйте пинг</string>
 </resources>
 

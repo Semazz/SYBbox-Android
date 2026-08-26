@@ -325,5 +325,6 @@
     <string name="widget_square_description">The button with the server it is on.</string>
     <string name="widget_panel_description">Server, subscription quota, speed and uptime, with a button.</string>
     <string name="no_quota">No quota</string>
+    <string name="msg_ping_while_connecting">Wait for the tunnel to settle before testing latency</string>
 </resources>
 

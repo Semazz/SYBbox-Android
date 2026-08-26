@@ -609,6 +609,7 @@ class SybBoxVpnService : VpnService() {
         const val DEFAULT_TEST_URL = "https://www.gstatic.com/generate_204"
 
         private const val FAILURE_LINGER_MILLIS = 6000L
+        private const val CONNECT_SETTLE_MILLIS = 10_000L
         private const val RESOLVER_CHECK_STEPS = 20
         private const val RESOLVER_CHECK_STEP_MILLIS = 100L
         private val PROBE_URLS = listOf(
@@ -635,7 +636,14 @@ class SybBoxVpnService : VpnService() {
 
         suspend fun activeLatency(): Int = liveInstance?.urlTest() ?: -1
 
+        @Volatile
+        private var connectRequestedAt = 0L
+
+        fun settlingAfterConnect(): Boolean =
+            System.currentTimeMillis() - connectRequestedAt < CONNECT_SETTLE_MILLIS
+
         private fun startAction(context: Context, profileId: Long, forceRestart: Boolean) {
+            connectRequestedAt = System.currentTimeMillis()
             val intent = Intent(context, SybBoxVpnService::class.java)
                 .setAction(ACTION_CONNECT)
                 .putExtra(EXTRA_PROFILE_ID, profileId)

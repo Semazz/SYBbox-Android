@@ -92,7 +92,10 @@ class ProfileRepository @Inject constructor(
         return resultIds
     }
 
-    private fun mergeKey(entity: ProfileEntity) = "${entity.protocol}|${entity.address}|${entity.port}"
+    private fun mergeKey(entity: ProfileEntity) = listOf(
+        entity.protocol, entity.address, entity.port.toString(),
+        entity.transport, entity.security, entity.name,
+    ).joinToString("|")
 
     suspend fun updateLatency(id: Long, latency: Int) {
         profileDao.updateLatency(id, latency)

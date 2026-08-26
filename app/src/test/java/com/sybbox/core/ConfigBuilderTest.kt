@@ -8,6 +8,7 @@ import com.sybbox.domain.model.RoutingRule
 import com.sybbox.domain.model.RoutingRuleType
 import com.sybbox.domain.model.SecurityType
 import com.sybbox.domain.model.ServerProfile
+import com.sybbox.domain.model.identityKey
 import com.sybbox.domain.model.TransportType
 import com.sybbox.ui.settings.SettingsState
 import org.junit.Assert.assertEquals
@@ -387,6 +388,16 @@ class ConfigBuilderTest {
             .getAsJsonArray("inbounds").map { it.asJsonObject }
             .first { it.get("tag").asString == ConfigBuilder.TAG_LOCAL }
         assertEquals("0.0.0.0", lan.get("listen").asString)
+    }
+
+    @Test
+    fun `servers on one host and port are told apart by their transport`() {
+        val tcp = realityVless
+        val xhttp = realityVless.copy(name = "xhttp", transport = TransportType.XHTTP)
+        val grpc = realityVless.copy(name = "grpc", transport = TransportType.GRPC)
+
+        val keys = listOf(tcp, xhttp, grpc).map { it.identityKey() }
+        assertEquals("each transport is its own server", keys.size, keys.toSet().size)
     }
 
     private fun parse(json: String): JsonObject = JsonParser.parseString(json).asJsonObject

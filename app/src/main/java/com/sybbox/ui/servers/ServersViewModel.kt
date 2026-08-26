@@ -13,6 +13,7 @@ import com.sybbox.domain.model.ConnectionState
 import com.sybbox.domain.model.ProtocolType
 import com.sybbox.domain.model.SecurityType
 import com.sybbox.domain.model.ServerProfile
+import com.sybbox.domain.model.identityKey
 import com.sybbox.domain.model.SubType
 import com.sybbox.domain.model.Subscription
 import com.sybbox.domain.model.TransportType
@@ -120,8 +121,8 @@ class ServersViewModel @Inject constructor(
                 val wg = WireGuardParser.parse(trimmed)
                 if (wg != null) {
                     val existing = profileRepository.getAllProfilesOnce().filter { it.subscriptionId == 0L }
-                    val key = "${wg.protocol}|${wg.address}|${wg.port}"
-                    existing.filter { "${it.protocol}|${it.address}|${it.port}" == key }
+                    val key = wg.identityKey()
+                    existing.filter { it.identityKey() == key }
                         .forEach { profileRepository.deleteProfile(it) }
                     profileRepository.insertProfiles(listOf(wg))
                     emit(UiMessage(R.string.msg_server_added, listOf(wg.displayName())))
@@ -132,8 +133,8 @@ class ServersViewModel @Inject constructor(
             if (direct.isNotEmpty()) {
                 val existing = profileRepository.getAllProfilesOnce().filter { it.subscriptionId == 0L }
                 for (newProfile in direct) {
-                    val key = "${newProfile.protocol}|${newProfile.address}|${newProfile.port}"
-                    existing.filter { "${it.protocol}|${it.address}|${it.port}" == key }
+                    val key = newProfile.identityKey()
+                    existing.filter { it.identityKey() == key }
                         .forEach { profileRepository.deleteProfile(it) }
                 }
                 profileRepository.insertProfiles(direct)
@@ -268,10 +269,10 @@ class ServersViewModel @Inject constructor(
             if (previousSelected == null || previousSelected.subscriptionId != subscriptionId) {
                 return ids.size
             }
-            val key = "${previousSelected.protocol}|${previousSelected.address}|${previousSelected.port}"
+            val key = previousSelected.identityKey()
             ids.forEach { profileId ->
                 val fresh = profileRepository.getProfileById(profileId)
-                if (fresh != null && "${fresh.protocol}|${fresh.address}|${fresh.port}" == key) {
+                if (fresh != null && fresh.identityKey() == key) {
                     settingsDataStore.setLastProfileId(profileId)
                     return ids.size
                 }

@@ -1,5 +1,9 @@
 package com.sybbox.domain.model
 
+fun ServerProfile.identityKey(): String =
+    listOf(protocol.name, address, port.toString(), transport.name, security.name, name)
+        .joinToString("|")
+
 enum class ProtocolType {
     VLESS, VMESS, TROJAN, SHADOWSOCKS, HYSTERIA2, TUIC, WIREGUARD, ANYTLS, SHADOWTLS, SSH, NAIVE, MIERU
 }

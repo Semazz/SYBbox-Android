@@ -26,6 +26,11 @@
   headers, behind the switch.
 
 ### Fixed — switching servers
+- Servers sharing a host and a port are told apart. They were identified by protocol, address and
+  port alone, so a VLESS over TCP, the same over XHTTP and the same over gRPC were one and the
+  same server to the app. A refresh collapsed them onto one row and re-inserted the rest under
+  fresh ids, which moved the selection to whichever one won — pick Hysteria, end up on XHTTP.
+  Transport, security and name are part of a server's identity now.
 - Switching and then leaving the screen at once no longer falls back to the previous server with
   “address already in use”. The port the tunnel check listens on was picked once and kept, so a
   switch made before the old core let go of it collided with itself. A free port is taken for

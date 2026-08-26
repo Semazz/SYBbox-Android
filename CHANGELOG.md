@@ -31,7 +31,9 @@
   so a subscription that asked to be refreshed every twelve hours was refreshed on whatever the
   app's own schedule said. The interval is stored with the subscription and used as its own.
 - The background job wakes hourly and refreshes only what is actually due, comparing each
-  subscription's interval against when it was last updated. The interval in Settings is now the
+  subscription's interval against when it was last updated, with five minutes of slack. Without
+  the slack an hourly subscription would be skipped by a tick landing a minute early and wait
+  another hour, turning one hour into two. The interval in Settings is now the
   fallback for subscriptions that do not state one, and says so.
 
 ### Changed — settings

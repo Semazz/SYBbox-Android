@@ -37,7 +37,8 @@ class SubscriptionUpdateWorker @AssistedInject constructor(
             .filter { it.enabled && it.autoUpdate }
             .filter { subscription ->
                 val hours = subscription.updateInterval.takeIf { it > 0 } ?: fallbackHours
-                subscription.lastUpdate <= 0 || now - subscription.lastUpdate >= hours * HOUR_MILLIS
+                val due = hours * HOUR_MILLIS - EARLY_TOLERANCE_MILLIS
+                subscription.lastUpdate <= 0 || now - subscription.lastUpdate >= due
             }
         if (subscriptions.isEmpty()) return Result.success()
 
@@ -74,6 +75,7 @@ class SubscriptionUpdateWorker @AssistedInject constructor(
     companion object {
         private const val WORK_NAME = "subscription-update"
         private const val HOUR_MILLIS = 60L * 60L * 1000L
+        private const val EARLY_TOLERANCE_MILLIS = 5L * 60L * 1000L
         private const val CHECK_INTERVAL_HOURS = 1L
 
         fun schedule(context: Context, intervalHours: Int) {

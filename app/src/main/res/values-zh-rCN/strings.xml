@@ -301,4 +301,7 @@
     </plurals>
     <string name="mode_include_hint">只有所选应用经隧道出网，其余直连。</string>
     <string name="mode_exclude_hint">所选应用直连、绕过隧道，其流量不受保护。</string>
+    <string name="widget_square_description">按钮与当前服务器。</string>
+    <string name="widget_panel_description">服务器、订阅流量、速度与时长，带按钮。</string>
+    <string name="no_quota">无限量</string>
 </resources>

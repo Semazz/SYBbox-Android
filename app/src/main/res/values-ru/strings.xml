@@ -320,5 +320,8 @@
     </plurals>
     <string name="mode_include_hint">Через туннель идут только выбранные приложения. Остальные — напрямую.</string>
     <string name="mode_exclude_hint">Выбранные приложения идут напрямую, мимо туннеля. Их трафик не защищён.</string>
+    <string name="widget_square_description">Кнопка и сервер, на котором вы сейчас.</string>
+    <string name="widget_panel_description">Сервер, остаток по подписке, скорость и время соединения с кнопкой.</string>
+    <string name="no_quota">Без лимита</string>
 </resources>
 

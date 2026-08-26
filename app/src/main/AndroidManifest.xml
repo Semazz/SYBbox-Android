@@ -114,6 +114,28 @@
         </receiver>
 
         <receiver
+            android:name=".service.SybBoxWidget$Square"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_square_info" />
+        </receiver>
+
+        <receiver
+            android:name=".service.SybBoxWidget$Panel"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_panel_info" />
+        </receiver>
+
+        <receiver
             android:name=".service.WidgetActionReceiver"
             android:exported="false">
             <intent-filter>

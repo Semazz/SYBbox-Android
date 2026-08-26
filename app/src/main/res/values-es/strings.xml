@@ -320,5 +320,8 @@
     </plurals>
     <string name="mode_include_hint">Solo las apps seleccionadas pasan por el tunel. El resto sale directo.</string>
     <string name="mode_exclude_hint">Las apps seleccionadas salen directo, fuera del tunel. Su trafico queda sin proteger.</string>
+    <string name="widget_square_description">El boton con el servidor actual.</string>
+    <string name="widget_panel_description">Servidor, cuota de la suscripcion, velocidad y tiempo, con un boton.</string>
+    <string name="no_quota">Sin limite</string>
 </resources>
 

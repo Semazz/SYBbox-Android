@@ -322,5 +322,8 @@
     </plurals>
     <string name="mode_include_hint">Only the selected apps go through the tunnel. Everything else goes straight out.</string>
     <string name="mode_exclude_hint">The selected apps go straight out, past the tunnel. Their traffic is not covered.</string>
+    <string name="widget_square_description">The button with the server it is on.</string>
+    <string name="widget_panel_description">Server, subscription quota, speed and uptime, with a button.</string>
+    <string name="no_quota">No quota</string>
 </resources>
 

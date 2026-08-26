@@ -127,13 +127,16 @@
   pixels standing in for the same intent now come from the same handful of named steps.
 
 ### Added — home screen widgets
-- **Two widgets.** A 2×1 with the logo, a state line and a power button, and a 1×1 that is
-  nothing but the button. Both use the app's own palette and follow the system between light and
+- **Four widgets.** A 1×1 that is nothing but the button; a 2×1 with the logo, a state line and
+  the button; a 2×2 that adds the server it is on; and a 2×3 that adds the subscription, how much
+  of its quota is gone with a bar for it, the speed each way and how long the tunnel has been up. Both use the app's own palette and follow the system between light and
   dark; the button carries the accent while the tunnel is up and goes quiet when it is not.
 - The button connects to the last server used and disconnects again. Where VPN permission has not
   been granted, or no server has been picked, it opens the app instead of failing silently.
   On the wide one, tapping beside the button opens the app.
-- Both follow the tunnel while the app's process is alive, redrawing whenever the state changes.
+- They follow the tunnel while the app's process is alive, redrawing when the state changes and
+  about every ten seconds while connected, so speed and uptime stay honest without redrawing
+  every second.
 
 ### Changed — subscriptions
 - The subscription User-Agent carries a per-install key again — `SYBbox/2.0.2/Android/<key>` —

@@ -316,6 +316,7 @@ class SybBoxVpnService : VpnService() {
                 tunDescriptor = descriptor
             }
             try {
+                probePort = freeProbePort()
                 val config = ConfigBuilder.build(
                     profile, settings, rules, useRuleSets,
                     systemDnsServers(),
@@ -341,10 +342,12 @@ class SybBoxVpnService : VpnService() {
         throw lastError ?: IllegalStateException("Core failed to start")
     }
 
-    private val probePort: Int by lazy {
-        runCatching { java.net.ServerSocket(0, 1, java.net.InetAddress.getByName("127.0.0.1")).use { it.localPort } }
-            .getOrDefault(0)
-    }
+    @Volatile
+    private var probePort = 0
+
+    private fun freeProbePort(): Int = runCatching {
+        java.net.ServerSocket(0, 1, java.net.InetAddress.getByName("127.0.0.1")).use { it.localPort }
+    }.getOrDefault(0)
 
     private suspend fun tunnelCarriesTraffic(probeUrl: String): Boolean {
         if (probePort == 0) return true

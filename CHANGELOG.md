@@ -25,6 +25,12 @@
   per-install id into every request whether or not you wanted one; identity now lives in the
   headers, behind the switch.
 
+### Fixed — switching servers
+- Switching and then leaving the screen at once no longer falls back to the previous server with
+  “address already in use”. The port the tunnel check listens on was picked once and kept, so a
+  switch made before the old core let go of it collided with itself. A free port is taken for
+  each attempt.
+
 ### Fixed — per-app routing
 - The chosen mode is remembered rather than guessed. It was inferred from whichever of the two
   lists held something, so picking “only the selected” before selecting anything flipped straight
@@ -128,8 +134,10 @@
 
 ### Added — home screen widgets
 - **Four widgets.** A 1×1 that is nothing but the button; a 2×1 with the logo, a state line and
-  the button; a 2×2 that adds the server it is on; and a 2×3 that adds the subscription, how much
-  of its quota is gone with a bar for it, the speed each way and how long the tunnel has been up. Both use the app's own palette and follow the system between light and
+  the button; a 2×2 that adds the server it is on; and a 3×2 that adds the subscription, how much
+  of its quota is gone with a bar for it, the speed each way and how long the tunnel has been up.
+  The two larger ones are laid out without a plain `View` anywhere — a home screen refuses to
+  inflate one, which is why they could not be added at all. Both use the app's own palette and follow the system between light and
   dark; the button carries the accent while the tunnel is up and goes quiet when it is not.
 - The button connects to the last server used and disconnects again. Where VPN permission has not
   been granted, or no server has been picked, it opens the app instead of failing silently.

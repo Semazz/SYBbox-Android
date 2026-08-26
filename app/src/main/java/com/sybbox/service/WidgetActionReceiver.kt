@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.net.VpnService
-import com.sybbox.MainActivity
 import com.sybbox.data.datastore.SettingsDataStore
 import com.sybbox.domain.model.ConnectionState
 import dagger.hilt.android.AndroidEntryPoint
@@ -49,9 +48,7 @@ class WidgetActionReceiver : BroadcastReceiver() {
     }
 
     private fun openApp(context: Context) {
-        val intent = Intent(context, MainActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        runCatching { context.startActivity(intent) }
+        runCatching { context.startActivity(AppLaunch.intent(context)) }
     }
 
     companion object {

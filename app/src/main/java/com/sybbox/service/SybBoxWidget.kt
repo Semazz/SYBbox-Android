@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
-import com.sybbox.MainActivity
 import com.sybbox.R
 import com.sybbox.domain.model.ConnectionState
 import kotlinx.coroutines.CoroutineScope
@@ -162,8 +161,7 @@ abstract class SybBoxWidget(private val shape: WidgetShape) : AppWidgetProvider(
         private fun openPending(context: Context): PendingIntent = PendingIntent.getActivity(
             context,
             2,
-            Intent(context, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            AppLaunch.intent(context),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
     }

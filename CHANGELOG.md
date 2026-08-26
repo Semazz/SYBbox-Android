@@ -187,6 +187,12 @@
   about every ten seconds while connected, so speed and uptime stay honest without redrawing
   every second.
 
+### Fixed — opening the app from outside
+- A widget, the notification or the quick tile no longer opens onto a black screen you had to
+  minimise and reopen to get past. They started the app on a fresh task and cleared it on the way
+  in, which left the window blank; they now ask for it the way the launcher does and the app keeps
+  a single task, so it comes back exactly where you left it.
+
 ### Changed — subscriptions
 - The subscription User-Agent carries a per-install key again — `SYBbox/2.0.2/Android/<key>` —
   rather than the build number. Panels key their device lists on it, and a number shared by every

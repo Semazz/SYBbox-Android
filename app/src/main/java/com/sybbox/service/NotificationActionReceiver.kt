@@ -16,10 +16,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 dismissNotification(context)
             }
             ACTION_OPEN_APP -> {
-                val i = Intent(context, com.sybbox.MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                }
-                context.startActivity(i)
+                runCatching { context.startActivity(AppLaunch.intent(context)) }
             }
         }
     }

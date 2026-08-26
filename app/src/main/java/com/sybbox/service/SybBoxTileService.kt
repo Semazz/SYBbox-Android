@@ -2,12 +2,10 @@ package com.sybbox.service
 
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
-import android.content.Intent
 import android.net.VpnService
 import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import com.sybbox.MainActivity
 import com.sybbox.R
 import com.sybbox.data.datastore.SettingsDataStore
 import com.sybbox.domain.model.ConnectionState
@@ -75,8 +73,7 @@ class SybBoxTileService : TileService() {
 
     @SuppressLint("StartActivityAndCollapseDeprecated")
     private fun openApp() {
-        val intent = Intent(this, MainActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        val intent = AppLaunch.intent(this)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startActivityAndCollapse(
                 android.app.PendingIntent.getActivity(

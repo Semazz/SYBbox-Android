@@ -26,6 +26,12 @@
   headers, behind the switch.
 
 ### Fixed — switching servers
+- Picking a server and going straight to the home screen connects to the one you picked. The
+  choice is written to storage, which takes a moment; the home screen read a copy that could
+  still be a frame behind, so connecting immediately used the previous server. It reads the
+  stored choice at the moment of connecting now.
+- While the tunnel is up or coming up, the card names the server that is actually running rather
+  than the one merely picked — the label says active server, so it should mean it.
 - Servers sharing a host and a port are told apart. They were identified by protocol, address and
   port alone, so a VLESS over TCP, the same over XHTTP and the same over gRPC were one and the
   same server to the app. A refresh collapsed them onto one row and re-inserted the rest under

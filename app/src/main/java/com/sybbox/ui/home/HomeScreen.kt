@@ -101,7 +101,11 @@ fun HomeScreen(
     val selectedId by viewModel.selectedProfileId.collectAsStateWithLifecycle()
     val latencies by viewModel.latencies.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val selected = profiles.firstOrNull { it.id == selectedId }
+    val picked = profiles.firstOrNull { it.id == selectedId }
+    val selected = when (appState.connectionState) {
+        ConnectionState.CONNECTED, ConnectionState.CONNECTING -> appState.activeProfile ?: picked
+        else -> picked
+    }
 
     val vpnPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),

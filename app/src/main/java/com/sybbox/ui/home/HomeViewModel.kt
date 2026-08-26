@@ -111,12 +111,20 @@ class HomeViewModel @Inject constructor(
     }
 
     fun connect() {
-        val profileId = selectedProfileId.value
-        if (profileId <= 0) {
-            reportNoServer()
-            return
+        viewModelScope.launch {
+            val profileId = chosenProfileId()
+            if (profileId <= 0) {
+                reportNoServer()
+                return@launch
+            }
+            SybBoxVpnService.connect(getApplication(), profileId)
         }
-        SybBoxVpnService.connect(getApplication(), profileId)
+    }
+
+    private suspend fun chosenProfileId(): Long {
+        val stored = settingsDataStore.lastProfileId.first()
+        if (stored > 0) return stored
+        return profiles.value.firstOrNull()?.id ?: -1L
     }
 
     fun disconnect() = SybBoxVpnService.disconnect(getApplication())
@@ -130,7 +138,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun pingSelected() {
-        viewModelScope.launch { measure(selectedProfileId.value, announceFailure = true) }
+        viewModelScope.launch { measure(chosenProfileId(), announceFailure = true) }
     }
 
     private fun pingOnConnect() {

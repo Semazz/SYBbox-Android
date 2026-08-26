@@ -31,6 +31,10 @@
   back, and clearing the last app in that mode silently flipped it too. The config follows the
   mode now, not whichever list happens to be filled.
 - An empty selection tunnels everything rather than nothing.
+- Picking apps now means tunnelling them. The default mode was “everything except the selected”,
+  so switching per-app routing on and choosing an app sent that one app around the tunnel — the
+  opposite of what choosing it suggests. New setups start on “only the selected”; anyone who
+  already had exclusions keeps them.
 - Both modes say what they do: only the selected go through the tunnel and the rest go straight
   out, or the selected go straight out past the tunnel and their traffic is not covered.
 

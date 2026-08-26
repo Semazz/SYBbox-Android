@@ -220,7 +220,8 @@ class ConfigBuilderTest {
 
     @Test
     fun `per-app exclusions reach the tun inbound`() {
-        val tun = parse(ConfigBuilder.build(realityVless, everythingOn))
+        val excluding = everythingOn.copy(perAppIncludeMode = false)
+        val tun = parse(ConfigBuilder.build(realityVless, excluding))
             .getAsJsonArray("inbounds")[0].asJsonObject
         assertEquals("com.android.chrome", tun.getAsJsonArray("exclude_package").first().asString)
     }

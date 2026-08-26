@@ -74,7 +74,9 @@ class SettingsDataStore @Inject constructor(
     val bypassChina: Flow<Boolean> = dataStore.data.map { it[KEY_BYPASS_CHINA] ?: false }
     val bypassRussia: Flow<Boolean> = dataStore.data.map { it[KEY_BYPASS_RUSSIA] ?: false }
     val perAppProxy: Flow<Boolean> = dataStore.data.map { it[KEY_PER_APP_PROXY] ?: false }
-    val perAppIncludeMode: Flow<Boolean> = dataStore.data.map { it[KEY_PER_APP_INCLUDE] ?: false }
+    val perAppIncludeMode: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_PER_APP_INCLUDE] ?: prefs[KEY_EXCLUDED_APPS].isNullOrEmpty()
+    }
     val enableMux: Flow<Boolean> = dataStore.data.map { it[KEY_ENABLE_MUX] ?: false }
     val fragmentEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_FRAGMENT_ENABLED] ?: true }
     val fragmentSleep: Flow<String> = dataStore.data.map { it[KEY_FRAGMENT_SLEEP] ?: "10" }
@@ -101,7 +103,7 @@ class SettingsDataStore @Inject constructor(
             bypassChina = p[KEY_BYPASS_CHINA] ?: false,
             bypassLocalNetwork = p[KEY_BYPASS_LOCAL_NETWORK] ?: false,
             perAppProxy = p[KEY_PER_APP_PROXY] ?: false,
-            perAppIncludeMode = p[KEY_PER_APP_INCLUDE] ?: false,
+            perAppIncludeMode = p[KEY_PER_APP_INCLUDE] ?: p[KEY_EXCLUDED_APPS].isNullOrEmpty(),
             includedApps = (p[KEY_INCLUDED_APPS] ?: emptySet()).toList(),
             excludedApps = (p[KEY_EXCLUDED_APPS] ?: emptySet()).toList(),
             remoteDns = p[KEY_REMOTE_DNS] ?: "https://1.1.1.1/dns-query",

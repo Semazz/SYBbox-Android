@@ -12,7 +12,7 @@ data class SettingsState(
     val bypassChina: Boolean = false,
     val bypassLocalNetwork: Boolean = false,
     val perAppProxy: Boolean = false,
-    val perAppIncludeMode: Boolean = false,
+    val perAppIncludeMode: Boolean = true,
     val includedApps: List<String> = emptyList(),
     val excludedApps: List<String> = emptyList(),
 

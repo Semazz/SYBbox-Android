@@ -25,23 +25,7 @@
   per-install id into every request whether or not you wanted one; identity now lives in the
   headers, behind the switch.
 
-### Fixed — server menus
-- A tap that opens a row's menu, or picks something from it, no longer also lands on the row
-  underneath. An overflow menu near the foot of the list opens upwards and covers its neighbour;
-  a tap arriving before the menu's own window has taken focus goes to whatever is beneath it,
-  which is how choosing “test latency” on one server quietly selected the one above it. Row
-  selection is refused for a moment either side of any menu interaction.
-
 ### Fixed — switching servers
-- Picking a server while the tunnel is up stores the choice before it asks for the switch, so
-  the two can never disagree about which server was meant. Every other way in — the tile, the
-  widgets, connect on start — already read the stored choice rather than a copy of it.
-- Picking a server and going straight to the home screen connects to the one you picked. The
-  choice is written to storage, which takes a moment; the home screen read a copy that could
-  still be a frame behind, so connecting immediately used the previous server. It reads the
-  stored choice at the moment of connecting now.
-- While the tunnel is up or coming up, the card names the server that is actually running rather
-  than the one merely picked — the label says active server, so it should mean it.
 - Servers sharing a host and a port are told apart. They were identified by protocol, address and
   port alone, so a VLESS over TCP, the same over XHTTP and the same over gRPC were one and the
   same server to the app. A refresh collapsed them onto one row and re-inserted the rest under

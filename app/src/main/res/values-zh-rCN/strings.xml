@@ -304,5 +304,4 @@
     <string name="widget_square_description">按钮与当前服务器。</string>
     <string name="widget_panel_description">服务器、订阅流量、速度与时长，带按钮。</string>
     <string name="no_quota">无限量</string>
-    <string name="msg_ping_while_connecting">请等隧道稳定后再测延迟</string>
 </resources>

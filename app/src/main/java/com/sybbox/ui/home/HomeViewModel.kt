@@ -103,28 +103,20 @@ class HomeViewModel @Inject constructor(
             val consented = runCatching { VpnService.prepare(getApplication()) == null }.getOrDefault(false)
             if (!consented) return@launch
             val profileId = withTimeoutOrNull(AUTO_CONNECT_WAIT_MS) {
-                settingsDataStore.lastProfileId.first { it > 0 }
-            } ?: profiles.value.firstOrNull()?.id ?: return@launch
+                selectedProfileId.first { it > 0 }
+            } ?: return@launch
             if (SybBoxVpnService.appState.value.connectionState != ConnectionState.DISCONNECTED) return@launch
             SybBoxVpnService.connect(getApplication(), profileId)
         }
     }
 
     fun connect() {
-        viewModelScope.launch {
-            val profileId = chosenProfileId()
-            if (profileId <= 0) {
-                reportNoServer()
-                return@launch
-            }
-            SybBoxVpnService.connect(getApplication(), profileId)
+        val profileId = selectedProfileId.value
+        if (profileId <= 0) {
+            reportNoServer()
+            return
         }
-    }
-
-    private suspend fun chosenProfileId(): Long {
-        val stored = settingsDataStore.lastProfileId.first()
-        if (stored > 0) return stored
-        return profiles.value.firstOrNull()?.id ?: -1L
+        SybBoxVpnService.connect(getApplication(), profileId)
     }
 
     fun disconnect() = SybBoxVpnService.disconnect(getApplication())
@@ -138,7 +130,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun pingSelected() {
-        viewModelScope.launch { measure(chosenProfileId(), announceFailure = true) }
+        viewModelScope.launch { measure(selectedProfileId.value, announceFailure = true) }
     }
 
     private fun pingOnConnect() {
@@ -148,7 +140,7 @@ class HomeViewModel @Inject constructor(
                 .distinctUntilChanged()
                 .filter { it == ConnectionState.CONNECTED }
                 .collect {
-                    val active = SybBoxVpnService.appState.value.activeProfile?.id ?: chosenProfileId()
+                    val active = SybBoxVpnService.appState.value.activeProfile?.id ?: selectedProfileId.value
                     measure(active, announceFailure = false)
                 }
         }

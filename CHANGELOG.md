@@ -64,6 +64,10 @@
   off.
 - **Notify on subscription updates**, off by default, for background refreshes.
 - The core the app is built on is no longer named anywhere in the interface.
+- Nothing appears in two places. The device id was on the subscriptions page and in About, the
+  logs opened from the settings root and from diagnostics, and the version sat in the footer as
+  well as in About. Each now has one home: the device id and the version in About, the logs on
+  the root.
 
 ### Added — settings
 - **Search.** A field at the top of settings finds a setting by its name, its description or the

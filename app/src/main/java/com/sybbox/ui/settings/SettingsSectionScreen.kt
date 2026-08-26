@@ -92,7 +92,6 @@ import com.sybbox.ui.theme.THEME_SYSTEM
 fun SettingsSectionScreen(
     section: SettingsSection,
     onBack: () -> Unit,
-    onOpenLogs: () -> Unit,
     onOpenPerApp: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -143,7 +142,7 @@ fun SettingsSectionScreen(
                             SettingsSection.LOCAL_PROXY -> LocalProxySettings(state, viewModel)
                             SettingsSection.SUBSCRIPTIONS -> SubscriptionSettings(state, viewModel)
                             SettingsSection.STARTUP -> StartupSettings(state, viewModel)
-                            SettingsSection.DIAGNOSTICS -> DiagnosticsSettings(state, viewModel, onOpenLogs)
+                            SettingsSection.DIAGNOSTICS -> DiagnosticsSettings(state, viewModel)
                             SettingsSection.MAINTENANCE -> MaintenanceSettings(state, viewModel)
                             SettingsSection.ABOUT -> AboutSettings(viewModel)
                         }
@@ -600,24 +599,10 @@ private fun SubscriptionSettings(state: SettingsState, viewModel: SettingsViewMo
         onCheckedChange = viewModel::setSubUpdateNotify,
         icon = Icons.Rounded.Sync,
     )
-    SettingsDivider()
-    SettingsAction(
-        title = stringResource(R.string.hwid),
-        value = hwid,
-        icon = Icons.Rounded.Fingerprint,
-        onClick = {
-            val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
-            clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("hwid", hwid))
-        },
-    )
 }
 
 @Composable
-private fun DiagnosticsSettings(
-    state: SettingsState,
-    viewModel: SettingsViewModel,
-    onOpenLogs: () -> Unit,
-) {
+private fun DiagnosticsSettings(state: SettingsState, viewModel: SettingsViewModel) {
     SettingsToggle(
         title = stringResource(R.string.tunnel_check),
         summary = stringResource(R.string.tunnel_check_summary),
@@ -661,12 +646,6 @@ private fun DiagnosticsSettings(
         onSelect = viewModel::setLogLevel,
         label = { it.uppercase() },
         icon = Icons.Rounded.Terminal,
-    )
-    SettingsDivider()
-    SettingsAction(
-        title = stringResource(R.string.open_logs),
-        icon = Icons.Rounded.Article,
-        onClick = onOpenLogs,
     )
 }
 

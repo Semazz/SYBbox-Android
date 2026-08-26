@@ -310,7 +310,6 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
                             SettingsSectionScreen(
                                 section = section,
                                 onBack = { navController.popBackStack() },
-                                onOpenLogs = { navController.navigate(Screen.Logs.route) },
                                 onOpenPerApp = { navController.navigate(Screen.PerApp.route) },
                                 viewModel = settingsViewModel,
                             )

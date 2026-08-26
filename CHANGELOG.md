@@ -25,11 +25,12 @@
   per-install id into every request whether or not you wanted one; identity now lives in the
   headers, behind the switch.
 
-### Changed — latency
-- Latency cannot be measured for ten seconds after a connect is asked for. Measuring reaches the
-  network on its own while the tunnel is being built, and the two together were producing the
-  wrong server; keeping them apart removes the interaction. Asking for it during those seconds
-  says so rather than doing nothing.
+### Fixed — server menus
+- A tap that opens a row's menu, or picks something from it, no longer also lands on the row
+  underneath. An overflow menu near the foot of the list opens upwards and covers its neighbour;
+  a tap arriving before the menu's own window has taken focus goes to whatever is beneath it,
+  which is how choosing “test latency” on one server quietly selected the one above it. Row
+  selection is refused for a moment either side of any menu interaction.
 
 ### Fixed — switching servers
 - Picking a server while the tunnel is up stores the choice before it asks for the switch, so

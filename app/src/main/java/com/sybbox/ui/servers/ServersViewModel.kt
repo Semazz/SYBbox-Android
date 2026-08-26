@@ -372,10 +372,6 @@ class ServersViewModel @Inject constructor(
     )
 
     fun measureLatency(profile: ServerProfile) {
-        if (SybBoxVpnService.settlingAfterConnect()) {
-            emit(UiMessage(R.string.msg_ping_while_connecting))
-            return
-        }
         viewModelScope.launch {
             _testing.update { it + profile.id }
             if (com.sybbox.service.VpnConflict.foreignVpnActive(getApplication())) {
@@ -394,10 +390,6 @@ class ServersViewModel @Inject constructor(
     }
 
     fun measureAll(targets: List<ServerProfile>) {
-        if (SybBoxVpnService.settlingAfterConnect()) {
-            emit(UiMessage(R.string.msg_ping_while_connecting))
-            return
-        }
         viewModelScope.launch {
             _testing.update { it + targets.map(ServerProfile::id) }
             if (targets.isNotEmpty() && com.sybbox.service.VpnConflict.foreignVpnActive(getApplication())) {

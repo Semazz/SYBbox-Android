@@ -143,7 +143,12 @@ fun ServersScreen(
     val settledAt = remember(collapsedGroups, selectedId, profiles.size, subscriptions.size) {
         SystemClock.elapsedRealtime()
     }
-    fun steady(): Boolean = SystemClock.elapsedRealtime() - settledAt >= MISCLICK_GUARD_MS
+    var menuTouchedAt by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
+    fun noteMenuTouch() { menuTouchedAt = SystemClock.elapsedRealtime() }
+    fun steady(): Boolean {
+        val now = SystemClock.elapsedRealtime()
+        return now - settledAt >= MISCLICK_GUARD_MS && now - menuTouchedAt >= MENU_GUARD_MS
+    }
 
     val filePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
@@ -264,7 +269,7 @@ fun ServersScreen(
                             Spacer(Modifier.width(SybSpacing.tight))
                             Box {
                                 IconButton(
-                                    onClick = { manualMenu = true },
+                                    onClick = { noteMenuTouch(); manualMenu = true },
                                     modifier = Modifier.size(36.dp),
                                 ) {
                                     Icon(
@@ -274,11 +279,12 @@ fun ServersScreen(
                                         modifier = Modifier.size(18.dp),
                                     )
                                 }
-                                DropdownMenu(expanded = manualMenu, onDismissRequest = { manualMenu = false }) {
+                                DropdownMenu(expanded = manualMenu, onDismissRequest = { noteMenuTouch(); manualMenu = false }) {
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.ping_all)) },
                                         leadingIcon = { Icon(Icons.Rounded.Speed, null) },
                                         onClick = {
+                                            noteMenuTouch()
                                             manualMenu = false
                                             viewModel.expandGroup(MANUAL_GROUP)
                                             viewModel.measureAll(manual)
@@ -289,7 +295,7 @@ fun ServersScreen(
                                         leadingIcon = {
                                             Icon(Icons.Rounded.Delete, null, tint = MaterialTheme.colorScheme.error)
                                         },
-                                        onClick = { manualMenu = false; confirmDeleteAllManual = true },
+                                        onClick = { noteMenuTouch(); manualMenu = false; confirmDeleteAllManual = true },
                                     )
                                 }
                             }
@@ -311,6 +317,7 @@ fun ServersScreen(
                         onDelete = { viewModel.deleteProfile(profile) },
                         onCopied = { viewModel.notifyCopied() },
                         onShareQr = { qrDialogProfile = profile; showQrDialog = true },
+                        onMenuTouched = ::noteMenuTouch,
                     )
                 }
             }
@@ -331,6 +338,7 @@ fun ServersScreen(
                     refreshing = subscription.id in refreshing,
                     showPing = true,
                     selectedName = members.firstOrNull { it.id == selectedId }?.displayName(),
+                    onMenuTouched = ::noteMenuTouch,
                     onToggle = {
                         if (steady()) viewModel.toggleGroup(groupKey)
                     },
@@ -367,6 +375,7 @@ fun ServersScreen(
                         onDelete = { viewModel.deleteProfile(profile) },
                         onCopied = { viewModel.notifyCopied() },
                         onShareQr = { qrDialogProfile = profile; showQrDialog = true },
+                        onMenuTouched = ::noteMenuTouch,
                     )
                 }
             }
@@ -423,6 +432,8 @@ fun ServersScreen(
 
 private const val MISCLICK_GUARD_MS = 400L
 
+private const val MENU_GUARD_MS = 600L
+
 private const val MANUAL_GROUP = "manual"
 
 @Composable
@@ -473,6 +484,7 @@ private fun ServerRow(
     onDelete: () -> Unit,
     onCopied: () -> Unit,
     onShareQr: () -> Unit,
+    onMenuTouched: () -> Unit,
 ) {
     var menu by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -550,7 +562,7 @@ private fun ServerRow(
             Spacer(Modifier.width(2.dp))
             Box {
                 IconButton(
-                    onClick = { menu = true },
+                    onClick = { onMenuTouched(); menu = true },
                     modifier = Modifier.size(32.dp),
                 ) {
                     Icon(
@@ -560,11 +572,11 @@ private fun ServerRow(
                         modifier = Modifier.size(18.dp),
                     )
                 }
-                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                DropdownMenu(expanded = menu, onDismissRequest = { onMenuTouched(); menu = false }) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.test_connection)) },
                         leadingIcon = { Icon(Icons.Rounded.Speed, null) },
-                        onClick = { menu = false; onPing() },
+                        onClick = { onMenuTouched(); menu = false; onPing() },
                     )
 
                     if (shareable) {
@@ -572,6 +584,7 @@ private fun ServerRow(
                             text = { Text(stringResource(R.string.copy_link)) },
                             leadingIcon = { Icon(Icons.Rounded.Link, null) },
                             onClick = {
+                                onMenuTouched()
                                 menu = false
                                 if (ConfigShare.copyToClipboard(context, profile)) onCopied()
                             },
@@ -579,18 +592,18 @@ private fun ServerRow(
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.share_link)) },
                             leadingIcon = { Icon(Icons.Rounded.Share, null) },
-                            onClick = { menu = false; ConfigShare.shareConfig(context, profile) },
+                            onClick = { onMenuTouched(); menu = false; ConfigShare.shareConfig(context, profile) },
                         )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.share_qr)) },
                             leadingIcon = { Icon(Icons.Rounded.QrCode, null) },
-                            onClick = { menu = false; onShareQr() },
+                            onClick = { onMenuTouched(); menu = false; onShareQr() },
                         )
                     }
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.delete)) },
                         leadingIcon = { Icon(Icons.Rounded.Delete, null, tint = MaterialTheme.colorScheme.error) },
-                        onClick = { menu = false; onDelete() },
+                        onClick = { onMenuTouched(); menu = false; onDelete() },
                     )
                 }
             }
@@ -606,6 +619,7 @@ private fun SubscriptionHeader(
     refreshing: Boolean,
     showPing: Boolean,
     selectedName: String?,
+    onMenuTouched: () -> Unit,
     onToggle: () -> Unit,
     onRefresh: () -> Unit,
     onPingAll: () -> Unit,
@@ -672,7 +686,7 @@ private fun SubscriptionHeader(
                     Spacer(Modifier.width(SybSpacing.tight))
                     Box {
                         IconButton(
-                            onClick = { menu = true },
+                            onClick = { onMenuTouched(); menu = true },
                             modifier = Modifier.size(36.dp),
                         ) {
                             Icon(
@@ -682,33 +696,33 @@ private fun SubscriptionHeader(
                                 modifier = Modifier.size(18.dp),
                             )
                         }
-                        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        DropdownMenu(expanded = menu, onDismissRequest = { onMenuTouched(); menu = false }) {
                             if (showPing) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.ping_all)) },
                                     leadingIcon = { Icon(Icons.Rounded.Speed, null) },
-                                    onClick = { menu = false; onPingAll() },
+                                    onClick = { onMenuTouched(); menu = false; onPingAll() },
                                 )
                             }
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.update)) },
                                 leadingIcon = { Icon(Icons.Rounded.Refresh, null) },
-                                onClick = { menu = false; onRefresh() },
+                                onClick = { onMenuTouched(); menu = false; onRefresh() },
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.copy_link)) },
                                 leadingIcon = { Icon(Icons.Rounded.ContentCopy, null) },
-                                onClick = { menu = false; onCopyLink() },
+                                onClick = { onMenuTouched(); menu = false; onCopyLink() },
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.open_link)) },
                                 leadingIcon = { Icon(Icons.Rounded.OpenInBrowser, null) },
-                                onClick = { menu = false; onOpenLink() },
+                                onClick = { onMenuTouched(); menu = false; onOpenLink() },
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.delete)) },
                                 leadingIcon = { Icon(Icons.Rounded.Delete, null, tint = MaterialTheme.colorScheme.error) },
-                                onClick = { menu = false; onDelete() },
+                                onClick = { onMenuTouched(); menu = false; onDelete() },
                             )
                         }
                     }

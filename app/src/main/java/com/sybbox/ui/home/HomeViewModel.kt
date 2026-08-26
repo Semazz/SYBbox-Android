@@ -156,10 +156,6 @@ class HomeViewModel @Inject constructor(
 
     private suspend fun measure(profileId: Long, announceFailure: Boolean) {
         if (profileId <= 0 || _pingTesting.value) return
-        if (announceFailure && SybBoxVpnService.settlingAfterConnect()) {
-            _messages.tryEmit(UiMessage(R.string.msg_ping_while_connecting))
-            return
-        }
         _pingTesting.value = true
         try {
             if (com.sybbox.service.VpnConflict.foreignVpnActive(getApplication())) {

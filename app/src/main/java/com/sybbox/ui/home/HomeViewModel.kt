@@ -103,8 +103,8 @@ class HomeViewModel @Inject constructor(
             val consented = runCatching { VpnService.prepare(getApplication()) == null }.getOrDefault(false)
             if (!consented) return@launch
             val profileId = withTimeoutOrNull(AUTO_CONNECT_WAIT_MS) {
-                selectedProfileId.first { it > 0 }
-            } ?: return@launch
+                settingsDataStore.lastProfileId.first { it > 0 }
+            } ?: profiles.value.firstOrNull()?.id ?: return@launch
             if (SybBoxVpnService.appState.value.connectionState != ConnectionState.DISCONNECTED) return@launch
             SybBoxVpnService.connect(getApplication(), profileId)
         }
@@ -148,7 +148,7 @@ class HomeViewModel @Inject constructor(
                 .distinctUntilChanged()
                 .filter { it == ConnectionState.CONNECTED }
                 .collect {
-                    val active = SybBoxVpnService.appState.value.activeProfile?.id ?: selectedProfileId.value
+                    val active = SybBoxVpnService.appState.value.activeProfile?.id ?: chosenProfileId()
                     measure(active, announceFailure = false)
                 }
         }

@@ -100,13 +100,15 @@ class ServersViewModel @Inject constructor(
     }
 
     fun select(profileId: Long) {
-        viewModelScope.launch { settingsDataStore.setLastProfileId(profileId) }
         if (profileId <= 0) return
-        val state = SybBoxVpnService.appState.value
-        val tunnelActive = state.connectionState == ConnectionState.CONNECTED ||
-            state.connectionState == ConnectionState.CONNECTING
-        if (tunnelActive && state.activeProfile?.id != profileId) {
-            SybBoxVpnService.switchServer(getApplication(), profileId)
+        viewModelScope.launch {
+            settingsDataStore.setLastProfileId(profileId)
+            val state = SybBoxVpnService.appState.value
+            val tunnelActive = state.connectionState == ConnectionState.CONNECTED ||
+                state.connectionState == ConnectionState.CONNECTING
+            if (tunnelActive && state.activeProfile?.id != profileId) {
+                SybBoxVpnService.switchServer(getApplication(), profileId)
+            }
         }
     }
 

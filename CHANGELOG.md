@@ -26,6 +26,9 @@
   headers, behind the switch.
 
 ### Fixed — switching servers
+- Picking a server while the tunnel is up stores the choice before it asks for the switch, so
+  the two can never disagree about which server was meant. Every other way in — the tile, the
+  widgets, connect on start — already read the stored choice rather than a copy of it.
 - Picking a server and going straight to the home screen connects to the one you picked. The
   choice is written to storage, which takes a moment; the home screen read a copy that could
   still be a frame behind, so connecting immediately used the previous server. It reads the

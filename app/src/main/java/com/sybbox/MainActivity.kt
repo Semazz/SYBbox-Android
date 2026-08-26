@@ -152,7 +152,8 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
                                 NavigationBarItem(
                                     selected = selected,
                                     onClick = {
-                                        val popped = selected && !root &&
+                                        if (root) return@NavigationBarItem
+                                        val popped = selected &&
                                             navController.popBackStack(item.screen.route, inclusive = false)
                                         if (!popped) {
                                             navController.navigate(item.screen.route) {

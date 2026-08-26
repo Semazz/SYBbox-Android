@@ -38,9 +38,9 @@
 - Per-app routing is listed once. It sat both on the settings root and inside routing.
 - The settings tab returns to the settings root. It used to leave the row unhighlighted while a
   page was open, and tapping it from there could land you on the home screen.
-- The halo behind the connect button is a hairline ring rather than a radial gradient. Gradients
-  that fade to nothing band into visible steps on a dark background, which read as grain laid
-  over the whole screen.
+- Tapping the tab you are already on does nothing. It used to pop the stack back to the start
+  destination and push the tab again, replaying the transition; held down, that read as the
+  screen shaking.
 - One spacing scale across the screens that had drifted apart — gaps of 10, 12, 16, 28 and 32
   pixels standing in for the same intent now come from the same handful of named steps.
 

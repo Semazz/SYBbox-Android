@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -19,7 +20,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -66,6 +66,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
@@ -298,6 +299,16 @@ private fun ConnectButton(state: ConnectionState, onClick: () -> Unit) {
         ),
         label = "pulse",
     )
+    val halo by transition.animateFloat(
+        initialValue = 0.10f,
+        targetValue = if (state == ConnectionState.CONNECTED) 0.24f else 0.10f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2200, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "halo",
+    )
+
     val accent = when (state) {
         ConnectionState.CONNECTED -> MaterialTheme.colorScheme.primary
         ConnectionState.CONNECTING -> MaterialTheme.colorScheme.primary
@@ -308,10 +319,14 @@ private fun ConnectButton(state: ConnectionState, onClick: () -> Unit) {
     Box(contentAlignment = Alignment.Center) {
         Box(
             modifier = Modifier
-                .size(188.dp)
+                .size(208.dp)
                 .scale(pulse)
                 .clip(CircleShape)
-                .border(1.dp, accent.copy(alpha = 0.22f), CircleShape),
+                .background(
+                    Brush.radialGradient(
+                        listOf(accent.copy(alpha = halo), Color.Transparent),
+                    ),
+                ),
         )
         Box(
             modifier = Modifier

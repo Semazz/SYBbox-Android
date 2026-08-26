@@ -10,7 +10,7 @@ data class LogEntry(
     val level: LogLevel,
     val message: String,
     val timestamp: Long = System.currentTimeMillis(),
-
+    val server: String = "",
     val id: Long = 0,
 )
 
@@ -45,6 +45,16 @@ object CoreLog {
             trim()
             publish()
         }
+    }
+
+    @Volatile
+    private var server = ""
+
+    private val _servers = MutableStateFlow<List<String>>(emptyList())
+    val servers: StateFlow<List<String>> = _servers.asStateFlow()
+
+    fun setServer(name: String) {
+        synchronized(buffer) { server = name.trim() }
     }
 
     private val explained = HashSet<String>()
@@ -82,7 +92,7 @@ object CoreLog {
     private fun append(level: LogLevel, message: String) {
         if (message.isBlank()) return
         synchronized(buffer) {
-            val entry = LogEntry(level, message.trimEnd(), id = nextId++)
+            val entry = LogEntry(level, message.trimEnd(), server = server, id = nextId++)
             buffer.addLast(entry)
             usedBytes += weigh(entry)
             trim()
@@ -98,8 +108,10 @@ object CoreLog {
     }
 
     private fun publish() {
-        _entries.value = buffer.toList()
+        val snapshot = buffer.toList()
+        _entries.value = snapshot
         _used.value = usedBytes
+        _servers.value = snapshot.mapNotNull { it.server.takeIf(String::isNotBlank) }.distinct()
     }
 
     private fun weigh(entry: LogEntry): Long = entry.message.length * 2L + ENTRY_OVERHEAD_BYTES

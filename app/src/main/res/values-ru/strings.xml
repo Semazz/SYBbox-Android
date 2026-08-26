@@ -296,5 +296,19 @@
     <string name="log_usage">%1$s из %2$s</string>
     <string name="settings_search">Поиск по настройкам</string>
     <string name="nothing_found">Ничего не найдено</string>
+    <string name="filter_all_servers">Все серверы</string>
+    <string name="proxy_user">Пользователь прокси</string>
+    <string name="proxy_password">Пароль прокси</string>
+    <string name="proxy_auth_summary">Оставьте пустыми, чтобы пускать без пароля</string>
+    <string name="resolve_server">Резолвить сервер заранее</string>
+    <string name="resolve_server_summary">Адрес сервера разрешается до запуска туннеля. Выключите, если сервер подключается только по имени.</string>
+    <string name="sub_update_notify">Уведомлять об обновлении подписок</string>
+    <string name="sub_update_notify_summary">Уведомление, когда подписка обновилась в фоне</string>
+    <plurals name="subscriptions_refreshed">
+        <item quantity="one">Обновлена %1$d подписка</item>
+        <item quantity="few">Обновлено %1$d подписки</item>
+        <item quantity="many">Обновлено %1$d подписок</item>
+        <item quantity="other">Обновлено %1$d подписки</item>
+    </plurals>
 </resources>
 

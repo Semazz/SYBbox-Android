@@ -75,8 +75,14 @@ fun LogsScreen(onBack: () -> Unit) {
     var filter by remember { mutableStateOf<LogLevel?>(null) }
     val listState = rememberLazyListState()
 
-    val visible = remember(entries, filter) {
-        if (filter == null) entries else entries.filter { it.level == filter }
+    val servers by CoreLog.servers.collectAsStateWithLifecycle()
+    var server by remember { mutableStateOf<String?>(null) }
+    if (server != null && server !in servers) server = null
+
+    val visible = remember(entries, filter, server) {
+        entries.filter { entry ->
+            (filter == null || entry.level == filter) && (server == null || entry.server == server)
+        }
     }
 
     LaunchedEffect(visible.size) {
@@ -133,6 +139,35 @@ fun LogsScreen(onBack: () -> Unit) {
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            if (servers.size > 1) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = SybSpacing.screen),
+                    horizontalArrangement = Arrangement.spacedBy(SybSpacing.small),
+                ) {
+                    FilterChip(
+                        selected = server == null,
+                        onClick = { server = null },
+                        label = { Text(stringResource(R.string.filter_all_servers)) },
+                    )
+                    servers.forEach { name ->
+                        FilterChip(
+                            selected = server == name,
+                            onClick = { server = name },
+                            label = {
+                                Text(
+                                    name,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                )
+                            },
+                        )
+                    }
+                }
+                Spacer(Modifier.height(SybSpacing.small))
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

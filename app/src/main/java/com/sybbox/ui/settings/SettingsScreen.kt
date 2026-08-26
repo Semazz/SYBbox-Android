@@ -51,7 +51,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sybbox.BuildConfig
 import com.sybbox.R
-import com.sybbox.core.Core
 import com.sybbox.ui.components.SettingsAction
 import com.sybbox.ui.components.SettingsGroup
 import com.sybbox.ui.components.PillShape
@@ -227,12 +226,6 @@ fun SettingsScreen(
             ) {
                 Text(
                     "${stringResource(R.string.version)} ${BuildConfig.VERSION_NAME}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-                Text(
-                    "${stringResource(R.string.core_version)} sing-box ${runCatching { Core.version() }.getOrDefault("\u2014")}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,

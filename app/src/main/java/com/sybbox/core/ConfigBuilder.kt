@@ -363,6 +363,14 @@ object ConfigBuilder {
                 addProperty("tag", TAG_LOCAL)
                 addProperty("listen", if (settings.allowLan) "0.0.0.0" else "127.0.0.1")
                 addProperty("listen_port", settings.localProxyPort)
+                if (settings.localProxyUser.isNotBlank() && settings.localProxyPassword.isNotBlank()) {
+                    add("users", JsonArray().apply {
+                        add(JsonObject().apply {
+                            addProperty("username", settings.localProxyUser)
+                            addProperty("password", settings.localProxyPassword)
+                        })
+                    })
+                }
             })
         }
     }

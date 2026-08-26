@@ -283,4 +283,15 @@
     <string name="log_usage">%1$s / %2$s</string>
     <string name="settings_search">搜索设置</string>
     <string name="nothing_found">未找到内容</string>
+    <string name="filter_all_servers">全部服务器</string>
+    <string name="proxy_user">代理用户名</string>
+    <string name="proxy_password">代理密码</string>
+    <string name="proxy_auth_summary">两项留空则不需要验证</string>
+    <string name="resolve_server">提前解析服务器</string>
+    <string name="resolve_server_summary">在建立隧道前解析地址。若服务器只能按域名连接，请关闭。</string>
+    <string name="sub_update_notify">订阅更新时通知</string>
+    <string name="sub_update_notify_summary">后台更新订阅后发出通知</string>
+    <plurals name="subscriptions_refreshed">
+        <item quantity="other">已更新 %1$d 个订阅</item>
+    </plurals>
 </resources>

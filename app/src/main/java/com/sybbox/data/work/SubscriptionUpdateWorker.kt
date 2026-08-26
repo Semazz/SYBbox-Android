@@ -52,6 +52,8 @@ class SubscriptionUpdateWorker @AssistedInject constructor(
             .followRedirects(true)
             .build()
 
+        val notify = settingsDataStore.subUpdateNotify.first()
+        var updated = 0
         var failures = 0
         subscriptions.forEach { subscription ->
             runCatching {
@@ -65,6 +67,7 @@ class SubscriptionUpdateWorker @AssistedInject constructor(
                 if (parsed.isEmpty()) return@runCatching
                 profileRepository.mergeSubscriptionProfiles(subscription.id, parsed)
                 subscriptionRepository.markUpdated(subscription.id, parsed.size, interval)
+                updated++
                 CoreLog.info("Updated subscription ${subscription.name}: ${parsed.size} servers")
             }.onFailure {
                 failures++
@@ -72,10 +75,30 @@ class SubscriptionUpdateWorker @AssistedInject constructor(
             }
         }
 
+        if (notify && updated > 0) announce(updated)
         return if (failures == subscriptions.size) Result.retry() else Result.success()
     }
 
+    private fun announce(count: Int) {
+        runCatching {
+            val notification = androidx.core.app.NotificationCompat
+                .Builder(applicationContext, com.sybbox.SybBoxApp.CHANNEL_UPDATES)
+                .setSmallIcon(com.sybbox.R.drawable.ic_notification)
+                .setContentTitle(applicationContext.getString(com.sybbox.R.string.sub_update_notify))
+                .setContentText(
+                    applicationContext.resources.getQuantityString(
+                        com.sybbox.R.plurals.subscriptions_refreshed, count, count,
+                    ),
+                )
+                .setAutoCancel(true)
+                .build()
+            com.sybbox.SybBoxApp.notificationManager(applicationContext)
+                .notify(UPDATE_NOTIFICATION_ID, notification)
+        }
+    }
+
     companion object {
+        private const val UPDATE_NOTIFICATION_ID = 4711
         private const val WORK_NAME = "subscription-update"
         private const val HOUR_MILLIS = 60L * 60L * 1000L
         private const val EARLY_TOLERANCE_MILLIS = 5L * 60L * 1000L

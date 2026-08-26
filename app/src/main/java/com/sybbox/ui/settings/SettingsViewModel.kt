@@ -81,9 +81,9 @@ class SettingsViewModel @Inject constructor(
     }
 
     private val localProxy = combine(
-        store.localProxy, store.localProxyPort, store.allowLan,
-    ) { enabled, port, lan ->
-        LocalProxySlice(enabled, port, lan)
+        store.localProxy, store.localProxyPort, store.allowLan, store.localProxyUser, store.localProxyPassword,
+    ) { enabled, port, lan, user, password ->
+        LocalProxySlice(enabled, port, lan, user, password)
     }
 
     private val startup = combine(
@@ -99,9 +99,15 @@ class SettingsViewModel @Inject constructor(
     }
 
     private val advanced = combine(
-        store.tcpFastOpen, store.tunnelCheck, store.muxProtocol, store.muxMaxStreams, store.muxPadding,
-    ) { tfo, check, muxProtocol, muxStreams, muxPadding ->
-        AdvancedSlice(tfo, check, muxProtocol, muxStreams, muxPadding)
+        combine(
+            store.tcpFastOpen, store.tunnelCheck, store.muxProtocol, store.muxMaxStreams, store.muxPadding,
+        ) { tfo, check, muxProtocol, muxStreams, muxPadding ->
+            AdvancedSlice(tfo, check, muxProtocol, muxStreams, muxPadding)
+        },
+        store.resolveServer,
+        store.subUpdateNotify,
+    ) { slice, resolveServer, subUpdateNotify ->
+        slice.copy(resolveServer = resolveServer, subUpdateNotify = subUpdateNotify)
     }
 
     val state: StateFlow<SettingsState> = combine(
@@ -155,9 +161,13 @@ class SettingsViewModel @Inject constructor(
             muxProtocol = advancedSlice.muxProtocol,
             muxMaxStreams = advancedSlice.muxMaxStreams,
             muxPadding = advancedSlice.muxPadding,
+            resolveServer = advancedSlice.resolveServer,
+            subUpdateNotify = advancedSlice.subUpdateNotify,
             localProxy = localProxySlice.enabled,
             localProxyPort = localProxySlice.port,
             allowLan = localProxySlice.allowLan,
+            localProxyUser = localProxySlice.user,
+            localProxyPassword = localProxySlice.password,
             updateOnStart = startupSlice.updateOnStart,
             connectOnStart = startupSlice.connectOnStart,
             probeUrl = startupSlice.probeUrl,
@@ -237,6 +247,10 @@ class SettingsViewModel @Inject constructor(
     fun setLocalProxy(value: Boolean) = edit { setLocalProxy(value) }
     fun setLocalProxyPort(value: Int) = edit { setLocalProxyPort(value) }
     fun setAllowLan(value: Boolean) = edit { setAllowLan(value) }
+    fun setLocalProxyUser(value: String) = edit { setLocalProxyUser(value) }
+    fun setLocalProxyPassword(value: String) = edit { setLocalProxyPassword(value) }
+    fun setResolveServer(value: Boolean) = edit { setResolveServer(value) }
+    fun setSubUpdateNotify(value: Boolean) = edit { setSubUpdateNotify(value) }
     fun setUpdateOnStart(value: Boolean) = edit { setUpdateOnStart(value) }
     fun setConnectOnStart(value: Boolean) = edit { setConnectOnStart(value) }
     fun setProbeUrl(value: String) = edit { setProbeUrl(value) }
@@ -320,12 +334,16 @@ class SettingsViewModel @Inject constructor(
         val muxProtocol: String,
         val muxMaxStreams: Int,
         val muxPadding: Boolean,
+        val resolveServer: Boolean = true,
+        val subUpdateNotify: Boolean = false,
     )
 
     private data class LocalProxySlice(
         val enabled: Boolean,
         val port: Int,
         val allowLan: Boolean,
+        val user: String,
+        val password: String,
     )
 
     private data class StartupSlice(

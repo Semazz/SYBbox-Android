@@ -73,7 +73,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sybbox.BuildConfig
 import com.sybbox.R
-import com.sybbox.core.Core
 import com.sybbox.data.remote.ReleaseCheck
 import com.sybbox.ui.components.SettingsAction
 import com.sybbox.ui.components.SettingsChoice
@@ -239,6 +238,14 @@ private fun ConnectionSettings(state: SettingsState, viewModel: SettingsViewMode
         checked = state.autoFailover,
         onCheckedChange = viewModel::setAutoFailover,
         icon = Icons.Rounded.SwapHoriz,
+    )
+    SettingsDivider()
+    SettingsToggle(
+        title = stringResource(R.string.resolve_server),
+        summary = stringResource(R.string.resolve_server_summary),
+        checked = state.resolveServer,
+        onCheckedChange = viewModel::setResolveServer,
+        icon = Icons.Rounded.Dns,
     )
     SettingsDivider()
     SettingsAction(
@@ -521,6 +528,21 @@ private fun LocalProxySettings(state: SettingsState, viewModel: SettingsViewMode
             icon = Icons.Rounded.SettingsEthernet,
         )
         SettingsDivider()
+        SettingsText(
+            title = stringResource(R.string.proxy_user),
+            summary = stringResource(R.string.proxy_auth_summary),
+            value = state.localProxyUser,
+            onValueChange = viewModel::setLocalProxyUser,
+            icon = Icons.Rounded.PhoneAndroid,
+        )
+        SettingsDivider()
+        SettingsText(
+            title = stringResource(R.string.proxy_password),
+            value = state.localProxyPassword,
+            onValueChange = viewModel::setLocalProxyPassword,
+            icon = Icons.Rounded.Lock,
+        )
+        SettingsDivider()
         SettingsToggle(
             title = stringResource(R.string.allow_lan),
             summary = stringResource(R.string.allow_lan_summary),
@@ -569,6 +591,14 @@ private fun SubscriptionSettings(state: SettingsState, viewModel: SettingsViewMo
         onSelect = viewModel::setSubInterval,
         label = { stringResource(R.string.hours_value, it) },
         icon = Icons.Rounded.Schedule,
+    )
+    SettingsDivider()
+    SettingsToggle(
+        title = stringResource(R.string.sub_update_notify),
+        summary = stringResource(R.string.sub_update_notify_summary),
+        checked = state.subUpdateNotify,
+        onCheckedChange = viewModel::setSubUpdateNotify,
+        icon = Icons.Rounded.Sync,
     )
     SettingsDivider()
     SettingsAction(
@@ -734,13 +764,6 @@ private fun AboutSettings(viewModel: SettingsViewModel) {
         value = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
         icon = Icons.Rounded.Bolt,
         onClick = { copy(context, "version", BuildConfig.VERSION_NAME) },
-    )
-    SettingsDivider()
-    SettingsAction(
-        title = stringResource(R.string.core_version),
-        value = "sing-box ${runCatching { Core.version() }.getOrDefault("—")}",
-        icon = Icons.Rounded.Layers,
-        onClick = { copy(context, "core", runCatching { Core.version() }.getOrDefault("")) },
     )
     SettingsDivider()
     SettingsAction(

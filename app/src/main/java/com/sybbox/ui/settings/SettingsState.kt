@@ -43,6 +43,8 @@ data class SettingsState(
     val localProxy: Boolean = false,
     val localProxyPort: Int = 10808,
     val allowLan: Boolean = false,
+    val localProxyUser: String = "",
+    val localProxyPassword: String = "",
 
     val updateOnStart: Boolean = false,
     val connectOnStart: Boolean = false,
@@ -50,6 +52,8 @@ data class SettingsState(
     val pingTimeout: Int = 3,
     val autoUpdateCheck: Boolean = true,
     val logLimitMb: Int = 10,
+    val resolveServer: Boolean = true,
+    val subUpdateNotify: Boolean = false,
 
     val subAutoUpdate: Boolean = true,
     val defaultSubInterval: Int = 12,

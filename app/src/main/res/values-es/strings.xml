@@ -300,5 +300,17 @@
     <string name="log_usage">%1$s de %2$s</string>
     <string name="settings_search">Buscar ajustes</string>
     <string name="nothing_found">Sin resultados</string>
+    <string name="filter_all_servers">Todos los servidores</string>
+    <string name="proxy_user">Usuario del proxy</string>
+    <string name="proxy_password">Contrasena del proxy</string>
+    <string name="proxy_auth_summary">Dejelos vacios para no pedir credenciales</string>
+    <string name="resolve_server">Resolver el servidor antes</string>
+    <string name="resolve_server_summary">Resuelve la direccion antes de levantar el tunel. Desactivelo si el servidor solo conecta por nombre.</string>
+    <string name="sub_update_notify">Avisar al actualizar suscripciones</string>
+    <string name="sub_update_notify_summary">Una notificacion cuando una suscripcion se actualiza en segundo plano</string>
+    <plurals name="subscriptions_refreshed">
+        <item quantity="one">%1$d suscripcion actualizada</item>
+        <item quantity="other">%1$d suscripciones actualizadas</item>
+    </plurals>
 </resources>
 

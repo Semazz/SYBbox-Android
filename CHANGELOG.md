@@ -53,6 +53,19 @@
   what the panel said this time — including that it said nothing.
 
 ### Added — settings
+- **Logs by server.** Every line records which server was connected when it was written, and the
+  logs screen filters by server as well as by level. The log is no longer wiped on each connect,
+  so what one server did is still there after switching to another — the size limit keeps that
+  from growing without end.
+- **A user and password on the local proxy**, for anyone who would rather not leave an open
+  proxy on the device. Both empty means no authentication, as before.
+- **Resolve the server up front**, on by default, now switchable. The address is looked up before
+  the tunnel starts so the core does not have to; a server that only connects by name needs it
+  off.
+- **Notify on subscription updates**, off by default, for background refreshes.
+- The core the app is built on is no longer named anywhere in the interface.
+
+### Added — settings
 - **Search.** A field at the top of settings finds a setting by its name, its description or the
   page it lives on, and the result takes you there. The index is generated from the pages
   themselves, so it cannot drift out of step with them.

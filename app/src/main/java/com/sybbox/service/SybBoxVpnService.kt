@@ -115,6 +115,9 @@ class SybBoxVpnService : VpnService() {
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("local_proxy")],
         prefs[androidx.datastore.preferences.core.intPreferencesKey("local_proxy_port")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("allow_lan")],
+        prefs[androidx.datastore.preferences.core.stringPreferencesKey("local_proxy_user")],
+        prefs[androidx.datastore.preferences.core.stringPreferencesKey("local_proxy_password")],
+        prefs[androidx.datastore.preferences.core.booleanPreferencesKey("resolve_server")],
         prefs[androidx.datastore.preferences.core.stringPreferencesKey("routing_mode")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("block_ads")],
         prefs[androidx.datastore.preferences.core.booleanPreferencesKey("block_trackers")],
@@ -175,7 +178,6 @@ class SybBoxVpnService : VpnService() {
     }
 
     private suspend fun startConnection(profileId: Long) {
-        CoreLog.clear()
         setState(ConnectionState.CONNECTING)
         val autoFailover = settingsDataStore.autoFailover.first()
         var currentProfileId = profileId
@@ -193,6 +195,7 @@ class SybBoxVpnService : VpnService() {
                     .let { if (plainTunAddress) it.copy(hideTunnelAddress = false) else it }
                 val rules = runCatching { routingRepository.getEnabledRules().first() }.getOrDefault(emptyList())
 
+                CoreLog.setServer(profile.name.ifBlank { profile.address })
                 CoreLog.info("Connecting to ${profile.name.ifBlank { profile.address }} (${profile.protocol})")
                 Core.setup(filesDir.absolutePath, filesDir.absolutePath, cacheDir.absolutePath)
 
@@ -314,7 +317,9 @@ class SybBoxVpnService : VpnService() {
             try {
                 val config = ConfigBuilder.build(
                     profile, settings, rules, useRuleSets,
-                    systemDnsServers(), resolveServerAddress(profile.address), probePort,
+                    systemDnsServers(),
+                    if (settings.resolveServer) resolveServerAddress(profile.address) else null,
+                    probePort,
                 )
                 val service = Core.newService(config, platform)
                 platform.boxService = service

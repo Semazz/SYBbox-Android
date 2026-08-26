@@ -44,6 +44,10 @@ class SettingsDataStore @Inject constructor(
     val localProxy: Flow<Boolean> = dataStore.data.map { it[KEY_LOCAL_PROXY] ?: false }
     val localProxyPort: Flow<Int> = dataStore.data.map { it[KEY_LOCAL_PROXY_PORT] ?: 10808 }
     val allowLan: Flow<Boolean> = dataStore.data.map { it[KEY_ALLOW_LAN] ?: false }
+    val localProxyUser: Flow<String> = dataStore.data.map { it[KEY_LOCAL_PROXY_USER] ?: "" }
+    val localProxyPassword: Flow<String> = dataStore.data.map { it[KEY_LOCAL_PROXY_PASSWORD] ?: "" }
+    val resolveServer: Flow<Boolean> = dataStore.data.map { it[KEY_RESOLVE_SERVER] ?: true }
+    val subUpdateNotify: Flow<Boolean> = dataStore.data.map { it[KEY_SUB_UPDATE_NOTIFY] ?: false }
     val updateOnStart: Flow<Boolean> = dataStore.data.map { it[KEY_UPDATE_ON_START] ?: false }
     val connectOnStart: Flow<Boolean> = dataStore.data.map { it[KEY_CONNECT_ON_START] ?: false }
     val probeUrl: Flow<String> = dataStore.data.map { it[KEY_PROBE_URL] ?: DEFAULT_PROBE_URL }
@@ -118,6 +122,10 @@ class SettingsDataStore @Inject constructor(
             localProxy = p[KEY_LOCAL_PROXY] ?: false,
             localProxyPort = p[KEY_LOCAL_PROXY_PORT] ?: 10808,
             allowLan = p[KEY_ALLOW_LAN] ?: false,
+            localProxyUser = p[KEY_LOCAL_PROXY_USER] ?: "",
+            localProxyPassword = p[KEY_LOCAL_PROXY_PASSWORD] ?: "",
+            resolveServer = p[KEY_RESOLVE_SERVER] ?: true,
+            subUpdateNotify = p[KEY_SUB_UPDATE_NOTIFY] ?: false,
             updateOnStart = p[KEY_UPDATE_ON_START] ?: false,
             connectOnStart = p[KEY_CONNECT_ON_START] ?: false,
             probeUrl = p[KEY_PROBE_URL] ?: DEFAULT_PROBE_URL,
@@ -178,6 +186,10 @@ class SettingsDataStore @Inject constructor(
     suspend fun setLocalProxy(value: Boolean) = dataStore.edit { it[KEY_LOCAL_PROXY] = value }
     suspend fun setLocalProxyPort(value: Int) = dataStore.edit { it[KEY_LOCAL_PROXY_PORT] = value }
     suspend fun setAllowLan(value: Boolean) = dataStore.edit { it[KEY_ALLOW_LAN] = value }
+    suspend fun setLocalProxyUser(value: String) = dataStore.edit { it[KEY_LOCAL_PROXY_USER] = value }
+    suspend fun setLocalProxyPassword(value: String) = dataStore.edit { it[KEY_LOCAL_PROXY_PASSWORD] = value }
+    suspend fun setResolveServer(value: Boolean) = dataStore.edit { it[KEY_RESOLVE_SERVER] = value }
+    suspend fun setSubUpdateNotify(value: Boolean) = dataStore.edit { it[KEY_SUB_UPDATE_NOTIFY] = value }
     suspend fun setUpdateOnStart(value: Boolean) = dataStore.edit { it[KEY_UPDATE_ON_START] = value }
     suspend fun setConnectOnStart(value: Boolean) = dataStore.edit { it[KEY_CONNECT_ON_START] = value }
     suspend fun setProbeUrl(value: String) = dataStore.edit { it[KEY_PROBE_URL] = value }
@@ -257,6 +269,10 @@ class SettingsDataStore @Inject constructor(
         private val KEY_LOCAL_PROXY = booleanPreferencesKey("local_proxy")
         private val KEY_LOCAL_PROXY_PORT = intPreferencesKey("local_proxy_port")
         private val KEY_ALLOW_LAN = booleanPreferencesKey("allow_lan")
+        private val KEY_LOCAL_PROXY_USER = stringPreferencesKey("local_proxy_user")
+        private val KEY_LOCAL_PROXY_PASSWORD = stringPreferencesKey("local_proxy_password")
+        private val KEY_RESOLVE_SERVER = booleanPreferencesKey("resolve_server")
+        private val KEY_SUB_UPDATE_NOTIFY = booleanPreferencesKey("sub_update_notify")
         private val KEY_UPDATE_ON_START = booleanPreferencesKey("update_on_start")
         private val KEY_CONNECT_ON_START = booleanPreferencesKey("connect_on_start")
         private val KEY_PROBE_URL = stringPreferencesKey("probe_url")

@@ -138,6 +138,11 @@
   pixels standing in for the same intent now come from the same handful of named steps.
 
 ### Fixed — switching servers
+- Every tap counts. Selecting a server and expanding a group were being refused for four hundred
+  milliseconds after the list last changed — a guard against a tap landing on a row that had
+  slid under the finger. A collapsed group stopped keeping a row visible some time ago, so the
+  list no longer shifts on selection and the guard had nothing left to guard; all it did was
+  swallow the second of two quick taps.
 - Tapping a server no longer stalls the screen. Switching shut the core down from the thread that
   draws the interface, and shutting a core down is native work that takes as long as it takes.
   It happens off that thread now, so the tap answers at once.
@@ -219,9 +224,6 @@
 ### Fixed — servers
 - The standalone servers card has an overflow menu: test all, and delete all behind a
   confirmation.
-- Taps are ignored for 400 ms after the list re-lays out. Selecting a server collapses its
-  group and moves every row below it, so a second quick tap used to land on whichever server
-  had slid under the finger — pick Hysteria, connect to VLESS.
 - Latency shows for ten seconds after the tunnel comes up, without having to ask for it.
 
 ### Fixed — switching servers

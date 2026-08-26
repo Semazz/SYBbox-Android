@@ -5,7 +5,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.SystemClock
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -141,11 +140,6 @@ fun ServersScreen(
 
     val manual = profiles.filter { it.subscriptionId == 0L }
 
-    val settledAt = remember(collapsedGroups, selectedId, profiles.size, subscriptions.size) {
-        SystemClock.elapsedRealtime()
-    }
-    fun steady(): Boolean = SystemClock.elapsedRealtime() - settledAt >= MISCLICK_GUARD_MS
-
     val filePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
             try {
@@ -217,7 +211,7 @@ fun ServersScreen(
         if (manual.isNotEmpty()) {
             item(key = "manual-group") {
                 Spacer(Modifier.height(SybSpacing.tight))
-                SybCard(modifier = Modifier.fillMaxWidth(), onClick = { if (steady()) viewModel.toggleGroup(MANUAL_GROUP) }) {
+                SybCard(modifier = Modifier.fillMaxWidth(), onClick = { viewModel.toggleGroup(MANUAL_GROUP) }) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(start = SybSpacing.cardH, top = SybSpacing.cardV, bottom = SybSpacing.cardV, end = SybSpacing.cardEndInset),
                             verticalAlignment = Alignment.CenterVertically,
@@ -244,7 +238,7 @@ fun ServersScreen(
                                 }
                             }
                             IconButton(
-                                onClick = { if (steady()) viewModel.toggleGroup(MANUAL_GROUP) },
+                                onClick = { viewModel.toggleGroup(MANUAL_GROUP) },
                                 modifier = Modifier.size(36.dp),
                             ) {
                                 val rot by animateFloatAsState(
@@ -307,7 +301,7 @@ fun ServersScreen(
                         selected = profile.id == selectedId,
                         latency = if (showLatency) latencies[profile.id] ?: profile.lastLatency else 0,
                         testing = profile.id in testing,
-                        onSelect = { if (steady()) viewModel.select(profile.id) },
+                        onSelect = { viewModel.select(profile.id) },
                         onPing = { viewModel.measureLatency(profile) },
                         onDelete = { viewModel.deleteProfile(profile) },
                         onCopied = { viewModel.notifyCopied() },
@@ -332,9 +326,7 @@ fun ServersScreen(
                     refreshing = subscription.id in refreshing,
                     showPing = true,
                     selectedName = members.firstOrNull { it.id == selectedId }?.displayName(),
-                    onToggle = {
-                        if (steady()) viewModel.toggleGroup(groupKey)
-                    },
+                    onToggle = { viewModel.toggleGroup(groupKey) },
                     onRefresh = { viewModel.refreshSubscription(subscription) },
                     onPingAll = {
                         viewModel.expandGroup(groupKey)
@@ -363,7 +355,7 @@ fun ServersScreen(
                         selected = profile.id == selectedId,
                         latency = if (showLatency) latencies[profile.id] ?: profile.lastLatency else 0,
                         testing = profile.id in testing,
-                        onSelect = { if (steady()) viewModel.select(profile.id) },
+                        onSelect = { viewModel.select(profile.id) },
                         onPing = { viewModel.measureLatency(profile) },
                         onDelete = { viewModel.deleteProfile(profile) },
                         onCopied = { viewModel.notifyCopied() },
@@ -422,7 +414,6 @@ fun ServersScreen(
     }
 }
 
-private const val MISCLICK_GUARD_MS = 400L
 
 private const val MANUAL_GROUP = "manual"
 

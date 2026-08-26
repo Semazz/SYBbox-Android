@@ -36,13 +36,13 @@ class SybBoxApp : Application(), Configuration.Provider {
         super.onCreate()
         createNotificationChannels()
         keepWidgetsCurrent()
-        SubscriptionUpdateWorker.schedule(this)
-        applyLogLimit()
+        applyStoredSettings()
     }
 
-    private fun applyLogLimit() {
+    private fun applyStoredSettings() {
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             CoreLog.setLimit(settingsDataStore.logLimitMb.first())
+            SubscriptionUpdateWorker.schedule(this@SybBoxApp)
         }
     }
 

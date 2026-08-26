@@ -537,8 +537,11 @@ private fun ServerRow(
                     lineHeight = 18.sp,
                 )
                 Spacer(Modifier.height(SybSpacing.labelGap))
+                val infoLine = remember(profile.protocol, profile.transport, profile.security) {
+                    profile.subInfoLine()
+                }
                 Text(
-                    profile.subInfoLine(),
+                    infoLine,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

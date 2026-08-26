@@ -137,9 +137,22 @@
 - One spacing scale across the screens that had drifted apart — gaps of 10, 12, 16, 28 and 32
   pixels standing in for the same intent now come from the same handful of named steps.
 
+### Changed — speed
+- Resolving the server address before the tunnel starts is capped at two seconds. It is there to
+  save the core a lookup, and it was allowed to take as long as the network wanted — on a slow
+  resolver that wait was the whole delay before the tunnel came up. Past the cap the core dials
+  by name, as it already did when resolving failed.
+- The tunnel check asks its endpoints at once rather than one after another, and waits five
+  seconds instead of seven. A server that carries nothing used to take up to twenty-one seconds
+  to say so; now it takes five.
+- Scheduling the subscription job moved off the startup path. It reaches into WorkManager, which
+  is not work for the moment the first frame is waiting to be drawn.
+- A row in the server list keeps its protocol line rather than rebuilding it on every tick of the
+  latency badge.
+
 ### Added — home screen widgets
 - **Four widgets.** A 1×1 that is nothing but the button; a 2×1 with the logo, a state line and
-  the button; a 2×2 that adds the server it is on; and a 3×2 that adds the subscription, how much
+  the button; a 2×2 that adds the server it is on; and a 4×2 that adds the subscription, how much
   of its quota is gone with a bar for it, the speed each way and how long the tunnel has been up.
   The two larger ones are laid out without a plain `View` anywhere — a home screen refuses to
   inflate one, which is why they could not be added at all. Both use the app's own palette and follow the system between light and

@@ -31,7 +31,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,6 +46,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.util.Locale
 import javax.inject.Inject
@@ -304,7 +307,7 @@ class SybBoxVpnService : VpnService() {
         return null
     }
 
-    private fun startCore(
+    private suspend fun startCore(
         profile: ServerProfile,
         settings: SettingsState,
         rules: List<com.sybbox.domain.model.RoutingRule>,
@@ -358,18 +361,22 @@ class SybBoxVpnService : VpnService() {
             .retryOnConnectionFailure(false)
             .build()
         return withContext(Dispatchers.IO) {
-
-            for (url in probeUrls(probeUrl)) {
-                val request = okhttp3.Request.Builder().url(url).header("User-Agent", "SYBbox").build()
-                val reached = runCatching {
-                    client.newCall(request).execute().use { it.code in 200..399 }
-                }.onFailure {
-                    CoreLog.warn("Tunnel check via ${url.toHttpUrl().host} failed: ${it.message ?: it.javaClass.simpleName}")
-                }.getOrDefault(false)
-                if (reached) return@withContext true
+            coroutineScope {
+                val probes = probeUrls(probeUrl).map { url -> async { reachable(client, url) } }
+                val reached = probes.any { it.await() }
+                probes.forEach { it.cancel() }
+                reached
             }
-            false
         }
+    }
+
+    private fun reachable(client: okhttp3.OkHttpClient, url: String): Boolean {
+        val request = okhttp3.Request.Builder().url(url).header("User-Agent", "SYBbox").build()
+        return runCatching {
+            client.newCall(request).execute().use { it.code in 200..399 }
+        }.onFailure {
+            CoreLog.warn("Tunnel check via ${url.toHttpUrl().host} failed: ${it.message ?: it.javaClass.simpleName}")
+        }.getOrDefault(false)
     }
 
     private fun probeUrls(configured: String): List<String> {
@@ -377,7 +384,15 @@ class SybBoxVpnService : VpnService() {
         return (listOfNotNull(chosen) + PROBE_URLS).distinct()
     }
 
-    private fun resolveServerAddress(address: String): String? {
+    private suspend fun resolveServerAddress(address: String): String? =
+        withTimeoutOrNull(RESOLVE_TIMEOUT_MILLIS) {
+            withContext(Dispatchers.IO) { lookUpServerAddress(address) }
+        } ?: run {
+            CoreLog.warn("Resolving the server took too long; the core will dial it by name")
+            null
+        }
+
+    private fun lookUpServerAddress(address: String): String? {
         val host = address.trim().trim('[', ']')
         if (host.isBlank()) return null
         if (host.count { it == ':' } > 1 || host.matches(Regex("""\d{1,3}(\.\d{1,3}){3}"""))) return null
@@ -609,13 +624,14 @@ class SybBoxVpnService : VpnService() {
         const val DEFAULT_TEST_URL = "https://www.gstatic.com/generate_204"
 
         private const val FAILURE_LINGER_MILLIS = 6000L
+        private const val RESOLVE_TIMEOUT_MILLIS = 2000L
         private const val RESOLVER_CHECK_STEPS = 20
         private const val RESOLVER_CHECK_STEP_MILLIS = 100L
         private val PROBE_URLS = listOf(
             DEFAULT_TEST_URL,
             "http://cp.cloudflare.com/generate_204",
         )
-        private const val PROBE_TIMEOUT_SECONDS = 7L
+        private const val PROBE_TIMEOUT_SECONDS = 5L
 
         @Volatile
         private var liveInstance: SybBoxVpnService? = null

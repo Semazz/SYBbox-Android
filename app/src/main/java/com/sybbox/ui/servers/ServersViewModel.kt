@@ -90,6 +90,8 @@ class ServersViewModel @Inject constructor(
 
     private val lastRefreshAt = mutableMapOf<Long, Long>()
 
+    private var switchJob: kotlinx.coroutines.Job? = null
+
     private val _messages = MutableSharedFlow<UiMessage>(extraBufferCapacity = 8)
     val messages: SharedFlow<UiMessage> = _messages
 
@@ -100,13 +102,21 @@ class ServersViewModel @Inject constructor(
     }
 
     fun select(profileId: Long) {
-        viewModelScope.launch { settingsDataStore.setLastProfileId(profileId) }
         if (profileId <= 0) return
+        viewModelScope.launch { settingsDataStore.setLastProfileId(profileId) }
+
         val state = SybBoxVpnService.appState.value
-        val tunnelActive = state.connectionState == ConnectionState.CONNECTED ||
+        val running = state.connectionState == ConnectionState.CONNECTED ||
             state.connectionState == ConnectionState.CONNECTING
-        if (tunnelActive && state.activeProfile?.id != profileId) {
-            SybBoxVpnService.switchServer(getApplication(), profileId)
+        val switching = switchJob?.isActive == true
+        if (!running && !switching) return
+        if (running && !switching && state.activeProfile?.id == profileId) return
+
+        switchJob?.cancel()
+        if (running) SybBoxVpnService.standby(getApplication())
+        switchJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(SWITCH_SETTLE_MS)
+            SybBoxVpnService.connect(getApplication(), profileId)
         }
     }
 
@@ -472,6 +482,7 @@ class ServersViewModel @Inject constructor(
 
     private companion object {
         const val REFRESH_COOLDOWN_MS = 30_000L
+        const val SWITCH_SETTLE_MS = 1_000L
 
         val httpClient: OkHttpClient by lazy {
             OkHttpClient.Builder()

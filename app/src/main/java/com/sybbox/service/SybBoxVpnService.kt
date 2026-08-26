@@ -70,6 +70,8 @@ class SybBoxVpnService : VpnService() {
 
     private var appliedConfigSignature = ""
 
+    private var idleJob: Job? = null
+
     private val coreMutex = kotlinx.coroutines.sync.Mutex()
 
     override fun onCreate() {
@@ -169,6 +171,10 @@ class SybBoxVpnService : VpnService() {
                 disconnect()
                 return START_NOT_STICKY
             }
+            ACTION_STANDBY -> {
+                standby()
+                return START_STICKY
+            }
             else -> stopSelf()
         }
         return START_STICKY
@@ -176,6 +182,7 @@ class SybBoxVpnService : VpnService() {
 
     private fun connect(profileId: Long, forceRestart: Boolean = false) {
         if (!forceRestart && _appState.value.connectionState == ConnectionState.CONNECTING) return
+        idleJob?.cancel()
         val previous = connectionJob
         connectionJob = serviceScope.launch {
             previous?.cancelAndJoin()
@@ -507,6 +514,27 @@ class SybBoxVpnService : VpnService() {
         runCatching { service.urlTest(ConfigBuilder.TAG_PROXY, url, 5000) }.getOrDefault(-1)
     }
 
+    private fun standby() {
+        val previous = connectionJob
+        connectionJob = null
+        activeProfileId = -1L
+        appliedConfigSignature = ""
+        _appState.value = AppState()
+        liveInstance = null
+        updateNotification()
+        idleJob?.cancel()
+        idleJob = serviceScope.launch {
+            previous?.cancelAndJoin()
+            monitorJob?.cancelAndJoin()
+            stopCore()
+            delay(STANDBY_LINGER_MILLIS)
+            if (_appState.value.connectionState == ConnectionState.DISCONNECTED) {
+                CoreLog.info("Nothing asked to connect; stopping")
+                stopSelfSafely()
+            }
+        }
+    }
+
     private fun disconnect() {
         val previous = connectionJob
         connectionJob = null
@@ -617,11 +645,13 @@ class SybBoxVpnService : VpnService() {
         const val NOTIFICATION_ID = 1
         const val ACTION_CONNECT = "com.sybbox.CONNECT"
         const val ACTION_DISCONNECT = "com.sybbox.DISCONNECT"
+        const val ACTION_STANDBY = "com.sybbox.STANDBY"
         const val EXTRA_PROFILE_ID = "profile_id"
         const val EXTRA_FORCE_RESTART = "force_restart"
         const val DEFAULT_TEST_URL = "https://www.gstatic.com/generate_204"
 
         private const val FAILURE_LINGER_MILLIS = 6000L
+        private const val STANDBY_LINGER_MILLIS = 15_000L
         private const val RESOLVER_CHECK_STEPS = 20
         private const val RESOLVER_CHECK_STEP_MILLIS = 100L
         private val PROBE_URLS = listOf(
@@ -657,6 +687,14 @@ class SybBoxVpnService : VpnService() {
                 context.startForegroundService(intent)
             } else {
                 context.startService(intent)
+            }
+        }
+
+        fun standby(context: Context) {
+            runCatching {
+                context.startService(
+                    Intent(context, SybBoxVpnService::class.java).setAction(ACTION_STANDBY),
+                )
             }
         }
 

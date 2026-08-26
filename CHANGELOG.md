@@ -138,6 +138,13 @@
   pixels standing in for the same intent now come from the same handful of named steps.
 
 ### Fixed — switching servers
+- Picking a server drops the tunnel at once and raises it a second after you stop picking. Each
+  further pick pushes that second out again, so running through a list rebuilds the tunnel once,
+  for the server you settled on, instead of once per tap.
+- While that second passes the service stays alive with the core stopped, rather than being torn
+  down and started again. Coming back up reuses what is already running, which is why connecting
+  right after switching used to take so long. If nothing asks to connect within fifteen seconds
+  the service stops on its own.
 - Every tap counts. Selecting a server and expanding a group were being refused for four hundred
   milliseconds after the list last changed — a guard against a tap landing on a row that had
   slid under the finger. A collapsed group stopped keeping a row visible some time ago, so the

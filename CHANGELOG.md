@@ -149,6 +149,15 @@
   is not work for the moment the first frame is waiting to be drawn.
 - A row in the server list keeps its protocol line rather than rebuilding it on every tick of the
   latency badge.
+- Settings are read once. Every one of the forty or so settings had its own reader over the same
+  file, folded back together through ten nested combines, and all of it started with the app
+  because the settings screen's model is built at launch. One reader now produces the whole
+  settings object; the model lost two hundred lines with it.
+- The latency badge waits for its own moment to pass instead of the whole list redrawing once a
+  second for the ten seconds it is shown.
+- Flags come from a table rather than a lookup by resource name, which the list did once per row
+  as you scrolled through two hundred and fifty of them.
+- The log allowance defaults to 30 MB, and the choice runs 5, 10, 30, 50.
 
 ### Added — home screen widgets
 - **Four widgets.** A 1×1 that is nothing but the button; a 2×1 with the logo, a state line and

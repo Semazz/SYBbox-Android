@@ -120,12 +120,13 @@ fun ServersScreen(
     val pingVisibleUntil by viewModel.pingVisibleUntil.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var nowTick by remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
-    androidx.compose.runtime.LaunchedEffect(pingVisibleUntil.isNotEmpty()) {
-        while (pingVisibleUntil.isNotEmpty()) {
-            kotlinx.coroutines.delay(1000)
-            nowTick = System.currentTimeMillis()
+    androidx.compose.runtime.LaunchedEffect(pingVisibleUntil) {
+        while (true) {
+            val now = System.currentTimeMillis()
+            nowTick = now
+            val next = pingVisibleUntil.values.filter { it > now }.minOrNull() ?: break
+            kotlinx.coroutines.delay(next - now + 50)
         }
-        nowTick = System.currentTimeMillis()
     }
 
     var showAddMenu by remember { mutableStateOf(false) }
@@ -490,10 +491,7 @@ private fun ServerRow(
             val code = remember(profile.name, profile.address, isAuto) {
                 if (isAuto) null else com.sybbox.ui.components.countryCodeForProfile(originalName, profile.address)
             }
-            val ctx = LocalContext.current
-            val flagRes = remember(code, ctx) {
-                if (code == null) 0 else ctx.resources.getIdentifier("flag_$code", "drawable", ctx.packageName)
-            }
+            val flagRes = remember(code) { com.sybbox.ui.components.flagResFor(code) }
             when {
                 isAuto -> IconTile(
                     Icons.Rounded.Bolt,

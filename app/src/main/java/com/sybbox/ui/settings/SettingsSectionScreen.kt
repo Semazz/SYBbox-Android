@@ -632,7 +632,7 @@ private fun DiagnosticsSettings(state: SettingsState, viewModel: SettingsViewMod
     SettingsChoice(
         title = stringResource(R.string.log_limit),
         summary = stringResource(R.string.log_limit_summary),
-        options = listOf(1, 5, 10, 25),
+        options = listOf(5, 10, 30, 50),
         selected = state.logLimitMb,
         onSelect = viewModel::setLogLimitMb,
         label = { stringResource(R.string.megabytes_value, it) },

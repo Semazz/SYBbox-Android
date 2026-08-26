@@ -23,7 +23,7 @@ data class LogSource(
 
 object CoreLog {
 
-    const val DEFAULT_LIMIT_MB = 10
+    const val DEFAULT_LIMIT_MB = 30
 
     private const val MAX_ENTRIES = 20_000
     private const val ENTRY_OVERHEAD_BYTES = 48L

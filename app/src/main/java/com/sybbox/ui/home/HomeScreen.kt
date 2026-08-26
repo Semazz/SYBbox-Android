@@ -150,8 +150,10 @@ fun HomeScreen(
         val pingBusy by viewModel.pingTesting.collectAsStateWithLifecycle()
         var nowTick by remember { mutableLongStateOf(System.currentTimeMillis()) }
         LaunchedEffect(pingVisibleUntil) {
-            while (nowTick < pingVisibleUntil) {
-                kotlinx.coroutines.delay(1_000)
+            val now = System.currentTimeMillis()
+            nowTick = now
+            if (pingVisibleUntil > now) {
+                kotlinx.coroutines.delay(pingVisibleUntil - now + 50)
                 nowTick = System.currentTimeMillis()
             }
         }
@@ -413,8 +415,8 @@ private fun ActiveServerCard(
             val code = androidx.compose.runtime.remember(displayNameRaw, profile?.address) {
                 if (profile == null) null else if (isAuto) null else com.sybbox.ui.components.countryCodeForProfile(displayNameRaw, profile.address)
             }
-            val flagRes = androidx.compose.runtime.remember(code, ctx) {
-                if (code == null) 0 else ctx.resources.getIdentifier("flag_$code", "drawable", ctx.packageName)
+            val flagRes = androidx.compose.runtime.remember(code) {
+                com.sybbox.ui.components.flagResFor(code)
             }
             val pColor = com.sybbox.ui.components.protocolColor(profile?.protocol ?: com.sybbox.domain.model.ProtocolType.VLESS)
             when {

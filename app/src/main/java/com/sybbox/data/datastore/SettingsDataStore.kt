@@ -53,7 +53,7 @@ class SettingsDataStore @Inject constructor(
     val probeUrl: Flow<String> = dataStore.data.map { it[KEY_PROBE_URL] ?: DEFAULT_PROBE_URL }
     val pingTimeout: Flow<Int> = dataStore.data.map { it[KEY_PING_TIMEOUT] ?: 3 }
     val autoUpdateCheck: Flow<Boolean> = dataStore.data.map { it[KEY_AUTO_UPDATE_CHECK] ?: true }
-    val logLimitMb: Flow<Int> = dataStore.data.map { it[KEY_LOG_LIMIT_MB] ?: 10 }
+    val logLimitMb: Flow<Int> = dataStore.data.map { it[KEY_LOG_LIMIT_MB] ?: 30 }
     val knownRelease: Flow<String> = dataStore.data.map { it[KEY_KNOWN_RELEASE] ?: "" }
     val knownReleasePage: Flow<String> = dataStore.data.map { it[KEY_KNOWN_RELEASE_PAGE] ?: "" }
     val dismissedRelease: Flow<String> = dataStore.data.map { it[KEY_DISMISSED_RELEASE] ?: "" }
@@ -91,8 +91,11 @@ class SettingsDataStore @Inject constructor(
     val includedApps: Flow<List<String>> = dataStore.data.map { (it[KEY_INCLUDED_APPS] ?: emptySet()).toList() }
     val excludedApps: Flow<List<String>> = dataStore.data.map { (it[KEY_EXCLUDED_APPS] ?: emptySet()).toList() }
 
-    suspend fun snapshot(): SettingsState {
-        val p = dataStore.data.first()
+    val state: Flow<SettingsState> = dataStore.data.map { toState(it) }
+
+    suspend fun snapshot(): SettingsState = toState(dataStore.data.first())
+
+    private fun toState(p: Preferences): SettingsState {
         return SettingsState(
             autoConnectOnBoot = p[KEY_AUTO_CONNECT_BOOT] ?: false,
             connectionTimeout = p[KEY_CONNECTION_TIMEOUT] ?: 30,
@@ -135,7 +138,7 @@ class SettingsDataStore @Inject constructor(
             probeUrl = p[KEY_PROBE_URL] ?: DEFAULT_PROBE_URL,
             pingTimeout = p[KEY_PING_TIMEOUT] ?: 3,
             autoUpdateCheck = p[KEY_AUTO_UPDATE_CHECK] ?: true,
-            logLimitMb = p[KEY_LOG_LIMIT_MB] ?: 10,
+            logLimitMb = p[KEY_LOG_LIMIT_MB] ?: 30,
             subAutoUpdate = p[KEY_SUB_AUTO_UPDATE] ?: true,
             defaultSubInterval = p[KEY_DEFAULT_SUB_INTERVAL] ?: 12,
             autoFailover = p[KEY_AUTO_FAILOVER] ?: false,

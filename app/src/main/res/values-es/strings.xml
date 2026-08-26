@@ -288,5 +288,6 @@
     <string name="group_advanced">Avanzado</string>
     <string name="group_other">Otros</string>
     <string name="sub_interval_summary">Se usa solo cuando la suscripcion no indica su propio intervalo</string>
+    <string name="sub_auto_update_summary">No afecta a las suscripciones con su propio intervalo, que siempre se actualizan por el</string>
 </resources>
 

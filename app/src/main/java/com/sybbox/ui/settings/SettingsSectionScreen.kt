@@ -549,6 +549,7 @@ private fun SubscriptionSettings(state: SettingsState, viewModel: SettingsViewMo
     val hwid by viewModel.hwid.collectAsStateWithLifecycle()
     SettingsToggle(
         title = stringResource(R.string.sub_auto_update),
+        summary = stringResource(R.string.sub_auto_update_summary),
         checked = state.subAutoUpdate,
         onCheckedChange = viewModel::setSubAutoUpdate,
         icon = Icons.Rounded.Sync,

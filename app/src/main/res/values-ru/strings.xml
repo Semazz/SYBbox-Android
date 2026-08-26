@@ -284,5 +284,6 @@
     <string name="group_advanced">Расширенные</string>
     <string name="group_other">Другое</string>
     <string name="sub_interval_summary">Используется только там, где подписка не задаёт свой интервал</string>
+    <string name="sub_auto_update_summary">Не распространяется на подписки со своим интервалом — они обновляются по нему всегда</string>
 </resources>
 

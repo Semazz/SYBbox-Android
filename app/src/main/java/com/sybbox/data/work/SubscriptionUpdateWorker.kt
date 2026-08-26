@@ -32,11 +32,14 @@ class SubscriptionUpdateWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         val fallbackHours = settingsDataStore.defaultSubInterval.first()
+        val fallbackEnabled = settingsDataStore.enableSubAutoUpdate.first()
         val now = System.currentTimeMillis()
         val subscriptions = subscriptionRepository.getAllSubscriptions().first()
             .filter { it.enabled && it.autoUpdate }
             .filter { subscription ->
-                val hours = subscription.updateInterval.takeIf { it > 0 } ?: fallbackHours
+                val stated = subscription.updateInterval > 0
+                if (!stated && !fallbackEnabled) return@filter false
+                val hours = if (stated) subscription.updateInterval else fallbackHours
                 val due = hours * HOUR_MILLIS - EARLY_TOLERANCE_MILLIS
                 subscription.lastUpdate <= 0 || now - subscription.lastUpdate >= due
             }
@@ -78,9 +81,9 @@ class SubscriptionUpdateWorker @AssistedInject constructor(
         private const val EARLY_TOLERANCE_MILLIS = 5L * 60L * 1000L
         private const val CHECK_INTERVAL_HOURS = 1L
 
-        fun schedule(context: Context, intervalHours: Int) {
+        fun schedule(context: Context) {
             val request = PeriodicWorkRequestBuilder<SubscriptionUpdateWorker>(
-                minOf(intervalHours.coerceIn(1, 24).toLong(), CHECK_INTERVAL_HOURS), TimeUnit.HOURS,
+                CHECK_INTERVAL_HOURS, TimeUnit.HOURS,
             ).setConstraints(
                 Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build(),
             ).build()
@@ -90,10 +93,6 @@ class SubscriptionUpdateWorker @AssistedInject constructor(
                 ExistingPeriodicWorkPolicy.UPDATE,
                 request,
             )
-        }
-
-        fun cancel(context: Context) {
-            WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
         }
     }
 }

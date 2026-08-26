@@ -290,5 +290,6 @@
     <string name="group_advanced">Advanced</string>
     <string name="group_other">Other</string>
     <string name="sub_interval_summary">Used only where a subscription does not state its own interval</string>
+    <string name="sub_auto_update_summary">Does not apply to subscriptions that state their own interval, which always refresh on it</string>
 </resources>
 

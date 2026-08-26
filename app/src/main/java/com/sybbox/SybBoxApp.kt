@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.sybbox.data.work.SubscriptionUpdateWorker
 import com.sybbox.service.SybBoxVpnService
 import com.sybbox.service.SybBoxWidget
 import dagger.hilt.android.HiltAndroidApp
@@ -31,6 +32,7 @@ class SybBoxApp : Application(), Configuration.Provider {
         super.onCreate()
         createNotificationChannels()
         keepWidgetsCurrent()
+        SubscriptionUpdateWorker.schedule(this)
     }
 
     private fun keepWidgetsCurrent() {

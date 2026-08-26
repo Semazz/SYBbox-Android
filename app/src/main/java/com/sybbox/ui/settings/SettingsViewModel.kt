@@ -242,18 +242,16 @@ class SettingsViewModel @Inject constructor(
 
     fun setSubAutoUpdate(value: Boolean) {
         edit { setSubAutoUpdate(value) }
-        applySubscriptionSchedule(value, state.value.defaultSubInterval)
+        applySubscriptionSchedule()
     }
 
     fun setSubInterval(value: Int) {
         edit { setDefaultSubInterval(value) }
-        applySubscriptionSchedule(state.value.subAutoUpdate, value)
+        applySubscriptionSchedule()
     }
 
-    private fun applySubscriptionSchedule(enabled: Boolean, intervalHours: Int) {
-        val context = getApplication<Application>()
-        if (enabled) SubscriptionUpdateWorker.schedule(context, intervalHours)
-        else SubscriptionUpdateWorker.cancel(context)
+    private fun applySubscriptionSchedule() {
+        SubscriptionUpdateWorker.schedule(getApplication())
     }
 
     fun setThemeMode(value: String) = edit { setThemeMode(value) }

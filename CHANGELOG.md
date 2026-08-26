@@ -25,6 +25,15 @@
   per-install id into every request whether or not you wanted one; identity now lives in the
   headers, behind the switch.
 
+### Fixed — subscriptions
+- A subscription's own update interval is honoured. Panels send it as `profile-update-interval`;
+  the app read the traffic counters and the title from the same response and threw this one away,
+  so a subscription that asked to be refreshed every twelve hours was refreshed on whatever the
+  app's own schedule said. The interval is stored with the subscription and used as its own.
+- The background job wakes hourly and refreshes only what is actually due, comparing each
+  subscription's interval against when it was last updated. The interval in Settings is now the
+  fallback for subscriptions that do not state one, and says so.
+
 ### Changed — settings
 - Settings open as a list of pages rather than one long scroll. The root names four areas —
   interface, tunnel, advanced, other — and each row opens its own screen with a title bar and a

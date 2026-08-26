@@ -270,4 +270,5 @@
     <string name="group_tunnel_settings">隧道</string>
     <string name="group_advanced">高级</string>
     <string name="group_other">其他</string>
+    <string name="sub_interval_summary">仅在订阅未给出自身间隔时使用</string>
 </resources>

@@ -31,8 +31,14 @@ class SubscriptionUpdateWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, parameters) {
 
     override suspend fun doWork(): Result {
+        val fallbackHours = settingsDataStore.defaultSubInterval.first()
+        val now = System.currentTimeMillis()
         val subscriptions = subscriptionRepository.getAllSubscriptions().first()
             .filter { it.enabled && it.autoUpdate }
+            .filter { subscription ->
+                val hours = subscription.updateInterval.takeIf { it > 0 } ?: fallbackHours
+                subscription.lastUpdate <= 0 || now - subscription.lastUpdate >= hours * HOUR_MILLIS
+            }
         if (subscriptions.isEmpty()) return Result.success()
 
         val userAgent = com.sybbox.data.remote.SubscriptionIdentity.userAgent(settingsDataStore)
@@ -48,11 +54,13 @@ class SubscriptionUpdateWorker @AssistedInject constructor(
                 val request = com.sybbox.data.remote.SubscriptionIdentity
                     .apply(Request.Builder().url(subscription.url), settingsDataStore, userAgent)
                     .build()
-                val body = client.newCall(request).execute().use { it.body?.string().orEmpty() }
+                val response = client.newCall(request).execute()
+                val body = response.use { it.body?.string().orEmpty() }
+                val interval = response.header("profile-update-interval")?.trim()?.toIntOrNull() ?: 0
                 val parsed = SubscriptionParser.parse(body, SubType.STANDARD)
                 if (parsed.isEmpty()) return@runCatching
                 profileRepository.mergeSubscriptionProfiles(subscription.id, parsed)
-                subscriptionRepository.updateStats(subscription.id, parsed.size)
+                subscriptionRepository.markUpdated(subscription.id, parsed.size, interval)
                 CoreLog.info("Updated subscription ${subscription.name}: ${parsed.size} servers")
             }.onFailure {
                 failures++
@@ -65,10 +73,12 @@ class SubscriptionUpdateWorker @AssistedInject constructor(
 
     companion object {
         private const val WORK_NAME = "subscription-update"
+        private const val HOUR_MILLIS = 60L * 60L * 1000L
+        private const val CHECK_INTERVAL_HOURS = 1L
 
         fun schedule(context: Context, intervalHours: Int) {
             val request = PeriodicWorkRequestBuilder<SubscriptionUpdateWorker>(
-                intervalHours.coerceIn(1, 24).toLong(), TimeUnit.HOURS,
+                minOf(intervalHours.coerceIn(1, 24).toLong(), CHECK_INTERVAL_HOURS), TimeUnit.HOURS,
             ).setConstraints(
                 Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build(),
             ).build()

@@ -289,5 +289,6 @@
     <string name="group_tunnel_settings">Tunnel</string>
     <string name="group_advanced">Advanced</string>
     <string name="group_other">Other</string>
+    <string name="sub_interval_summary">Used only where a subscription does not state its own interval</string>
 </resources>
 

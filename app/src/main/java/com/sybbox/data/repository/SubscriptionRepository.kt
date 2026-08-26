@@ -40,10 +40,33 @@ class SubscriptionRepository @Inject constructor(
         subscriptionDao.deleteSubscription(subscription.toEntity())
     }
 
-    suspend fun updateStats(id: Long, profileCount: Int, upload: Long = 0, download: Long = 0, total: Long = 0, expire: Long = 0) {
+    suspend fun updateStats(
+        id: Long,
+        profileCount: Int,
+        upload: Long = 0,
+        download: Long = 0,
+        total: Long = 0,
+        expire: Long = 0,
+        updateInterval: Int = 0,
+    ) {
         subscriptionDao.updateSubscriptionStats(id, System.currentTimeMillis(), profileCount)
         val sub = subscriptionDao.getSubscriptionById(id) ?: return
-        subscriptionDao.updateSubscription(sub.copy(upload = upload, download = download, total = total, expire = expire))
+        subscriptionDao.updateSubscription(
+            sub.copy(
+                upload = upload,
+                download = download,
+                total = total,
+                expire = expire,
+                updateInterval = if (updateInterval > 0) updateInterval else sub.updateInterval,
+            ),
+        )
+    }
+
+    suspend fun markUpdated(id: Long, profileCount: Int, updateInterval: Int) {
+        subscriptionDao.updateSubscriptionStats(id, System.currentTimeMillis(), profileCount)
+        if (updateInterval <= 0) return
+        val sub = subscriptionDao.getSubscriptionById(id) ?: return
+        subscriptionDao.updateSubscription(sub.copy(updateInterval = updateInterval))
     }
 }
 

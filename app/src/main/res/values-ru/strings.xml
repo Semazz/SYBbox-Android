@@ -283,5 +283,6 @@
     <string name="group_tunnel_settings">Туннель</string>
     <string name="group_advanced">Расширенные</string>
     <string name="group_other">Другое</string>
+    <string name="sub_interval_summary">Используется только там, где подписка не задаёт свой интервал</string>
 </resources>
 

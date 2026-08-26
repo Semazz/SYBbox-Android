@@ -248,6 +248,7 @@ class ServersViewModel @Inject constructor(
             subscriptionRepository.updateStats(
                 subscriptionId, ids.size,
                 finalResponse.upload, finalResponse.download, finalResponse.total, finalResponse.expire,
+                finalResponse.updateInterval,
             )
 
             finalResponse.profileTitle?.let { title ->
@@ -294,6 +295,7 @@ class ServersViewModel @Inject constructor(
         client.newCall(request).execute().use { response ->
             val body = response.body?.string().orEmpty()
             val info = response.header("subscription-userinfo").orEmpty()
+            val updateInterval = response.header("profile-update-interval")?.trim()?.toIntOrNull() ?: 0
             val contentDisposition = response.header("Content-Disposition").orEmpty()
             val headerName = extractFilename(contentDisposition)
 
@@ -318,6 +320,7 @@ class ServersViewModel @Inject constructor(
                 expire = info.readCounter("expire"),
                 headerName = headerName,
                 profileTitle = profileTitle,
+                updateInterval = updateInterval,
             )
         }
     }
@@ -346,6 +349,7 @@ class ServersViewModel @Inject constructor(
         val expire: Long = 0,
         val headerName: String? = null,
         val profileTitle: String? = null,
+        val updateInterval: Int = 0,
     )
 
     fun measureLatency(profile: ServerProfile) {

@@ -556,6 +556,7 @@ private fun SubscriptionSettings(state: SettingsState, viewModel: SettingsViewMo
     SettingsDivider()
     SettingsChoice(
         title = stringResource(R.string.sub_interval),
+        summary = stringResource(R.string.sub_interval_summary),
         options = listOf(1, 3, 6, 12, 24),
         selected = state.defaultSubInterval,
         onSelect = viewModel::setSubInterval,

@@ -32,6 +32,8 @@ import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Memory
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.MergeType
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PhoneAndroid
@@ -563,8 +565,36 @@ private fun LocalProxySettings(state: SettingsState, viewModel: SettingsViewMode
             onCheckedChange = viewModel::setAllowLan,
             icon = Icons.Rounded.Wifi,
         )
+        if (state.allowLan) {
+            SettingsDivider()
+            val proxyContext = LocalContext.current
+            val address = remember(state.localProxyPort) { lanAddress() }
+            val shown = if (address.isBlank()) {
+                stringResource(R.string.lan_address_missing)
+            } else {
+                "$address:${state.localProxyPort}"
+            }
+            SettingsAction(
+                title = stringResource(R.string.lan_address),
+                summary = stringResource(R.string.lan_address_summary),
+                value = shown,
+                icon = Icons.Rounded.Share,
+                onClick = { if (address.isNotBlank()) copy(proxyContext, "proxy", shown) },
+            )
+        }
     }
 }
+
+private fun lanAddress(): String = runCatching {
+    java.net.NetworkInterface.getNetworkInterfaces()
+        .asSequence()
+        .filter { it.isUp && !it.isLoopback && !it.name.startsWith("tun") }
+        .flatMap { it.inetAddresses.asSequence() }
+        .filterIsInstance<java.net.Inet4Address>()
+        .firstOrNull { !it.isLoopbackAddress && it.isSiteLocalAddress }
+        ?.hostAddress
+        .orEmpty()
+}.getOrDefault("")
 
 @Composable
 private fun StartupSettings(state: SettingsState, viewModel: SettingsViewModel) {
@@ -758,6 +788,14 @@ private fun AboutSettings(viewModel: SettingsViewModel) {
         value = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
         icon = Icons.Rounded.Bolt,
         onClick = { copy(context, "version", BuildConfig.VERSION_NAME) },
+    )
+    SettingsDivider()
+    val coreVersion = remember { runCatching { com.sybbox.core.Core.version() }.getOrDefault("") }
+    SettingsAction(
+        title = stringResource(R.string.core_version),
+        value = coreVersion.ifBlank { stringResource(R.string.unknown_value) },
+        icon = Icons.Rounded.Memory,
+        onClick = { copy(context, "core", coreVersion) },
     )
     SettingsDivider()
     SettingsAction(

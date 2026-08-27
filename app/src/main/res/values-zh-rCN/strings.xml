@@ -311,4 +311,8 @@
     <string name="fragment_packets">分片对象</string>
     <string name="noise">噪声</string>
     <string name="noise_summary">在握手前发送垃圾数据包以干扰深度包检测</string>
+    <string name="unknown_value">未知</string>
+    <string name="lan_address">其他设备使用的地址</string>
+    <string name="lan_address_summary">在另一台设备上填入此 SOCKS5 代理，其流量将经由隧道</string>
+    <string name="lan_address_missing">未连接网络</string>
 </resources>

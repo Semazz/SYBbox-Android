@@ -184,7 +184,7 @@
 
     <string name="version">Version</string>
     <string name="core_version">Core</string>
-    <string name="developed_by" translatable="false">SYBcreate</string>
+    <string name="developed_by" translatable="false">Developed by SYBcreate</string>
 
     
     <string name="add">Add</string>
@@ -332,5 +332,9 @@
     <string name="fragment_packets">What to fragment</string>
     <string name="noise">Noise</string>
     <string name="noise_summary">Send junk packets before the handshake to confuse deep packet inspection</string>
+    <string name="unknown_value">Unknown</string>
+    <string name="lan_address">Address for other devices</string>
+    <string name="lan_address_summary">Enter this as a SOCKS5 proxy on another device to send its traffic through the tunnel</string>
+    <string name="lan_address_missing">Not on a network</string>
 </resources>
 

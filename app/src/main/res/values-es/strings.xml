@@ -182,7 +182,7 @@
 
     <string name="version">Versión</string>
     <string name="core_version">Núcleo</string>
-    <string name="developed_by" translatable="false">SYBcreate</string>
+    <string name="developed_by" translatable="false">Developed by SYBcreate</string>
 
     
     <string name="add">Añadir</string>
@@ -330,5 +330,9 @@
     <string name="fragment_packets">Qué fragmentar</string>
     <string name="noise">Ruido</string>
     <string name="noise_summary">Enviar paquetes basura antes del saludo para confundir la inspección de paquetes</string>
+    <string name="unknown_value">Desconocido</string>
+    <string name="lan_address">Dirección para otros dispositivos</string>
+    <string name="lan_address_summary">Introdúzcala como proxy SOCKS5 en otro dispositivo para que su tráfico pase por el túnel</string>
+    <string name="lan_address_missing">Sin red</string>
 </resources>
 

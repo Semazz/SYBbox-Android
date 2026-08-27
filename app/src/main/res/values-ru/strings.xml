@@ -330,5 +330,9 @@
     <string name="fragment_packets">Что дробить</string>
     <string name="noise">Шум</string>
     <string name="noise_summary">Слать мусорные пакеты перед рукопожатием, чтобы сбить анализатор трафика</string>
+    <string name="unknown_value">Неизвестно</string>
+    <string name="lan_address">Адрес для других устройств</string>
+    <string name="lan_address_summary">Впишите его как SOCKS5-прокси на другом устройстве, и его трафик пойдёт через туннель</string>
+    <string name="lan_address_missing">Нет сети</string>
 </resources>
 

@@ -18,6 +18,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -116,6 +118,11 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
+private val NAV_BAR_CORNER = 32.dp
+private val NAV_BAR_INSET = 14.dp
+private val NAV_BAR_LIFT = 10.dp
+private val NAV_BAR_HEIGHT = 74.dp
+
 private const val NAV_ENTER_MILLIS = 260
 private const val NAV_EXIT_MILLIS = 200
 
@@ -154,17 +161,22 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
             snackbarHost = { SnackbarHost(snackbarHost) },
             bottomBar = {
                 if (showBottomBar) {
-                    Surface(
+                    Box(
                         modifier = Modifier
-                            .shadow(8.dp, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                            .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainer),
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = NAV_BAR_INSET, vertical = NAV_BAR_LIFT),
+                    ) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(NAV_BAR_CORNER),
                         color = MaterialTheme.colorScheme.surfaceContainer,
                         tonalElevation = 3.dp,
+                        shadowElevation = 10.dp,
                     ) {
                         NavigationBar(
                             containerColor = Color.Transparent,
-                            modifier = Modifier.navigationBarsPadding(),
+                            modifier = Modifier.height(NAV_BAR_HEIGHT),
                         ) {
                             bottomNavItems.forEach { item ->
                                 val root = currentRoute == item.screen.route
@@ -211,6 +223,7 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
                                 )
                             }
                         }
+                    }
                     }
                 }
             },

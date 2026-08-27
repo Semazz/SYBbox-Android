@@ -614,6 +614,18 @@ private fun LocalProxySettings(state: SettingsState, viewModel: SettingsViewMode
                 icon = Icons.Rounded.SettingsEthernet,
             )
         }
+        if (state.allowLan && (state.localProxyUser.isBlank() || state.localProxyPassword.isBlank())) {
+            Text(
+                stringResource(R.string.allow_lan_open_warning),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(
+                    start = SybSpacing.rowH,
+                    end = SybSpacing.rowH,
+                    top = SybSpacing.tight,
+                ),
+            )
+        }
         if (state.allowLan) {
             SettingsDivider()
             val proxyContext = LocalContext.current

@@ -326,4 +326,5 @@
     <string name="excluded_routes_summary">此处列出的地址将完全绕过隧道。需要 Android 13 或更高版本</string>
     <string name="subscription_user_agent">标识为</string>
     <string name="subscription_user_agent_summary">部分面板会根据请求方的身份下发不同的服务器</string>
+    <string name="allow_lan_open_warning">未设置用户名和密码时，同一网络中的任何人都可通过你的隧道转发流量</string>
 </resources>

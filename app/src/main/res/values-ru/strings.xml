@@ -345,5 +345,6 @@
     <string name="excluded_routes_summary">Перечисленные адреса пойдут в обход туннеля. Нужен Android 13 или новее</string>
     <string name="subscription_user_agent">Представляться как</string>
     <string name="subscription_user_agent_summary">Некоторые панели отдают разные серверы в зависимости от того, кто спрашивает</string>
+    <string name="allow_lan_open_warning">Без пользователя и пароля любой в той же сети может пустить свой трафик через ваш туннель</string>
 </resources>
 

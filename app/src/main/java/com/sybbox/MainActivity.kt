@@ -8,8 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -49,7 +48,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -115,6 +116,12 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
+private const val NAV_ENTER_MILLIS = 260
+private const val NAV_EXIT_MILLIS = 200
+
+private fun NavController.settled(): Boolean =
+    currentBackStackEntry?.lifecycle?.currentState == Lifecycle.State.RESUMED
+
 @Composable
 private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
     val settings by settingsViewModel.state.collectAsStateWithLifecycle()
@@ -126,7 +133,12 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
         val snackbarHost = remember { SnackbarHostState() }
         val context = LocalContext.current
         val open: (String) -> Unit = { route ->
-            navController.navigate(route) { launchSingleTop = true }
+            if (navController.settled()) {
+                navController.navigate(route) { launchSingleTop = true }
+            }
+        }
+        val back: () -> Unit = {
+            if (navController.settled()) navController.popBackStack()
         }
 
         val fullScreenRoutes = setOf(
@@ -210,67 +222,45 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
                     enterTransition = {
                         slideInHorizontally(
                             initialOffsetX = { it / 8 },
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMediumLow,
-                            ),
+                            animationSpec = tween(NAV_ENTER_MILLIS, easing = FastOutSlowInEasing),
                         ) + fadeIn(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMediumLow,
-                            ),
+                            animationSpec = tween(NAV_ENTER_MILLIS, easing = FastOutSlowInEasing),
                         ) + scaleIn(
                             initialScale = 0.96f,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMediumLow,
-                            ),
+                            animationSpec = tween(NAV_ENTER_MILLIS, easing = FastOutSlowInEasing),
                         )
                     },
                     exitTransition = {
                         slideOutHorizontally(
                             targetOffsetX = { -it / 8 },
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMediumLow,
-                            ),
+                            animationSpec = tween(NAV_EXIT_MILLIS, easing = FastOutSlowInEasing),
                         ) + fadeOut(
-                            animationSpec = tween(120),
+                            animationSpec = tween(NAV_EXIT_MILLIS, easing = FastOutSlowInEasing),
                         ) + scaleOut(
                             targetScale = 0.98f,
-                            animationSpec = tween(120),
+                            animationSpec = tween(NAV_EXIT_MILLIS, easing = FastOutSlowInEasing),
                         )
                     },
                     popEnterTransition = {
                         slideInHorizontally(
                             initialOffsetX = { -it / 8 },
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMediumLow,
-                            ),
+                            animationSpec = tween(NAV_ENTER_MILLIS, easing = FastOutSlowInEasing),
                         ) + fadeIn(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMediumLow,
-                            ),
+                            animationSpec = tween(NAV_ENTER_MILLIS, easing = FastOutSlowInEasing),
                         ) + scaleIn(
                             initialScale = 0.96f,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMediumLow,
-                            ),
+                            animationSpec = tween(NAV_ENTER_MILLIS, easing = FastOutSlowInEasing),
                         )
                     },
                     popExitTransition = {
                         slideOutHorizontally(
                             targetOffsetX = { it / 8 },
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMediumLow,
-                            ),
-                        ) + fadeOut(tween(120)) + scaleOut(
+                            animationSpec = tween(NAV_EXIT_MILLIS, easing = FastOutSlowInEasing),
+                        ) + fadeOut(
+                            animationSpec = tween(NAV_EXIT_MILLIS, easing = FastOutSlowInEasing),
+                        ) + scaleOut(
                             targetScale = 0.98f,
-                            animationSpec = tween(120),
+                            animationSpec = tween(NAV_EXIT_MILLIS, easing = FastOutSlowInEasing),
                         )
                     },
                 ) {
@@ -281,12 +271,14 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
                         }
                         HomeScreen(
                             onBrowseServers = {
-                                navController.navigate(Screen.Servers.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                if (navController.settled()) {
+                                    navController.navigate(Screen.Servers.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
                                 }
                             },
                             viewModel = viewModel,
@@ -318,7 +310,7 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
                         } else {
                             SettingsSectionScreen(
                                 section = section,
-                                onBack = { navController.popBackStack() },
+                                onBack = back,
                                 onOpenPerApp = { open(Screen.PerApp.route) },
                                 viewModel = settingsViewModel,
                             )
@@ -327,21 +319,21 @@ private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
                     composable(Screen.Logs.route) {
                         LogsIndexScreen(
                             onOpen = { open(Screen.LogView.route(it)) },
-                            onBack = { navController.popBackStack() },
+                            onBack = back,
                         )
                     }
                     composable(Screen.LogView.route) { entry ->
                         val name = entry.arguments?.getString("server").orEmpty()
                         LogsScreen(
                             server = name.takeIf { it != Screen.LogView.ALL },
-                            onBack = { navController.popBackStack() },
+                            onBack = back,
                         )
                     }
                     composable(Screen.PerApp.route) {
-                        PerAppScreen(onBack = { navController.popBackStack() })
+                        PerAppScreen(onBack = back)
                     }
                     composable(Screen.Scanner.route) {
-                        ScannerDestination(onFinished = { navController.popBackStack() })
+                        ScannerDestination(onFinished = back)
                     }
                 }
             }

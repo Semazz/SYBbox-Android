@@ -361,13 +361,13 @@ class SybBoxVpnService : VpnService() {
 
         val address = if (settings.hideTunnelAddress) TUN_ADDRESS_V4_HIDDEN else TUN_ADDRESS_V4
         builder.addAddress(address, TUN_PREFIX_V4)
-        if (!settings.leakProtection) {
-            runCatching { builder.addAddress(TUN_ADDRESS_V6, TUN_PREFIX_V6) }
-        }
+        val carriesIpv6 = runCatching { builder.addAddress(TUN_ADDRESS_V6, TUN_PREFIX_V6) }
+            .onFailure { CoreLog.warn("The system refused an IPv6 address: ${it.message}") }
+            .isSuccess
 
         if (settings.autoRoute) {
             builder.addRoute("0.0.0.0", 0)
-            if (!settings.leakProtection || settings.strictRoute) {
+            if (carriesIpv6) {
                 runCatching { builder.addRoute("::", 0) }
                     .onFailure { CoreLog.warn("The system refused an IPv6 route: ${it.message}") }
             }

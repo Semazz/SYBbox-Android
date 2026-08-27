@@ -599,22 +599,6 @@ class SybBoxVpnService : VpnService() {
         }
     }
 
-    suspend fun urlTest(url: String = DEFAULT_TEST_URL): Int = withContext(Dispatchers.IO) {
-        if (xrayInstance == null || probePort == 0) return@withContext -1
-        val client = okhttp3.OkHttpClient.Builder()
-            .proxy(java.net.Proxy(java.net.Proxy.Type.SOCKS, java.net.InetSocketAddress("127.0.0.1", probePort)))
-            .connectTimeout(URL_TEST_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
-            .callTimeout(URL_TEST_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
-            .retryOnConnectionFailure(false)
-            .build()
-        val request = okhttp3.Request.Builder().url(url).header("User-Agent", "SYBbox").build()
-        runCatching {
-            val started = System.nanoTime()
-            val reached = client.newCall(request).execute().use { it.code in 200..399 }
-            if (!reached) return@runCatching -1
-            ((System.nanoTime() - started) / 1_000_000L).toInt().coerceAtLeast(1)
-        }.getOrDefault(-1)
-    }
 
     private fun standby() {
         val previous = connectionJob
@@ -710,10 +694,17 @@ class SybBoxVpnService : VpnService() {
 
     private fun startPing() {
         serviceScope.launch {
+            val profile = _appState.value.activeProfile ?: return@launch
             pingMillis = PING_RUNNING
             updateNotification()
-            val measured = urlTest()
+
+            val timeout = runCatching { readSettings().pingTimeout * 1000 }.getOrDefault(3000)
+            val measured = withContext(Dispatchers.IO) {
+                com.sybbox.core.PingTool.pingForProfile(this@SybBoxVpnService, profile, timeout)
+            }
+
             pingMillis = measured
+            runCatching { profileRepository.updateLatency(profile.id, measured) }
             updateNotification()
         }
     }
@@ -792,7 +783,6 @@ class SybBoxVpnService : VpnService() {
             DEFAULT_TEST_URL,
             "http://cp.cloudflare.com/generate_204",
         )
-        private const val URL_TEST_TIMEOUT_SECONDS = 5L
         private const val PING_IDLE = 0
         private const val PING_RUNNING = -2
 
@@ -822,8 +812,6 @@ class SybBoxVpnService : VpnService() {
         fun switchServer(context: Context, profileId: Long) {
             startAction(context, profileId, forceRestart = true)
         }
-
-        suspend fun activeLatency(): Int = liveInstance?.urlTest() ?: -1
 
         fun measurePing() {
             liveInstance?.startPing()

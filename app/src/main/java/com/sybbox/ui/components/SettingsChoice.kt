@@ -58,11 +58,10 @@ fun <T> SettingsChoice(
     val fitsAsSegments = options.size in 2..4 && labels.all { it.length <= SEGMENT_LABEL_MAX }
 
     if (fitsAsSegments) {
-        SettingsRowCard {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = SybSpacing.rowH, vertical = SybSpacing.cardV),
+                .padding(horizontal = SybSpacing.rowH, vertical = SybSpacing.rowV),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (icon != null) {
@@ -74,16 +73,15 @@ fun <T> SettingsChoice(
             Spacer(Modifier.height(SybSpacing.small + SybSpacing.hair))
             SybSegmented(options, labels, selected, onSelect)
         }
-        }
         return
     }
 
     var sheetOpen by remember { mutableStateOf(false) }
-    SettingsRowCard(onClick = { sheetOpen = true }) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = SybSpacing.rowH, vertical = SybSpacing.cardV),
+            .clickable { sheetOpen = true }
+            .padding(horizontal = SybSpacing.rowH, vertical = SybSpacing.rowV),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
@@ -116,7 +114,6 @@ fun <T> SettingsChoice(
                 modifier = Modifier.size(16.dp),
             )
         }
-    }
     }
 
     if (sheetOpen) {

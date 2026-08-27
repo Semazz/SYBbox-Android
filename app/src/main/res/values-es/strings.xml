@@ -345,11 +345,5 @@
     <string name="excluded_routes_summary">Las direcciones aquí evitan el túnel. Requiere Android 13 o superior</string>
     <string name="subscription_user_agent">Identificarse como</string>
     <string name="subscription_user_agent_summary">Algunos paneles entregan servidores distintos según quién pregunte</string>
-    <string name="corner_style">Redondeo de esquinas</string>
-    <string name="corner_style_summary">Cuánto se redondean las esquinas en toda la app</string>
-    <string name="corner_sharp">Rectas</string>
-    <string name="corner_medium">Medio</string>
-    <string name="corner_round">Redondas</string>
-    <string name="corner_extra">Máximo</string>
 </resources>
 

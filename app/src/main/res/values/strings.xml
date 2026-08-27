@@ -347,11 +347,5 @@
     <string name="excluded_routes_summary">Addresses listed here bypass the tunnel entirely. Needs Android 13 or newer</string>
     <string name="subscription_user_agent">Identify as</string>
     <string name="subscription_user_agent_summary">Some panels hand out different servers depending on who is asking</string>
-    <string name="corner_style">Corner rounding</string>
-    <string name="corner_style_summary">How round the corners are across the app</string>
-    <string name="corner_sharp">Sharp</string>
-    <string name="corner_medium">Medium</string>
-    <string name="corner_round">Round</string>
-    <string name="corner_extra">Extra</string>
 </resources>
 

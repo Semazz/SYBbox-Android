@@ -58,7 +58,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sybbox.R
 import com.sybbox.domain.model.ProtocolType
-import com.sybbox.ui.theme.LocalCornerScale
 import com.sybbox.ui.theme.SybSpacing
 import com.sybbox.ui.theme.LatencyFast
 import com.sybbox.ui.theme.LatencyMedium
@@ -74,12 +73,6 @@ import com.sybbox.ui.theme.ProtocolVless
 import com.sybbox.ui.theme.ProtocolVmess
 
 val CardShape = RoundedCornerShape(20.dp)
-
-@Composable
-fun cardShape() = RoundedCornerShape((20 * LocalCornerScale.current).dp)
-
-@Composable
-fun tileShape() = RoundedCornerShape((14 * LocalCornerScale.current).dp)
 val GroupShape = RoundedCornerShape(24.dp)
 val TileShape = RoundedCornerShape(14.dp)
 val PillShape = RoundedCornerShape(50)
@@ -91,7 +84,7 @@ fun SybCard(
     selected: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val shape = cardShape()
+    val shape = CardShape
     val border by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
         animationSpec = tween(240),
@@ -134,7 +127,7 @@ fun IconTile(
     Box(
         modifier = modifier
             .size(42.dp)
-            .clip(tileShape())
+            .clip(TileShape)
             .background(container),
         contentAlignment = Alignment.Center,
     ) {
@@ -297,12 +290,20 @@ fun SettingsGroup(
     icon: ImageVector? = null,
     content: @Composable () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        SectionHeader(title)
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(SybSpacing.small),
-        ) { content() }
+    if (icon == null) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            SectionHeader(title)
+            SybCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(vertical = 6.dp)) { content() }
+            }
+        }
+    } else {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            SectionHeader(title)
+            SybCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(vertical = 6.dp)) { content() }
+            }
+        }
     }
 }
 
@@ -316,21 +317,20 @@ fun SettingsToggle(
     icon: ImageVector? = null,
 ) {
     val alpha = if (enabled) 1f else 0.5f
-    SettingsRowCard(onClick = { onCheckedChange(!checked) }, enabled = enabled) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = SybSpacing.rowH, vertical = SybSpacing.cardV),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (icon != null) {
-                IconTile(icon, modifier = Modifier.alpha(alpha))
-                Spacer(Modifier.width(14.dp))
-            }
-            RowLabel(title, summary, Modifier.weight(1f), enabled)
-            Spacer(Modifier.width(12.dp))
-            Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled) { onCheckedChange(!checked) }
+            .padding(horizontal = SybSpacing.rowH, vertical = SybSpacing.rowV),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (icon != null) {
+            IconTile(icon, modifier = Modifier.alpha(alpha))
+            Spacer(Modifier.width(14.dp))
         }
+        RowLabel(title, summary, Modifier.weight(1f), enabled)
+        Spacer(Modifier.width(12.dp))
+        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
     }
 }
 
@@ -342,32 +342,33 @@ fun SettingsAction(
     value: String? = null,
     icon: ImageVector? = null,
 ) {
-    SettingsRowCard(onClick = onClick) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = SybSpacing.rowH, vertical = SybSpacing.cardV),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (icon != null) {
-                IconTile(icon)
-                Spacer(Modifier.width(14.dp))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                RowLabel(title, summary)
-                if (value != null) {
-                    Spacer(Modifier.height(SybSpacing.small))
-                    ValuePill(value, Modifier.widthIn(max = 220.dp))
-                }
-            }
-            Spacer(Modifier.width(SybSpacing.small))
-            Icon(
-                Icons.Rounded.ChevronRight,
-                null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(22.dp),
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = SybSpacing.rowH, vertical = SybSpacing.rowV),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (icon != null) {
+            IconTile(icon)
+            Spacer(Modifier.width(14.dp))
+        }
+        RowLabel(title, summary, Modifier.weight(1f))
+        if (value != null) {
+            Spacer(Modifier.width(12.dp))
+            Text(
+                value,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = 160.dp),
             )
         }
+        Icon(
+            Icons.Rounded.ChevronRight,
+            null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(22.dp),
+        )
     }
 }
 
@@ -383,33 +384,34 @@ fun SettingsText(
     var editing by remember { mutableStateOf(false) }
     var draft by remember(value) { mutableStateOf(value) }
 
-    SettingsRowCard(onClick = { draft = value; editing = true }) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = SybSpacing.rowH, vertical = SybSpacing.cardV),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (icon != null) {
-                IconTile(icon)
-                Spacer(Modifier.width(14.dp))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                RowLabel(title, summary)
-                Spacer(Modifier.height(SybSpacing.small))
-                ValuePill(
-                    value.ifBlank { placeholder.ifBlank { "—" } },
-                    Modifier.widthIn(max = 220.dp),
-                )
-            }
-            Spacer(Modifier.width(SybSpacing.small))
-            Icon(
-                Icons.Rounded.ChevronRight,
-                null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(22.dp),
-            )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { draft = value; editing = true }
+            .padding(horizontal = SybSpacing.rowH, vertical = SybSpacing.rowV),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (icon != null) {
+            IconTile(icon)
+            Spacer(Modifier.width(14.dp))
         }
+        RowLabel(title, summary, Modifier.weight(1f))
+        Spacer(Modifier.width(12.dp))
+        Text(
+            value.ifBlank { placeholder.ifBlank { "—" } },
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.widthIn(max = 140.dp),
+        )
+        Icon(
+            Icons.Rounded.ChevronRight,
+            null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(22.dp),
+        )
     }
 
     if (editing) {
@@ -457,53 +459,10 @@ internal fun RowLabel(title: String, summary: String?, modifier: Modifier = Modi
 
 @Composable
 fun SettingsDivider() {
-    Spacer(Modifier.height(SybSpacing.small))
-}
-
-@Composable
-fun SettingsRowCard(
-    onClick: (() -> Unit)? = null,
-    enabled: Boolean = true,
-    content: @Composable () -> Unit,
-) {
-    val shape = cardShape()
-    val interaction = remember { MutableInteractionSource() }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .then(
-                if (onClick != null && enabled) {
-                    Modifier.clickable(
-                        interactionSource = interaction,
-                        indication = LocalIndication.current,
-                        onClick = onClick,
-                    )
-                } else {
-                    Modifier
-                },
-            ),
-    ) { content() }
-}
-
-@Composable
-fun ValuePill(text: String, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .clip(PillShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            .padding(horizontal = SybSpacing.medium, vertical = SybSpacing.tight + 2.dp),
-    ) {
-        Text(
-            text,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 72.dp),
+        color = MaterialTheme.colorScheme.outlineVariant,
+    )
 }
 
 val ScreenPadding = PaddingValues(horizontal = 16.dp)

@@ -126,11 +126,7 @@ private fun NavController.settled(): Boolean =
 private fun AppContent(settingsViewModel: SettingsViewModel = hiltViewModel()) {
     val settings by settingsViewModel.state.collectAsStateWithLifecycle()
 
-    SYBboxTheme(
-        themeMode = settings.themeMode,
-        dynamicColor = settings.dynamicColor,
-        cornerStyle = settings.cornerStyle,
-    ) {
+    SYBboxTheme(themeMode = settings.themeMode, dynamicColor = settings.dynamicColor) {
         val navController = rememberNavController()
         val backStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = backStackEntry?.destination?.route

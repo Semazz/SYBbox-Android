@@ -1,11 +1,6 @@
 package com.sybbox.ui.settings
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.rounded.ChevronRight
-import com.sybbox.ui.components.IconTile
-import com.sybbox.ui.components.SettingsRowCard
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -61,19 +56,19 @@ import com.sybbox.ui.components.SettingsGroup
 import com.sybbox.ui.components.PillShape
 import com.sybbox.ui.theme.SybSpacing
 
-enum class SettingsSection(val titleRes: Int, val icon: ImageVector, val accent: Long) {
-    APPEARANCE(R.string.group_appearance, Icons.Rounded.Palette, 0xFFB86FA8),
-    CONNECTION(R.string.group_connection, Icons.Rounded.Bolt, 0xFF3F7ED8),
-    ROUTING(R.string.group_routing, Icons.Rounded.AltRoute, 0xFF3FA98A),
-    DNS(R.string.group_dns, Icons.Rounded.Dns, 0xFF7A6FD8),
-    TRANSPORT(R.string.group_tls, Icons.Rounded.Layers, 0xFFD8863F),
-    TUNNEL(R.string.group_tun, Icons.Rounded.Shield, 0xFF4FA33F),
-    LOCAL_PROXY(R.string.group_local_proxy, Icons.Rounded.Router, 0xFF3FA0B8),
-    SUBSCRIPTIONS(R.string.group_subscriptions, Icons.Rounded.Sync, 0xFFD85F7A),
-    STARTUP(R.string.group_startup, Icons.Rounded.PowerSettingsNew, 0xFF8A8F3F),
-    DIAGNOSTICS(R.string.group_diagnostics, Icons.Rounded.BugReport, 0xFF6F8FA8),
-    MAINTENANCE(R.string.group_maintenance, Icons.Rounded.RestartAlt, 0xFFB8763F),
-    ABOUT(R.string.group_about, Icons.Rounded.Info, 0xFF7F7F8F),
+enum class SettingsSection(val titleRes: Int, val icon: ImageVector) {
+    APPEARANCE(R.string.group_appearance, Icons.Rounded.Palette),
+    CONNECTION(R.string.group_connection, Icons.Rounded.Bolt),
+    ROUTING(R.string.group_routing, Icons.Rounded.AltRoute),
+    DNS(R.string.group_dns, Icons.Rounded.Dns),
+    TRANSPORT(R.string.group_tls, Icons.Rounded.Layers),
+    TUNNEL(R.string.group_tun, Icons.Rounded.Shield),
+    LOCAL_PROXY(R.string.group_local_proxy, Icons.Rounded.Router),
+    SUBSCRIPTIONS(R.string.group_subscriptions, Icons.Rounded.Sync),
+    STARTUP(R.string.group_startup, Icons.Rounded.PowerSettingsNew),
+    DIAGNOSTICS(R.string.group_diagnostics, Icons.Rounded.BugReport),
+    MAINTENANCE(R.string.group_maintenance, Icons.Rounded.RestartAlt),
+    ABOUT(R.string.group_about, Icons.Rounded.Info),
 }
 
 @Composable
@@ -243,34 +238,11 @@ fun SettingsScreen(
 
 @Composable
 private fun SectionRow(section: SettingsSection, onOpen: (SettingsSection) -> Unit) {
-    val accent = Color(section.accent)
-    SettingsRowCard(onClick = { onOpen(section) }) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = SybSpacing.rowH, vertical = SybSpacing.cardV),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconTile(
-                section.icon,
-                tint = accent,
-                container = accent.copy(alpha = 0.18f),
-            )
-            Spacer(Modifier.width(SybSpacing.iconGap))
-            Text(
-                stringResource(section.titleRes),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
-            )
-            Icon(
-                Icons.Rounded.ChevronRight,
-                null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-    }
+    SettingsAction(
+        title = stringResource(section.titleRes),
+        icon = section.icon,
+        onClick = { onOpen(section) },
+    )
 }
 
 @Composable

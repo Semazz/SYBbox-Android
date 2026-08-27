@@ -327,4 +327,8 @@
     <string name="subscription_user_agent">标识为</string>
     <string name="subscription_user_agent_summary">部分面板会根据请求方的身份下发不同的服务器</string>
     <string name="allow_lan_open_warning">未设置用户名和密码时，同一网络中的任何人都可通过你的隧道转发流量</string>
+    <string name="ping_measure">测量延迟</string>
+    <string name="ping_measuring">测量中…</string>
+    <string name="ping_result">延迟 %1$d 毫秒</string>
+    <string name="ping_failed">无法测量延迟</string>
 </resources>

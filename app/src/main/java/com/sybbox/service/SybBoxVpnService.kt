@@ -230,6 +230,7 @@ class SybBoxVpnService : VpnService() {
                 )
                 baselineTx = trafficTx()
                 baselineRx = trafficRx()
+                pingMillis = PING_IDLE
                 startMonitor()
                 updateNotification()
                 CoreLog.info("Connected")
@@ -594,7 +595,6 @@ class SybBoxVpnService : VpnService() {
                 )
                 lastTx = tx
                 lastRx = rx
-                updateNotification()
             }
         }
     }
@@ -680,21 +680,47 @@ class SybBoxVpnService : VpnService() {
         }
     }
 
-    private fun buildNotification(): android.app.Notification {
-        val state = _appState.value
-        val profile = state.activeProfile
-        val stats = state.stats
-
-        val openIntent = PendingIntent.getActivity(
+    private val openIntent: PendingIntent by lazy {
+        PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        val disconnectIntent = PendingIntent.getBroadcast(
+    }
+
+    private val disconnectIntent: PendingIntent by lazy {
+        PendingIntent.getBroadcast(
             this, 1,
             Intent(this, NotificationActionReceiver::class.java)
                 .setAction(NotificationActionReceiver.ACTION_DISCONNECT),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+    }
+
+    private val pingIntent: PendingIntent by lazy {
+        PendingIntent.getBroadcast(
+            this, 2,
+            Intent(this, NotificationActionReceiver::class.java)
+                .setAction(NotificationActionReceiver.ACTION_PING),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
+    @Volatile
+    private var pingMillis: Int = PING_IDLE
+
+    private fun startPing() {
+        serviceScope.launch {
+            pingMillis = PING_RUNNING
+            updateNotification()
+            val measured = urlTest()
+            pingMillis = measured
+            updateNotification()
+        }
+    }
+
+    private fun buildNotification(): android.app.Notification {
+        val state = _appState.value
+        val profile = state.activeProfile
 
         val title = when (state.connectionState) {
             ConnectionState.CONNECTED -> profile?.name?.ifBlank { profile.address } ?: getString(R.string.connected)
@@ -703,7 +729,12 @@ class SybBoxVpnService : VpnService() {
             ConnectionState.DISCONNECTED -> getString(R.string.disconnected)
         }
         val body = when (state.connectionState) {
-            ConnectionState.CONNECTED -> "▲ ${formatSpeed(stats.uploadSpeed)}   ▼ ${formatSpeed(stats.downloadSpeed)}   ${formatDuration(stats.duration)}"
+            ConnectionState.CONNECTED -> when {
+                pingMillis == PING_RUNNING -> getString(R.string.ping_measuring)
+                pingMillis > 0 -> getString(R.string.ping_result, pingMillis)
+                pingMillis == PING_IDLE -> getString(R.string.connected)
+                else -> getString(R.string.ping_failed)
+            }
             ConnectionState.FAILED -> state.lastError.orEmpty()
             else -> ""
         }
@@ -711,9 +742,13 @@ class SybBoxVpnService : VpnService() {
         return NotificationCompat.Builder(this, SybBoxApp.CHANNEL_VPN)
             .setContentTitle(title)
             .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(openIntent)
+            .apply {
+                if (state.connectionState == ConnectionState.CONNECTED) {
+                    addAction(R.drawable.ic_notification, getString(R.string.ping_measure), pingIntent)
+                }
+            }
             .addAction(R.drawable.ic_notification, getString(R.string.disconnect), disconnectIntent)
             .setOngoing(state.connectionState != ConnectionState.FAILED)
             .setSilent(true)
@@ -758,6 +793,8 @@ class SybBoxVpnService : VpnService() {
             "http://cp.cloudflare.com/generate_204",
         )
         private const val URL_TEST_TIMEOUT_SECONDS = 5L
+        private const val PING_IDLE = 0
+        private const val PING_RUNNING = -2
 
         private const val SESSION_NAME = "SYBbox"
         private const val TUN_ADDRESS_V4 = "172.19.0.1"
@@ -787,6 +824,10 @@ class SybBoxVpnService : VpnService() {
         }
 
         suspend fun activeLatency(): Int = liveInstance?.urlTest() ?: -1
+
+        fun measurePing() {
+            liveInstance?.startPing()
+        }
 
         private fun startAction(context: Context, profileId: Long, forceRestart: Boolean) {
             val intent = Intent(context, SybBoxVpnService::class.java)

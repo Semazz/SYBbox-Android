@@ -15,6 +15,9 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 SybBoxVpnService.disconnect(context)
                 dismissNotification(context)
             }
+            ACTION_PING -> {
+                SybBoxVpnService.measurePing()
+            }
             ACTION_OPEN_APP -> {
                 runCatching { context.startActivity(AppLaunch.intent(context)) }
             }
@@ -29,5 +32,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_DISCONNECT = "com.sybbox.NOTIFICATION_DISCONNECT"
         const val ACTION_OPEN_APP = "com.sybbox.NOTIFICATION_OPEN_APP"
+        const val ACTION_PING = "com.sybbox.NOTIFICATION_PING"
     }
 }

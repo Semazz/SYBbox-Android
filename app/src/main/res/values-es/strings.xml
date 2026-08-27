@@ -346,5 +346,9 @@
     <string name="subscription_user_agent">Identificarse como</string>
     <string name="subscription_user_agent_summary">Algunos paneles entregan servidores distintos según quién pregunte</string>
     <string name="allow_lan_open_warning">Sin usuario y contraseña, cualquiera en la misma red puede enviar su tráfico por su túnel</string>
+    <string name="ping_measure">Medir el ping</string>
+    <string name="ping_measuring">Midiendo…</string>
+    <string name="ping_result">Ping %1$d ms</string>
+    <string name="ping_failed">No se pudo medir el ping</string>
 </resources>
 

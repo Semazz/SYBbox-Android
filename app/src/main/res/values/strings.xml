@@ -348,5 +348,9 @@
     <string name="subscription_user_agent">Identify as</string>
     <string name="subscription_user_agent_summary">Some panels hand out different servers depending on who is asking</string>
     <string name="allow_lan_open_warning">Without a user and password anyone on the same network can send their traffic through your tunnel</string>
+    <string name="ping_measure">Measure ping</string>
+    <string name="ping_measuring">Measuring…</string>
+    <string name="ping_result">Ping %1$d ms</string>
+    <string name="ping_failed">Ping could not be measured</string>
 </resources>
 

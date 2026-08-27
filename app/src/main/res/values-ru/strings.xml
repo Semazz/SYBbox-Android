@@ -346,5 +346,9 @@
     <string name="subscription_user_agent">Представляться как</string>
     <string name="subscription_user_agent_summary">Некоторые панели отдают разные серверы в зависимости от того, кто спрашивает</string>
     <string name="allow_lan_open_warning">Без пользователя и пароля любой в той же сети может пустить свой трафик через ваш туннель</string>
+    <string name="ping_measure">Измерить пинг</string>
+    <string name="ping_measuring">Измеряю…</string>
+    <string name="ping_result">Пинг %1$d мс</string>
+    <string name="ping_failed">Пинг измерить не удалось</string>
 </resources>
 

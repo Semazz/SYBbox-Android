@@ -294,7 +294,7 @@ fun PerAppScreen(
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(50))
+                                        .clip(PillShape)
                                         .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                                         .padding(horizontal = SybSpacing.chipH, vertical = SybSpacing.chipV),
                                 )
@@ -366,6 +366,8 @@ private fun ExpressiveSegment(
     )
 }
 
+private val APP_ICON_SIZE = 44.dp
+
 @Composable
 private fun AppRowExpressive(
     app: InstalledApp,
@@ -391,21 +393,13 @@ private fun AppRowExpressive(
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-            Box(
+            AndroidView(
+                factory = { context -> ImageView(context).apply { scaleType = ImageView.ScaleType.FIT_XY } },
+                update = { view -> view.setImageDrawable(icon) },
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(SybRadius.tile))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                contentAlignment = Alignment.Center,
-            ) {
-                AndroidView(
-                    factory = { context -> ImageView(context).apply { scaleType = ImageView.ScaleType.FIT_CENTER } },
-                    update = { view -> view.setImageDrawable(icon) },
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(RoundedCornerShape(SybRadius.inner)),
-                )
-            }
+                    .size(APP_ICON_SIZE)
+                    .clip(RoundedCornerShape(SybRadius.tile)),
+            )
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(

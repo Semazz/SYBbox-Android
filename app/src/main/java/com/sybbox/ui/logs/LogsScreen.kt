@@ -57,6 +57,7 @@ import com.sybbox.service.SybBoxVpnService
 import com.sybbox.core.LogEntry
 import com.sybbox.core.LogLevel
 import com.sybbox.ui.components.EmptyState
+import com.sybbox.ui.components.PillShape
 import com.sybbox.ui.theme.SybSpacing
 import com.sybbox.ui.theme.LatencyFast
 import com.sybbox.ui.theme.LatencyMedium
@@ -203,7 +204,7 @@ private fun LogRow(entry: LogEntry) {
         Spacer(Modifier.width(8.dp))
         Box(
             modifier = Modifier
-                .background(levelColor(entry.level).copy(alpha = 0.16f), RoundedCornerShape(50))
+                .background(levelColor(entry.level).copy(alpha = 0.16f), PillShape)
                 .padding(horizontal = SybSpacing.chipH, vertical = SybSpacing.hair),
         ) {
             Text(

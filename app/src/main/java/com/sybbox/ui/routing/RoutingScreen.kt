@@ -56,6 +56,7 @@ import com.sybbox.ui.components.EmptyState
 import com.sybbox.ui.components.SectionHeader
 import com.sybbox.ui.components.SettingsAction
 import com.sybbox.ui.components.SybCard
+import com.sybbox.ui.components.PillShape
 import com.sybbox.ui.theme.SybSpacing
 import com.sybbox.ui.theme.LatencyFast
 import com.sybbox.ui.theme.LatencySlow
@@ -204,7 +205,7 @@ private fun ActionChip(action: RoutingAction) {
     }
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(50))
+            .clip(PillShape)
             .background(color.copy(alpha = 0.16f))
             .padding(horizontal = SybSpacing.chipH, vertical = SybSpacing.chipV),
     ) {

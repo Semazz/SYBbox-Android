@@ -1,5 +1,6 @@
 package com.sybbox.ui.servers
 
+import com.sybbox.ui.components.PillShape
 import com.sybbox.ui.theme.SybRadius
 import com.sybbox.ui.theme.SybSpacing
 import android.content.ClipboardManager
@@ -727,7 +728,7 @@ private fun SubscriptionHeader(
                     Spacer(Modifier.height(6.dp))
                     LinearProgressIndicator(
                         progress = { progress },
-                        modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)),
+                        modifier = Modifier.fillMaxWidth().height(6.dp).clip(PillShape),
                         color = if (progress > 0.9f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                         trackColor = MaterialTheme.colorScheme.surfaceVariant,
                     )

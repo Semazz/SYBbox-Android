@@ -406,6 +406,23 @@ private fun TransportSettings(state: SettingsState, viewModel: SettingsViewModel
         icon = Icons.Rounded.Layers,
     )
     SettingsDivider()
+    SettingsChoice(
+        title = stringResource(R.string.fragment_packets),
+        options = listOf("tlshello", "1-3", "1-2"),
+        selected = state.fragmentPackets,
+        onSelect = viewModel::setFragmentPackets,
+        label = { it },
+        icon = Icons.Rounded.Layers,
+    )
+    SettingsDivider()
+    SettingsToggle(
+        title = stringResource(R.string.noise),
+        summary = stringResource(R.string.noise_summary),
+        checked = state.noiseEnabled,
+        onCheckedChange = viewModel::setNoiseEnabled,
+        icon = Icons.Rounded.Layers,
+    )
+    SettingsDivider()
     SettingsToggle(
         title = stringResource(R.string.multiplex),
         summary = stringResource(R.string.multiplex_summary),
@@ -415,10 +432,10 @@ private fun TransportSettings(state: SettingsState, viewModel: SettingsViewModel
     )
     SettingsDivider()
     SettingsChoice(
-        title = stringResource(R.string.mux_protocol),
-        options = listOf("h2mux", "smux", "yamux"),
-        selected = state.muxProtocol,
-        onSelect = viewModel::setMuxProtocol,
+        title = stringResource(R.string.xudp_udp443),
+        options = listOf("reject", "allow", "skip"),
+        selected = state.xudpUdp443,
+        onSelect = viewModel::setXudpUdp443,
         label = { it },
         icon = Icons.Rounded.Tune,
     )
@@ -444,19 +461,11 @@ private fun TransportSettings(state: SettingsState, viewModel: SettingsViewModel
 @Composable
 private fun TunnelSettings(state: SettingsState, viewModel: SettingsViewModel) {
     SettingsChoice(
-        title = stringResource(R.string.tun_stack),
-        options = listOf("gvisor", "system", "mixed"),
-        selected = state.tunStack,
-        onSelect = viewModel::setTunStack,
-        label = {
-            stringResource(
-                when (it) {
-                    "system" -> R.string.tun_stack_system
-                    "mixed" -> R.string.tun_stack_mixed
-                    else -> R.string.tun_stack_gvisor
-                },
-            )
-        },
+        title = stringResource(R.string.domain_strategy),
+        options = listOf("AsIs", "IPIfNonMatch", "IPOnDemand"),
+        selected = state.domainStrategy,
+        onSelect = viewModel::setDomainStrategy,
+        label = { it },
         icon = Icons.Rounded.SettingsEthernet,
     )
     SettingsDivider()

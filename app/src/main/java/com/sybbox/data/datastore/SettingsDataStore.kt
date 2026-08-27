@@ -80,6 +80,10 @@ class SettingsDataStore @Inject constructor(
     val enableMux: Flow<Boolean> = dataStore.data.map { it[KEY_ENABLE_MUX] ?: false }
     val fragmentEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_FRAGMENT_ENABLED] ?: true }
     val fragmentSleep: Flow<String> = dataStore.data.map { it[KEY_FRAGMENT_SLEEP] ?: "10" }
+    val fragmentPackets: Flow<String> = dataStore.data.map { it[KEY_FRAGMENT_PACKETS] ?: "tlshello" }
+    val noiseEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_NOISE_ENABLED] ?: false }
+    val xudpUdp443: Flow<String> = dataStore.data.map { it[KEY_XUDP_UDP443] ?: "reject" }
+    val domainStrategy: Flow<String> = dataStore.data.map { it[KEY_DOMAIN_STRATEGY] ?: "IPIfNonMatch" }
     val enableRecordRoute: Flow<Boolean> = dataStore.data.map { it[KEY_ENABLE_RECORD_ROUTE] ?: false }
     val autoFailover: Flow<Boolean> = dataStore.data.map { it[KEY_AUTO_FAILOVER] ?: false }
     val tcpFastOpen: Flow<Boolean> = dataStore.data.map { it[KEY_TCP_FAST_OPEN] ?: false }
@@ -117,6 +121,10 @@ class SettingsDataStore @Inject constructor(
             customSni = p[KEY_CUSTOM_SNI] ?: "",
             fragmentEnabled = p[KEY_FRAGMENT_ENABLED] ?: true,
             fragmentSleep = p[KEY_FRAGMENT_SLEEP] ?: "10",
+            fragmentPackets = p[KEY_FRAGMENT_PACKETS] ?: "tlshello",
+            noiseEnabled = p[KEY_NOISE_ENABLED] ?: false,
+            xudpUdp443 = p[KEY_XUDP_UDP443] ?: "reject",
+            domainStrategy = p[KEY_DOMAIN_STRATEGY] ?: "IPIfNonMatch",
             recordFragment = p[KEY_ENABLE_RECORD_ROUTE] ?: false,
             enableMux = p[KEY_ENABLE_MUX] ?: false,
             tunStack = p[KEY_TUN_STACK] ?: "gvisor",
@@ -246,6 +254,10 @@ class SettingsDataStore @Inject constructor(
     suspend fun setEnableMux(value: Boolean) = dataStore.edit { it[KEY_ENABLE_MUX] = value }
     suspend fun setFragmentEnabled(value: Boolean) = dataStore.edit { it[KEY_FRAGMENT_ENABLED] = value }
     suspend fun setFragmentSleep(value: String) = dataStore.edit { it[KEY_FRAGMENT_SLEEP] = value }
+    suspend fun setFragmentPackets(value: String) = dataStore.edit { it[KEY_FRAGMENT_PACKETS] = value }
+    suspend fun setNoiseEnabled(value: Boolean) = dataStore.edit { it[KEY_NOISE_ENABLED] = value }
+    suspend fun setXudpUdp443(value: String) = dataStore.edit { it[KEY_XUDP_UDP443] = value }
+    suspend fun setDomainStrategy(value: String) = dataStore.edit { it[KEY_DOMAIN_STRATEGY] = value }
     suspend fun setEnableRecordRoute(value: Boolean) = dataStore.edit { it[KEY_ENABLE_RECORD_ROUTE] = value }
     suspend fun setAutoFailover(value: Boolean) = dataStore.edit { it[KEY_AUTO_FAILOVER] = value }
     suspend fun setTcpFastOpen(value: Boolean) = dataStore.edit { it[KEY_TCP_FAST_OPEN] = value }
@@ -309,6 +321,10 @@ class SettingsDataStore @Inject constructor(
         private val KEY_ENABLE_MUX = booleanPreferencesKey("enable_mux")
         private val KEY_FRAGMENT_ENABLED = booleanPreferencesKey("fragment_enabled")
         private val KEY_FRAGMENT_SLEEP = stringPreferencesKey("fragment_sleep")
+        private val KEY_FRAGMENT_PACKETS = stringPreferencesKey("fragment_packets")
+        private val KEY_NOISE_ENABLED = booleanPreferencesKey("noise_enabled")
+        private val KEY_XUDP_UDP443 = stringPreferencesKey("xudp_udp443")
+        private val KEY_DOMAIN_STRATEGY = stringPreferencesKey("domain_strategy")
         private val KEY_ENABLE_RECORD_ROUTE = booleanPreferencesKey("enable_record_route")
         private val KEY_AUTO_FAILOVER = booleanPreferencesKey("auto_failover")
         private val KEY_TCP_FAST_OPEN = booleanPreferencesKey("tcp_fast_open")

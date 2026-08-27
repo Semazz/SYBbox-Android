@@ -81,6 +81,10 @@ class SettingsViewModel @Inject constructor(
     fun setCustomSni(value: String) = edit { setCustomSni(value) }
     fun setFragmentEnabled(value: Boolean) = edit { setFragmentEnabled(value) }
     fun setFragmentSleep(value: String) = edit { setFragmentSleep(value) }
+    fun setFragmentPackets(value: String) = edit { setFragmentPackets(value) }
+    fun setNoiseEnabled(value: Boolean) = edit { setNoiseEnabled(value) }
+    fun setXudpUdp443(value: String) = edit { setXudpUdp443(value) }
+    fun setDomainStrategy(value: String) = edit { setDomainStrategy(value) }
     fun setRecordFragment(value: Boolean) = edit { setEnableRecordRoute(value) }
     fun setEnableMux(value: Boolean) = edit { setEnableMux(value) }
     fun setMuxProtocol(value: String) = edit { setMuxProtocol(value) }

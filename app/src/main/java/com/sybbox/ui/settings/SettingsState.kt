@@ -25,6 +25,8 @@ data class SettingsState(
     val customSni: String = "",
 
     val fragmentEnabled: Boolean = true,
+    val fragmentPackets: String = "tlshello",
+    val noiseEnabled: Boolean = false,
 
     val fragmentSleep: String = "10",
     val recordFragment: Boolean = false,
@@ -32,6 +34,8 @@ data class SettingsState(
     val muxProtocol: String = "h2mux",
     val muxMaxStreams: Int = 8,
     val muxPadding: Boolean = false,
+    val xudpUdp443: String = "reject",
+    val domainStrategy: String = "IPIfNonMatch",
 
     val tunStack: String = "gvisor",
     val tunMTU: Int = 1500,

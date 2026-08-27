@@ -42,6 +42,7 @@ class SybBoxApp : Application(), Configuration.Provider {
     private fun applyStoredSettings() {
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             CoreLog.setLimit(settingsDataStore.logLimitMb.first())
+            CoreLog.setLevel(settingsDataStore.logLevel.first())
             SubscriptionUpdateWorker.schedule(this@SybBoxApp)
         }
     }

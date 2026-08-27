@@ -173,6 +173,7 @@
     <string name="dynamic_color_summary">Use colours from the wallpaper on Android 12 and newer</string>
 
     <string name="log_level">Log level</string>
+    <string name="log_level_summary">How much the core is allowed to say. WARN keeps only what went wrong; the lines the app writes itself always show</string>
     <string name="open_logs">Open logs</string>
     <string name="clear_logs">Clear logs</string>
     <string name="copy_logs">Copy logs</string>

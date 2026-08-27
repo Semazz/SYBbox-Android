@@ -56,7 +56,7 @@ val settingsIndex: List<SettingsEntry> = listOf(
     SettingsEntry(R.string.probe_url, R.string.probe_url_summary, SettingsSection.DIAGNOSTICS),
     SettingsEntry(R.string.ping_timeout, null, SettingsSection.DIAGNOSTICS),
     SettingsEntry(R.string.log_limit, R.string.log_limit_summary, SettingsSection.DIAGNOSTICS),
-    SettingsEntry(R.string.log_level, null, SettingsSection.DIAGNOSTICS),
+    SettingsEntry(R.string.log_level, R.string.log_level_summary, SettingsSection.DIAGNOSTICS),
     SettingsEntry(R.string.check_update, null, SettingsSection.MAINTENANCE),
     SettingsEntry(R.string.auto_update_check, R.string.auto_update_check_summary, SettingsSection.MAINTENANCE),
     SettingsEntry(R.string.reset_settings, R.string.reset_settings_summary, SettingsSection.MAINTENANCE),

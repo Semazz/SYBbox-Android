@@ -646,6 +646,7 @@ private fun DiagnosticsSettings(state: SettingsState, viewModel: SettingsViewMod
     SettingsDivider()
     SettingsChoice(
         title = stringResource(R.string.log_level),
+        summary = stringResource(R.string.log_level_summary),
         options = listOf("error", "warn", "info", "debug", "trace"),
         selected = state.logLevel.lowercase(),
         onSelect = viewModel::setLogLevel,

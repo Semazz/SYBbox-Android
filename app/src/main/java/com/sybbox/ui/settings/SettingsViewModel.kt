@@ -113,7 +113,19 @@ class SettingsViewModel @Inject constructor(
         edit { setLogLimitMb(value) }
         com.sybbox.core.CoreLog.setLimit(value)
     }
-    fun resetToDefaults() = edit { resetToDefaults() }
+
+    fun setLogLevel(value: String) {
+        edit { setLogLevel(value) }
+        com.sybbox.core.CoreLog.setLevel(value)
+    }
+
+    fun resetToDefaults() {
+        viewModelScope.launch {
+            store.resetToDefaults()
+            com.sybbox.core.CoreLog.setLimit(store.logLimitMb.first())
+            com.sybbox.core.CoreLog.setLevel(store.logLevel.first())
+        }
+    }
 
     fun setSubAutoUpdate(value: Boolean) {
         edit { setSubAutoUpdate(value) }
@@ -131,7 +143,6 @@ class SettingsViewModel @Inject constructor(
 
     fun setThemeMode(value: String) = edit { setThemeMode(value) }
     fun setDynamicColor(value: Boolean) = edit { setDynamicColor(value) }
-    fun setLogLevel(value: String) = edit { setLogLevel(value) }
 
     fun setLanguage(value: String) {
         edit { setLanguage(value) }

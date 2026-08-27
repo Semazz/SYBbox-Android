@@ -2,7 +2,15 @@ package com.sybbox.core
 
 object Diagnostics {
 
-    const val MAX_MESSAGE = 400
+    const val MAX_MESSAGE = 240
+
+    private val COLOURS = Regex("""\u001B\[[0-9;]*m""")
+
+    private val LEVEL_PREFIX = Regex("""^(?:PANIC|FATAL|ERROR|WARN|INFO|DEBUG|TRACE)\[\d+]\s*""")
+
+    private val CONNECTION_ID = Regex("""^\[\d+ [^\]]{0,16}]\s*""")
+
+    private val NOISE = Regex("""inbound (?:packet )?connection from """)
 
     private val rules: List<Pair<Regex, (MatchResult) -> String>> = listOf(
         Regex("""x509: certificate is valid for .*?, not ([A-Za-z0-9.\-*]+)""", RegexOption.DOT_MATCHES_ALL) to { m ->
@@ -29,6 +37,16 @@ object Diagnostics {
             "The server closed the connection. It may be refusing repeated failed handshakes."
         },
     )
+
+    fun tidy(message: String): String {
+        var text = message
+        if (text.indexOf('\u001B') >= 0) text = COLOURS.replace(text, "")
+        text = LEVEL_PREFIX.replaceFirst(text, "")
+        text = CONNECTION_ID.replaceFirst(text, "")
+        return text.trim()
+    }
+
+    fun isNoise(message: String): Boolean = NOISE.containsMatchIn(message)
 
     fun condense(message: String): String {
         if (message.length <= MAX_MESSAGE) return message

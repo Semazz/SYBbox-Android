@@ -216,6 +216,15 @@ private fun LogRow(entry: LogEntry) {
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
+        if (entry.repeats > 1) {
+            Spacer(Modifier.width(6.dp))
+            Text(
+                "×${entry.repeats}",
+                fontFamily = FontFamily.Monospace,
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
     }
 }
 

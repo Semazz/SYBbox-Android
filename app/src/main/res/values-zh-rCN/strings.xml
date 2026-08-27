@@ -160,6 +160,7 @@
     <string name="dynamic_color_summary">Android 12 及以上使用壁纸配色</string>
 
     <string name="log_level">日志级别</string>
+    <string name="log_level_summary">内核可以输出多少。WARN 仅保留错误；应用自身的日志始终可见</string>
     <string name="open_logs">查看日志</string>
     <string name="clear_logs">清空日志</string>
     <string name="copy_logs">复制日志</string>

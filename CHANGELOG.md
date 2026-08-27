@@ -188,6 +188,21 @@
   every second.
 
 ### Changed — logs
+- **The log level is obeyed.** The core handed every line it had to the app whatever the level
+  said, so debug and trace lines were kept even on INFO — the setting only ever changed what the
+  core wrote to its own output. Anything past the chosen level is now dropped before it is
+  stored, and WARN really does leave only what went wrong. Lines the app writes itself are not
+  filtered, so the log still says which server it is on and when it connected.
+- **Less of every line is stored.** Each one arrived carrying colour escapes, a repeat of the
+  level and the seconds since start, and a connection id — forty-odd characters the app already
+  knows or cannot use. They are stripped on the way in, and a long line is cut at 240 characters
+  rather than 400.
+- **A line said over and over is counted, not repeated.** The same message lands on the line
+  already there with a × count beside it, so a handshake failing forty times is one line rather
+  than forty.
+- The line saying traffic came from our own tunnel is dropped — there is nowhere else it could
+  have come from, and it was a third of everything written while connected. DEBUG and TRACE are
+  meant for troubleshooting and still keep every line.
 - Nothing is kept longer than a day. Lines past twenty-four hours are dropped as new ones
   arrive and whenever the logs are opened, so the log is what happened today rather than
   everything since the app was last started. The size limit still applies on top of that.

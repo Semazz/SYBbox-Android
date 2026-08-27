@@ -166,6 +166,7 @@
     <string name="dynamic_color_summary">Брать цвета из обоев на Android 12 и новее</string>
 
     <string name="log_level">Уровень логов</string>
+    <string name="log_level_summary">Сколько позволено говорить ядру. WARN оставляет только ошибки; собственные строки приложения видны всегда</string>
     <string name="open_logs">Открыть логи</string>
     <string name="clear_logs">Очистить логи</string>
     <string name="copy_logs">Скопировать логи</string>

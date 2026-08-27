@@ -12,6 +12,7 @@ data class LogEntry(
     val timestamp: Long = System.currentTimeMillis(),
     val server: String = "",
     val id: Long = 0,
+    val repeats: Int = 1,
 )
 
 data class LogSource(
@@ -28,6 +29,7 @@ object CoreLog {
     private const val MAX_ENTRIES = 20_000
     private const val RETENTION_MILLIS = 24L * 60 * 60 * 1000
     private const val ENTRY_OVERHEAD_BYTES = 48L
+    private const val FOLD_REACH = 3
 
     @Volatile
     internal var clock: () -> Long = { System.currentTimeMillis() }
@@ -59,6 +61,14 @@ object CoreLog {
     }
 
     @Volatile
+    private var verbosity = LogLevel.INFO
+
+    fun setLevel(name: String) {
+        val next = runCatching { LogLevel.valueOf(name.trim().uppercase()) }.getOrNull() ?: LogLevel.INFO
+        synchronized(buffer) { verbosity = next }
+    }
+
+    @Volatile
     private var server = ""
 
     private val _sources = MutableStateFlow<List<LogSource>>(emptyList())
@@ -78,9 +88,13 @@ object CoreLog {
             5 -> LogLevel.DEBUG
             else -> LogLevel.TRACE
         }
-        append(level, Diagnostics.condense(message))
+        if (level > verbosity) return
+        val text = Diagnostics.tidy(message)
+        if (text.isEmpty()) return
+        if (verbosity <= LogLevel.INFO && Diagnostics.isNoise(text)) return
+        append(level, Diagnostics.condense(text))
         if (level != LogLevel.ERROR) return
-        val hint = Diagnostics.explain(message) ?: return
+        val hint = Diagnostics.explain(text) ?: return
         val isNew = synchronized(buffer) { explained.add(hint) }
         if (isNew) append(LogLevel.WARN, hint)
     }
@@ -110,13 +124,27 @@ object CoreLog {
 
     private fun append(level: LogLevel, message: String) {
         if (message.isBlank()) return
+        val text = message.trimEnd()
         synchronized(buffer) {
-            val entry = LogEntry(level, message.trimEnd(), clock(), server, nextId++)
-            buffer.addLast(entry)
-            usedBytes += weigh(entry)
-            trim()
+            if (!fold(level, text)) {
+                val entry = LogEntry(level, text, clock(), server, nextId++)
+                buffer.addLast(entry)
+                usedBytes += weigh(entry)
+                trim()
+            }
             publish()
         }
+    }
+
+    private fun fold(level: LogLevel, text: String): Boolean {
+        val last = buffer.size - 1
+        for (index in last downTo maxOf(0, last - FOLD_REACH)) {
+            val entry = buffer[index]
+            if (entry.level != level || entry.server != server || entry.message != text) continue
+            buffer[index] = entry.copy(repeats = entry.repeats + 1)
+            return true
+        }
+        return false
     }
 
     private fun trim() {

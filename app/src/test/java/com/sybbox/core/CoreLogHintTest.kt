@@ -59,7 +59,7 @@ class CoreLogHintTest {
 
     @Test
     fun `routine lines are passed through untouched`() {
-        CoreLog.write(4, "inbound/tun[tun-in]: inbound connection from 172.19.0.1:41308")
+        CoreLog.write(4, "inbound/tun[tun-in]: inbound connection to 1.1.1.1:443")
         val entries = CoreLog.entries.value
         assertEquals(1, entries.size)
         assertEquals(LogLevel.INFO, entries[0].level)

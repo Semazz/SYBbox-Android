@@ -171,6 +171,7 @@
     <string name="dynamic_color_summary">Usar colores del fondo de pantalla en Android 12 y superior</string>
 
     <string name="log_level">Nivel de registro</string>
+    <string name="log_level_summary">Cuanto puede decir el nucleo. WARN deja solo los fallos; las lineas propias de la aplicacion siempre se ven</string>
     <string name="open_logs">Abrir registros</string>
     <string name="clear_logs">Borrar registros</string>
     <string name="copy_logs">Copiar registros</string>

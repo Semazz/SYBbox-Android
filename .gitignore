@@ -19,7 +19,6 @@ release/
 .gradle/
 build/
 app/build/
-libcore/singbox-fork/
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -39,8 +38,7 @@ jniLibs/
 *.so
 *.syso
 
-# sing-box fork and build artifacts
-libcore/singbox-fork/
+# Core build artifacts
 libcore/aar_extract*/
 libcore/jar_extract*/
 libcore/sybbox_core.aar
@@ -62,7 +60,6 @@ google-services.json
 Thumbs.db
 *.swp
 *~
-libcore/shadowsocks2-patch/
 cache.db
 keystore.properties
 *.p12

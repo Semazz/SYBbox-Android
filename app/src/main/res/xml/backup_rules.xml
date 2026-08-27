@@ -2,5 +2,5 @@
 <full-backup-content>
     <include domain="database" path="sybbox.db" />
     <include domain="sharedpref" path="." />
+    <include domain="file" path="datastore" />
 </full-backup-content>
-

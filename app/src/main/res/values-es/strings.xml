@@ -176,7 +176,7 @@
     <string name="clear_logs">Borrar registros</string>
     <string name="copy_logs">Copiar registros</string>
     <string name="export_config">Exportar configuración</string>
-    <string name="export_config_summary">Guardar la configuración generada de sing-box para inspeccionarla</string>
+    <string name="export_config_summary">Guardar la configuración generada para inspeccionarla</string>
     <string name="no_logs">Aún no hay registros</string>
     <string name="filter_all">Todos</string>
 
@@ -324,5 +324,11 @@
     <string name="widget_square_description">El boton con el servidor actual.</string>
     <string name="widget_panel_description">Servidor, cuota, velocidad y tiempo, con un boton.</string>
     <string name="no_quota">Sin limite</string>
+    <string name="server_unsupported">El núcleo no lo admite</string>
+    <string name="domain_strategy">Cómo el enrutador resuelve los dominios</string>
+    <string name="xudp_udp443">XUDP en el puerto 443</string>
+    <string name="fragment_packets">Qué fragmentar</string>
+    <string name="noise">Ruido</string>
+    <string name="noise_summary">Enviar paquetes basura antes del saludo para confundir la inspección de paquetes</string>
 </resources>
 

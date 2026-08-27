@@ -171,7 +171,7 @@
     <string name="clear_logs">Очистить логи</string>
     <string name="copy_logs">Скопировать логи</string>
     <string name="export_config">Экспорт конфигурации</string>
-    <string name="export_config_summary">Сохранить сгенерированный конфиг sing-box для проверки</string>
+    <string name="export_config_summary">Сохранить сгенерированный конфиг для проверки</string>
     <string name="no_logs">Пока ничего не записано</string>
     <string name="filter_all">Все</string>
 
@@ -324,5 +324,11 @@
     <string name="widget_square_description">Кнопка и сервер, на котором вы сейчас.</string>
     <string name="widget_panel_description">Сервер, остаток по подписке, скорость и время соединения с кнопкой.</string>
     <string name="no_quota">Без лимита</string>
+    <string name="server_unsupported">Ядро не поддерживает</string>
+    <string name="domain_strategy">Как маршрутизатор разбирает домены</string>
+    <string name="xudp_udp443">XUDP на порту 443</string>
+    <string name="fragment_packets">Что дробить</string>
+    <string name="noise">Шум</string>
+    <string name="noise_summary">Слать мусорные пакеты перед рукопожатием, чтобы сбить анализатор трафика</string>
 </resources>
 

@@ -165,7 +165,7 @@
     <string name="clear_logs">清空日志</string>
     <string name="copy_logs">复制日志</string>
     <string name="export_config">导出配置</string>
-    <string name="export_config_summary">保存生成的 sing-box 配置以便检查</string>
+    <string name="export_config_summary">保存生成的配置以便检查</string>
     <string name="no_logs">暂无日志</string>
     <string name="filter_all">全部</string>
 
@@ -305,4 +305,10 @@
     <string name="widget_square_description">按钮与当前服务器。</string>
     <string name="widget_panel_description">服务器、订阅流量、速度与时长，带按钮。</string>
     <string name="no_quota">无限量</string>
+    <string name="server_unsupported">内核不支持</string>
+    <string name="domain_strategy">路由如何解析域名</string>
+    <string name="xudp_udp443">443 端口的 XUDP</string>
+    <string name="fragment_packets">分片对象</string>
+    <string name="noise">噪声</string>
+    <string name="noise_summary">在握手前发送垃圾数据包以干扰深度包检测</string>
 </resources>

@@ -178,7 +178,7 @@
     <string name="clear_logs">Clear logs</string>
     <string name="copy_logs">Copy logs</string>
     <string name="export_config">Export configuration</string>
-    <string name="export_config_summary">Save the generated sing-box config for inspection</string>
+    <string name="export_config_summary">Save the generated config for inspection</string>
     <string name="no_logs">Nothing logged yet</string>
     <string name="filter_all">All</string>
 
@@ -326,5 +326,11 @@
     <string name="widget_square_description">The button with the server it is on.</string>
     <string name="widget_panel_description">Server, subscription quota, speed and uptime, with a button.</string>
     <string name="no_quota">No quota</string>
+    <string name="server_unsupported">Not supported by the core</string>
+    <string name="domain_strategy">How the router resolves domains</string>
+    <string name="xudp_udp443">XUDP on port 443</string>
+    <string name="fragment_packets">What to fragment</string>
+    <string name="noise">Noise</string>
+    <string name="noise_summary">Send junk packets before the handshake to confuse deep packet inspection</string>
 </resources>
 

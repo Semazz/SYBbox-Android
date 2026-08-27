@@ -469,6 +469,7 @@ private fun ServerRow(
     var menu by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val shareable = remember(profile) { ConfigShare.canShare(profile) }
+    val unsupported = remember(profile) { com.sybbox.core.XrayConfigBuilder.unsupportedReason(profile) }
 
     SybCard(modifier = Modifier.fillMaxWidth(), onClick = onSelect, selected = selected) {
         Row(
@@ -530,9 +531,13 @@ private fun ServerRow(
                     profile.subInfoLine()
                 }
                 Text(
-                    infoLine,
+                    if (unsupported != null) stringResource(R.string.server_unsupported) else infoLine,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (unsupported != null) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

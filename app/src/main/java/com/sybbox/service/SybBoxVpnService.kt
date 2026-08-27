@@ -385,21 +385,33 @@ class SybBoxVpnService : VpnService() {
     }
 
     private fun applyPackageFilter(builder: Builder, settings: SettingsState) {
+        if (settings.perAppProxy && settings.perAppIncludeMode) {
+            applyAllowList(builder, settings.includedApps)
+            return
+        }
+
         runCatching { builder.addDisallowedApplication(packageName) }
         if (!settings.perAppProxy) return
 
-        if (settings.perAppIncludeMode) {
-            settings.includedApps.forEach { name ->
-                runCatching { builder.addAllowedApplication(name) }
-                    .onFailure { CoreLog.warn("Cannot include $name: ${it.message}") }
-            }
-            return
-        }
         settings.excludedApps.forEach { name ->
             if (name == packageName) return@forEach
             runCatching { builder.addDisallowedApplication(name) }
                 .onFailure { CoreLog.warn("Cannot exclude $name: ${it.message}") }
         }
+    }
+
+    private fun applyAllowList(builder: Builder, apps: List<String>) {
+        var allowed = 0
+        apps.forEach { name ->
+            if (name == packageName) return@forEach
+            runCatching { builder.addAllowedApplication(name) }
+                .onSuccess { allowed++ }
+                .onFailure { CoreLog.warn("Cannot include $name: ${it.message}") }
+        }
+        if (allowed > 0) return
+
+        CoreLog.warn("No app was picked for the tunnel, so nothing is routed through it")
+        runCatching { builder.addDisallowedApplication(packageName) }
     }
 
     @Volatile

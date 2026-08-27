@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.0.2 (2026-08-25)
+## v2.0.2 (2026-08-27)
 
 ### Added — settings
 - **Local proxy.** A SOCKS5 and HTTP inbound on a port of your choosing, so other apps can reach
@@ -24,6 +24,35 @@
 - The subscription User-Agent no longer carries an identifier of its own. It was smuggling a
   per-install id into every request whether or not you wanted one; identity now lives in the
   headers, behind the switch.
+- **Logs by server.** Every line records which server was connected when it was written. Logs
+  open on a page listing what has been written and by whom — each server with its size, its line
+  count and when it last wrote, above a bar showing the whole log against its limit — and picking
+  one opens just that server's lines. The log is no longer wiped on each connect, so what one
+  server did is still there after switching to another; the size limit keeps that from growing
+  without end.
+- Screens no longer reserve a strip at the foot of the list for the navigation bar. The bar is
+  already inset out of the content area, so that strip was empty space below everything.
+- Tapping through the navigation quickly no longer wedges it. Taps arriving mid-transition were
+  queued rather than dropped, and enough of them left the bar unresponsive.
+- **A user and password on the local proxy**, for anyone who would rather not leave an open
+  proxy on the device. Both empty means no authentication, as before.
+- **Resolve the server up front**, on by default, now switchable. The address is looked up before
+  the tunnel starts so the core does not have to; a server that only connects by name needs it
+  off.
+- **Notify on subscription updates**, off by default, for background refreshes.
+- The core the app is built on is no longer named anywhere in the interface.
+- Nothing appears in two places. The device id was on the subscriptions page and in About, the
+  logs opened from the settings root and from diagnostics, and the version sat in the footer as
+  well as in About. Each now has one home: the device id and the version in About, the logs on
+  the root.
+- **Search.** A field at the top of settings finds a setting by its name, its description or the
+  page it lives on, and the result takes you there. The index is generated from the pages
+  themselves, so it cannot drift out of step with them.
+- **About.** App version and build, sing-box version, Android version, device model and the
+  device id, each copied on tap, with a link to the source.
+- **Log size limit**, 10 MB by default. The log is held in memory and was bounded only by a
+  count of lines, which says nothing about how much it holds; it is bounded by size now, oldest
+  lines first, and the logs screen shows what it is using against the limit.
 
 ### Fixed — switching servers
 - Servers sharing a host and a port are told apart. They were identified by protocol, address and
@@ -35,6 +64,30 @@
   “address already in use”. The port the tunnel check listens on was picked once and kept, so a
   switch made before the old core let go of it collided with itself. A free port is taken for
   each attempt.
+- Picking a server drops the tunnel at once and raises it a second after you stop picking. Each
+  further pick pushes that second out again, so running through a list rebuilds the tunnel once,
+  for the server you settled on, instead of once per tap.
+- While that second passes the service stays alive with the core stopped, rather than being torn
+  down and started again. Coming back up reuses what is already running, which is why connecting
+  right after switching used to take so long. If nothing asks to connect within fifteen seconds
+  the service stops on its own.
+- Every tap counts. Selecting a server and expanding a group were being refused for four hundred
+  milliseconds after the list last changed — a guard against a tap landing on a row that had
+  slid under the finger. A collapsed group stopped keeping a row visible some time ago, so the
+  list no longer shifts on selection and the guard had nothing left to guard; all it did was
+  swallow the second of two quick taps.
+- Tapping a server no longer stalls the screen. Switching shut the core down from the thread that
+  draws the interface, and shutting a core down is native work that takes as long as it takes.
+  It happens off that thread now, so the tap answers at once.
+- Switching repeatedly no longer leaves the tunnel up but carrying nothing. A switch cancelled the
+  running attempt without waiting for it to stop, then tore the core down underneath it and built
+  another — two of them in the same core at once. Each switch now waits for the previous attempt
+  to finish, and starting and stopping the core are held apart so they can never overlap.
+- Switching servers quickly no longer lands on the first one in the subscription. Each switch
+  cancels the connection attempt in flight, and the cancellation was caught as a connection
+  failure — which handed it to auto-failover, which walked to the next server and wrapped around
+  to the first. Cancellation now passes through, and failover never revisits a server it has
+  already tried.
 
 ### Fixed — per-app routing
 - The chosen mode is remembered rather than guessed. It was inferred from whichever of the two
@@ -48,6 +101,12 @@
   already had exclusions keeps them.
 - Both modes say what they do: only the selected go through the tunnel and the rest go straight
   out, or the selected go straight out past the tunnel and their traffic is not covered.
+- Selected apps sort to the top of the list.
+- The empty search result read as a row of question marks. The string had been mangled to
+  replacement characters in the source; it is a translated resource now.
+- Reordering waits until you stop toggling. It used to happen mid-tap, so the row that slid under
+  the finger took the press and lit up instead of the one that was tapped, and item animation drew
+  two rows over each other while they swapped.
 
 ### Fixed — subscriptions
 - **Refresh** refreshes. The button shared a thirty-second cooldown meant for automatic updates,
@@ -57,8 +116,6 @@
   deleted and brought back by a refresh reappeared at the bottom instead of its own place. The
   order the subscription gave is stored with each server, and the database carries a migration
   so nothing already added is lost.
-
-
 - A subscription's own update interval is honoured. Panels send it as `profile-update-interval`;
   the app read the traffic counters and the title from the same response and threw this one away,
   so a subscription that asked to be refreshed every twelve hours was refreshed on whatever the
@@ -85,39 +142,6 @@
   six and the setting never applied to anything. It starts empty now, and each refresh records
   what the panel said this time — including that it said nothing.
 
-### Added — settings
-- **Logs by server.** Every line records which server was connected when it was written. Logs
-  open on a page listing what has been written and by whom — each server with its size, its line
-  count and when it last wrote, above a bar showing the whole log against its limit — and picking
-  one opens just that server's lines. The log is no longer wiped on each connect, so what one
-  server did is still there after switching to another; the size limit keeps that from growing
-  without end.
-- Screens no longer reserve a strip at the foot of the list for the navigation bar. The bar is
-  already inset out of the content area, so that strip was empty space below everything.
-- Tapping through the navigation quickly no longer wedges it. Taps arriving mid-transition were
-  queued rather than dropped, and enough of them left the bar unresponsive.
-- **A user and password on the local proxy**, for anyone who would rather not leave an open
-  proxy on the device. Both empty means no authentication, as before.
-- **Resolve the server up front**, on by default, now switchable. The address is looked up before
-  the tunnel starts so the core does not have to; a server that only connects by name needs it
-  off.
-- **Notify on subscription updates**, off by default, for background refreshes.
-- The core the app is built on is no longer named anywhere in the interface.
-- Nothing appears in two places. The device id was on the subscriptions page and in About, the
-  logs opened from the settings root and from diagnostics, and the version sat in the footer as
-  well as in About. Each now has one home: the device id and the version in About, the logs on
-  the root.
-
-### Added — settings
-- **Search.** A field at the top of settings finds a setting by its name, its description or the
-  page it lives on, and the result takes you there. The index is generated from the pages
-  themselves, so it cannot drift out of step with them.
-- **About.** App version and build, sing-box version, Android version, device model and the
-  device id, each copied on tap, with a link to the source.
-- **Log size limit**, 10 MB by default. The log is held in memory and was bounded only by a
-  count of lines, which says nothing about how much it holds; it is bounded by size now, oldest
-  lines first, and the logs screen shows what it is using against the limit.
-
 ### Changed — settings
 - Settings open as a list of pages rather than one long scroll. The root names four areas —
   interface, tunnel, advanced, other — and each row opens its own screen with a title bar and a
@@ -136,27 +160,6 @@
   screen shaking.
 - One spacing scale across the screens that had drifted apart — gaps of 10, 12, 16, 28 and 32
   pixels standing in for the same intent now come from the same handful of named steps.
-
-### Fixed — switching servers
-- Picking a server drops the tunnel at once and raises it a second after you stop picking. Each
-  further pick pushes that second out again, so running through a list rebuilds the tunnel once,
-  for the server you settled on, instead of once per tap.
-- While that second passes the service stays alive with the core stopped, rather than being torn
-  down and started again. Coming back up reuses what is already running, which is why connecting
-  right after switching used to take so long. If nothing asks to connect within fifteen seconds
-  the service stops on its own.
-- Every tap counts. Selecting a server and expanding a group were being refused for four hundred
-  milliseconds after the list last changed — a guard against a tap landing on a row that had
-  slid under the finger. A collapsed group stopped keeping a row visible some time ago, so the
-  list no longer shifts on selection and the guard had nothing left to guard; all it did was
-  swallow the second of two quick taps.
-- Tapping a server no longer stalls the screen. Switching shut the core down from the thread that
-  draws the interface, and shutting a core down is native work that takes as long as it takes.
-  It happens off that thread now, so the tap answers at once.
-- Switching repeatedly no longer leaves the tunnel up but carrying nothing. A switch cancelled the
-  running attempt without waiting for it to stop, then tore the core down underneath it and built
-  another — two of them in the same core at once. Each switch now waits for the previous attempt
-  to finish, and starting and stopping the core are held apart so they can never overlap.
 
 ### Changed — speed
 - Scheduling the subscription job moved off the startup path. It reaches into WorkManager, which
@@ -265,13 +268,6 @@
   confirmation.
 - Latency shows for ten seconds after the tunnel comes up, without having to ask for it.
 
-### Fixed — switching servers
-- Switching servers quickly no longer lands on the first one in the subscription. Each switch
-  cancels the connection attempt in flight, and the cancellation was caught as a connection
-  failure — which handed it to auto-failover, which walked to the next server and wrapped around
-  to the first. Cancellation now passes through, and failover never revisits a server it has
-  already tried.
-
 ### Changed — server list
 - Groups start open and remember being closed. Which subscriptions are collapsed survives leaving
   the screen and restarting the app, and more than one can be open at a time.
@@ -284,14 +280,6 @@
 - The home screen keeps the server you picked. It used to fall back to the first profile in the
   list whenever the stored id was briefly missing, which a subscription refresh causes on its
   own. Deleting a server now repoints the selection deliberately instead.
-
-### Fixed — per-app routing
-- Selected apps sort to the top of the list.
-- The empty search result read as a row of question marks. The string had been mangled to
-  replacement characters in the source; it is a translated resource now.
-- Reordering waits until you stop toggling. It used to happen mid-tap, so the row that slid under
-  the finger took the press and lit up instead of the one that was tapped, and item animation drew
-  two rows over each other while they swapped.
 
 ## v2.0.1 (2026-08-24)
 

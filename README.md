@@ -3,7 +3,7 @@
 # SYBbox
 
 [![Android](https://img.shields.io/badge/Android-7.0%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=24)
-[![Release](https://img.shields.io/badge/release-2.0.1-blue?style=flat)](https://github.com/Semazz/SYBbox-Android/releases/latest)
+[![Release](https://img.shields.io/badge/release-2.0.2-blue?style=flat)](https://github.com/Semazz/SYBbox-Android/releases/latest)
 [![License](https://img.shields.io/badge/license-GPL--3.0-orange.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 [Скачать](#скачать) · [Возможности](#возможности) · [Как пользоваться](#как-пользоваться) · [Сборка](#сборка) · [Структура](#структура-проекта)
@@ -18,9 +18,9 @@
 
 | ABI | Для кого | Ссылка |
 | --- | --- | --- |
-| **arm64-v8a** | почти все телефоны с 2018 года | [SYBbox-2.0.1-arm64-v8a.apk](https://github.com/Semazz/SYBbox-Android/releases/download/v2.0.1/SYBbox-2.0.1-arm64-v8a.apk) |
-| armeabi-v7a | старые 32-битные устройства | [SYBbox-2.0.1-armeabi-v7a.apk](https://github.com/Semazz/SYBbox-Android/releases/download/v2.0.1/SYBbox-2.0.1-armeabi-v7a.apk) |
-| x86_64 | эмуляторы, планшеты на Intel | [SYBbox-2.0.1-x86_64.apk](https://github.com/Semazz/SYBbox-Android/releases/download/v2.0.1/SYBbox-2.0.1-x86_64.apk) |
+| **arm64-v8a** | почти все телефоны с 2018 года | [SYBbox-2.0.2-arm64-v8a.apk](https://github.com/Semazz/SYBbox-Android/releases/download/v2.0.2/SYBbox-2.0.2-arm64-v8a.apk) |
+| armeabi-v7a | старые 32-битные устройства | [SYBbox-2.0.2-armeabi-v7a.apk](https://github.com/Semazz/SYBbox-Android/releases/download/v2.0.2/SYBbox-2.0.2-armeabi-v7a.apk) |
+| x86_64 | эмуляторы, планшеты на Intel | [SYBbox-2.0.2-x86_64.apk](https://github.com/Semazz/SYBbox-Android/releases/download/v2.0.2/SYBbox-2.0.2-x86_64.apk) |
 
 Не знаете, что выбрать — берите **arm64-v8a**. Требуется **Android 7.0** и новее.
 

@@ -389,4 +389,49 @@ class XrayConfigBuilderTest {
         val mux = proxyOf(wsVmess, SettingsState(enableMux = true, xudpUdp443 = "skip")).getAsJsonObject("mux")
         assertEquals("skip", mux.get("xudpProxyUDP443").asString)
     }
+
+    @Test
+    fun `the http entrance stays out until it is asked for`() {
+        val without = config(realityVless, SettingsState(localProxy = true, localProxyPort = 10808))
+            .getAsJsonArray("inbounds").map { it.asJsonObject.get("tag").asString }
+        assertFalse(without.contains(XrayConfigBuilder.TAG_HTTP))
+
+        val settings = SettingsState(
+            localProxy = true,
+            localProxyPort = 10808,
+            httpInbound = true,
+            httpInboundPort = 10809,
+        )
+        val http = config(realityVless, settings).getAsJsonArray("inbounds").map { it.asJsonObject }
+            .single { it.get("tag").asString == XrayConfigBuilder.TAG_HTTP }
+        assertEquals("http", http.get("protocol").asString)
+        assertEquals(10809, http.get("port").asInt)
+    }
+
+    @Test
+    fun `the http entrance never steals a port already in use`() {
+        val settings = SettingsState(
+            localProxy = true,
+            localProxyPort = 10808,
+            httpInbound = true,
+            httpInboundPort = 10808,
+        )
+        val tags = config(realityVless, settings).getAsJsonArray("inbounds")
+            .map { it.asJsonObject.get("tag").asString }
+        assertFalse(tags.contains(XrayConfigBuilder.TAG_HTTP))
+    }
+
+    @Test
+    fun `reading the destination from traffic follows its setting`() {
+        val on = config(realityVless, SettingsState(localProxy = true), probePort = 38431)
+            .getAsJsonArray("inbounds")[0].asJsonObject.getAsJsonObject("sniffing")
+        assertTrue(on.get("enabled").asBoolean)
+        assertFalse(on.get("routeOnly").asBoolean)
+
+        val settings = SettingsState(localProxy = true, sniffing = false, sniffRouteOnly = true)
+        val off = config(realityVless, settings, probePort = 38431)
+            .getAsJsonArray("inbounds")[0].asJsonObject.getAsJsonObject("sniffing")
+        assertFalse(off.get("enabled").asBoolean)
+        assertTrue(off.get("routeOnly").asBoolean)
+    }
 }

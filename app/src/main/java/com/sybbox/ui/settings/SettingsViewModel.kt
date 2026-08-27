@@ -82,6 +82,12 @@ class SettingsViewModel @Inject constructor(
     fun setFragmentEnabled(value: Boolean) = edit { setFragmentEnabled(value) }
     fun setFragmentSleep(value: String) = edit { setFragmentSleep(value) }
     fun setFragmentPackets(value: String) = edit { setFragmentPackets(value) }
+    fun setHttpInbound(value: Boolean) = edit { setHttpInbound(value) }
+    fun setHttpInboundPort(value: Int) = edit { setHttpInboundPort(value) }
+    fun setSubscriptionUserAgent(value: String) = edit { setSubscriptionUserAgent(value) }
+    fun setExcludedRoutes(value: String) = edit { setExcludedRoutes(value) }
+    fun setSniffing(value: Boolean) = edit { setSniffing(value) }
+    fun setSniffRouteOnly(value: Boolean) = edit { setSniffRouteOnly(value) }
     fun setNoiseEnabled(value: Boolean) = edit { setNoiseEnabled(value) }
     fun setXudpUdp443(value: String) = edit { setXudpUdp443(value) }
     fun setDomainStrategy(value: String) = edit { setDomainStrategy(value) }

@@ -334,5 +334,16 @@
     <string name="lan_address">Адрес для других устройств</string>
     <string name="lan_address_summary">Впишите его как SOCKS5-прокси на другом устройстве, и его трафик пойдёт через туннель</string>
     <string name="lan_address_missing">Нет сети</string>
+    <string name="http_inbound">HTTP-прокси</string>
+    <string name="http_inbound_summary">Второй вход для приложений, которые умеют только HTTP-прокси</string>
+    <string name="http_inbound_port">Порт HTTP-прокси</string>
+    <string name="sniffing">Определять назначение из трафика</string>
+    <string name="sniffing_summary">Находит настоящий домен за адресом, чтобы срабатывали правила по доменам. Без этого маршрутизировать можно только по адресам</string>
+    <string name="sniff_route_only">Домен только для маршрутизации</string>
+    <string name="sniff_route_only_summary">Серверу по-прежнему отдаётся адрес, а не домен</string>
+    <string name="excluded_routes">Маршруты мимо туннеля</string>
+    <string name="excluded_routes_summary">Перечисленные адреса пойдут в обход туннеля. Нужен Android 13 или новее</string>
+    <string name="subscription_user_agent">Представляться как</string>
+    <string name="subscription_user_agent_summary">Некоторые панели отдают разные серверы в зависимости от того, кто спрашивает</string>
 </resources>
 

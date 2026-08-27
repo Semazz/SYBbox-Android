@@ -334,5 +334,16 @@
     <string name="lan_address">Dirección para otros dispositivos</string>
     <string name="lan_address_summary">Introdúzcala como proxy SOCKS5 en otro dispositivo para que su tráfico pase por el túnel</string>
     <string name="lan_address_missing">Sin red</string>
+    <string name="http_inbound">Proxy HTTP</string>
+    <string name="http_inbound_summary">Una segunda entrada para las apps que solo hablan proxy HTTP</string>
+    <string name="http_inbound_port">Puerto del proxy HTTP</string>
+    <string name="sniffing">Leer el destino del tráfico</string>
+    <string name="sniffing_summary">Encuentra el dominio real tras una dirección para que las reglas por dominio coincidan</string>
+    <string name="sniff_route_only">Usar el dominio solo para enrutar</string>
+    <string name="sniff_route_only_summary">Al servidor se le sigue dando la dirección en lugar del dominio</string>
+    <string name="excluded_routes">Rutas fuera del túnel</string>
+    <string name="excluded_routes_summary">Las direcciones aquí evitan el túnel. Requiere Android 13 o superior</string>
+    <string name="subscription_user_agent">Identificarse como</string>
+    <string name="subscription_user_agent_summary">Algunos paneles entregan servidores distintos según quién pregunte</string>
 </resources>
 

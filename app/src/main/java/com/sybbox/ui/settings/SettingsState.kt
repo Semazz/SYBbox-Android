@@ -44,12 +44,17 @@ data class SettingsState(
     val leakProtection: Boolean = true,
     val blockWebRtc: Boolean = false,
     val hideTunnelAddress: Boolean = true,
+    val excludedRoutes: String = "",
+    val sniffing: Boolean = true,
+    val sniffRouteOnly: Boolean = false,
 
     val localProxy: Boolean = false,
     val localProxyPort: Int = 10808,
     val allowLan: Boolean = false,
     val localProxyUser: String = "",
     val localProxyPassword: String = "",
+    val httpInbound: Boolean = false,
+    val httpInboundPort: Int = 10809,
 
     val updateOnStart: Boolean = false,
     val connectOnStart: Boolean = false,
@@ -62,6 +67,7 @@ data class SettingsState(
 
     val subAutoUpdate: Boolean = true,
     val defaultSubInterval: Int = 12,
+    val subscriptionUserAgent: String = "sybbox",
 
     val autoFailover: Boolean = false,
     val tcpFastOpen: Boolean = false,

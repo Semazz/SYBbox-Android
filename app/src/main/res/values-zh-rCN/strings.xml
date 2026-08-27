@@ -315,4 +315,15 @@
     <string name="lan_address">其他设备使用的地址</string>
     <string name="lan_address_summary">在另一台设备上填入此 SOCKS5 代理，其流量将经由隧道</string>
     <string name="lan_address_missing">未连接网络</string>
+    <string name="http_inbound">HTTP 代理</string>
+    <string name="http_inbound_summary">为仅支持 HTTP 代理的应用提供的第二个入口</string>
+    <string name="http_inbound_port">HTTP 代理端口</string>
+    <string name="sniffing">从流量中读取目标</string>
+    <string name="sniffing_summary">找出地址背后的真实域名，使按域名的规则得以匹配</string>
+    <string name="sniff_route_only">域名仅用于路由</string>
+    <string name="sniff_route_only_summary">仍向服务器提供地址而非域名</string>
+    <string name="excluded_routes">绕过隧道的路由</string>
+    <string name="excluded_routes_summary">此处列出的地址将完全绕过隧道。需要 Android 13 或更高版本</string>
+    <string name="subscription_user_agent">标识为</string>
+    <string name="subscription_user_agent_summary">部分面板会根据请求方的身份下发不同的服务器</string>
 </resources>

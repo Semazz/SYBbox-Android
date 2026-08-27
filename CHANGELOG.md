@@ -46,6 +46,32 @@ fork, the patched shadowsocks2 and the third-party XHTTP fork are all gone.
   handled by the VPN interface and never involved the core.
 - **Turning the tunnel on and off no longer leaks the descriptor.** The core owns it from the
   moment it is handed over and closes it on every path out.
+- **IPv6 escaped the tunnel while leak protection was on.** The setting stopped the tunnel from
+  taking an IPv6 address, and Android then refused the IPv6 route that was supposed to catch that
+  traffic. Nothing was captured, so anything with IPv6 connectivity went straight out. The tunnel
+  now always takes IPv6, and the setting decides what the core does with it: block it, or carry it.
+- **Only the selected apps sent everything through the tunnel.** Android refuses to mix an allowed
+  list with a disallowed one, and the app quietly asked for both — every app in the list failed to
+  register, leaving an empty list that let everything through. The two modes no longer overlap.
+- **Two screens were drawn on top of each other** when a row was tapped twice. Navigation ran on
+  springs that keep a screen alive long after it fades out, and a second tap during that window
+  pushed the same screen again. Transitions are timed now, and a tap that arrives mid-transition
+  is dropped rather than stacked.
+- **Widgets showed different states from one another** when tapped quickly. Each refresh raced the
+  others, and one reading stale data could finish last. They are updated one at a time now, all
+  from the same snapshot.
+- The big widget took three rows instead of two, and left an empty strip along its bottom.
+
+### Added — after the core swap
+- **HTTP proxy**, a second local entrance for apps that only speak HTTP proxy.
+- **Reading the destination from traffic** is switchable, along with using the domain for routing
+  only. It reaches both the local entrances and the tunnel itself.
+- **Routes outside the tunnel**, for addresses that should bypass it. Android 13 and newer.
+- **Identify as**, so subscriptions can be fetched as a browser. Some panels hand out different
+  servers depending on who is asking.
+- **The address to hand other devices** is shown once connections from the LAN are allowed, so it
+  can be typed straight into another device rather than guessed.
+- **The core version** in About. The string existed in four languages but was never shown.
 
 
 ## v2.0.2 (2026-08-27)

@@ -336,5 +336,16 @@
     <string name="lan_address">Address for other devices</string>
     <string name="lan_address_summary">Enter this as a SOCKS5 proxy on another device to send its traffic through the tunnel</string>
     <string name="lan_address_missing">Not on a network</string>
+    <string name="http_inbound">HTTP proxy</string>
+    <string name="http_inbound_summary">A second entrance for apps that only speak HTTP proxy</string>
+    <string name="http_inbound_port">HTTP proxy port</string>
+    <string name="sniffing">Read the destination from the traffic</string>
+    <string name="sniffing_summary">Finds the real domain behind an address so rules by domain can match. Turning it off leaves only addresses to route by</string>
+    <string name="sniff_route_only">Use the domain only for routing</string>
+    <string name="sniff_route_only_summary">The server is still given the address rather than the domain</string>
+    <string name="excluded_routes">Routes outside the tunnel</string>
+    <string name="excluded_routes_summary">Addresses listed here bypass the tunnel entirely. Needs Android 13 or newer</string>
+    <string name="subscription_user_agent">Identify as</string>
+    <string name="subscription_user_agent_summary">Some panels hand out different servers depending on who is asking</string>
 </resources>
 

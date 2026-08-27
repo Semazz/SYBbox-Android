@@ -33,6 +33,7 @@ import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Memory
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.MergeType
 import androidx.compose.material.icons.rounded.Palette
@@ -462,6 +463,33 @@ private fun TransportSettings(state: SettingsState, viewModel: SettingsViewModel
 
 @Composable
 private fun TunnelSettings(state: SettingsState, viewModel: SettingsViewModel) {
+    SettingsToggle(
+        title = stringResource(R.string.sniffing),
+        summary = stringResource(R.string.sniffing_summary),
+        checked = state.sniffing,
+        onCheckedChange = viewModel::setSniffing,
+        icon = Icons.Rounded.Search,
+    )
+    if (state.sniffing) {
+        SettingsDivider()
+        SettingsToggle(
+            title = stringResource(R.string.sniff_route_only),
+            summary = stringResource(R.string.sniff_route_only_summary),
+            checked = state.sniffRouteOnly,
+            onCheckedChange = viewModel::setSniffRouteOnly,
+            icon = Icons.Rounded.AltRoute,
+        )
+    }
+    SettingsDivider()
+    SettingsText(
+        title = stringResource(R.string.excluded_routes),
+        summary = stringResource(R.string.excluded_routes_summary),
+        value = state.excludedRoutes,
+        onValueChange = viewModel::setExcludedRoutes,
+        placeholder = "192.168.0.0/16, 10.0.0.0/8",
+        icon = Icons.Rounded.AltRoute,
+    )
+    SettingsDivider()
     SettingsChoice(
         title = stringResource(R.string.domain_strategy),
         options = listOf("AsIs", "IPIfNonMatch", "IPOnDemand"),
@@ -565,6 +593,27 @@ private fun LocalProxySettings(state: SettingsState, viewModel: SettingsViewMode
             onCheckedChange = viewModel::setAllowLan,
             icon = Icons.Rounded.Wifi,
         )
+        SettingsDivider()
+        SettingsToggle(
+            title = stringResource(R.string.http_inbound),
+            summary = stringResource(R.string.http_inbound_summary),
+            checked = state.httpInbound,
+            onCheckedChange = viewModel::setHttpInbound,
+            icon = Icons.Rounded.SettingsEthernet,
+        )
+        if (state.httpInbound) {
+            SettingsDivider()
+            SettingsText(
+                title = stringResource(R.string.http_inbound_port),
+                value = state.httpInboundPort.toString(),
+                onValueChange = { entered ->
+                    entered.trim().toIntOrNull()?.takeIf { it in 1024..65535 }
+                        ?.let(viewModel::setHttpInboundPort)
+                },
+                placeholder = "10809",
+                icon = Icons.Rounded.SettingsEthernet,
+            )
+        }
         if (state.allowLan) {
             SettingsDivider()
             val proxyContext = LocalContext.current
@@ -616,6 +665,16 @@ private fun StartupSettings(state: SettingsState, viewModel: SettingsViewModel) 
 
 @Composable
 private fun SubscriptionSettings(state: SettingsState, viewModel: SettingsViewModel) {
+    SettingsChoice(
+        title = stringResource(R.string.subscription_user_agent),
+        summary = stringResource(R.string.subscription_user_agent_summary),
+        options = com.sybbox.data.remote.SubscriptionIdentity.CHOICES,
+        selected = state.subscriptionUserAgent,
+        onSelect = viewModel::setSubscriptionUserAgent,
+        label = { it },
+        icon = Icons.Rounded.Language,
+    )
+    SettingsDivider()
     val context = LocalContext.current
     val hwid by viewModel.hwid.collectAsStateWithLifecycle()
     SettingsToggle(

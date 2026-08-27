@@ -25,6 +25,7 @@ object XrayConfigBuilder {
     const val TAG_PROBE = "probe"
     const val TAG_LOCAL = "local"
     const val TAG_FRAGMENT = "fragment"
+    const val TAG_HTTP = "http-in"
 
     private const val MUX_MAX_CONCURRENCY = 64
 
@@ -175,7 +176,7 @@ object XrayConfigBuilder {
 
     private fun buildInbounds(settings: SettingsState, probePort: Int) = JsonArray().apply {
         if (probePort in 1..65535) {
-            add(socksInbound(TAG_PROBE, "127.0.0.1", probePort, "", ""))
+            add(socksInbound(TAG_PROBE, "127.0.0.1", probePort, "", "", settings))
         }
         if (settings.localProxy && settings.localProxyPort in 1..65535 && settings.localProxyPort != probePort) {
             val listen = if (settings.allowLan) "0.0.0.0" else "127.0.0.1"
@@ -186,12 +187,36 @@ object XrayConfigBuilder {
                     settings.localProxyPort,
                     settings.localProxyUser,
                     settings.localProxyPassword,
+                    settings,
                 ),
             )
+            if (settings.httpInbound && settings.httpInboundPort in 1..65535 &&
+                settings.httpInboundPort != settings.localProxyPort && settings.httpInboundPort != probePort
+            ) {
+                add(httpInbound(listen, settings))
+            }
         }
     }
 
-    private fun socksInbound(tag: String, listen: String, port: Int, user: String, password: String) =
+    private fun httpInbound(listen: String, settings: SettingsState) = JsonObject().apply {
+        addProperty("tag", TAG_HTTP)
+        addProperty("protocol", "http")
+        addProperty("listen", listen)
+        addProperty("port", settings.httpInboundPort)
+        add("settings", JsonObject().apply {
+            if (settings.localProxyUser.isNotBlank() && settings.localProxyPassword.isNotBlank()) {
+                add("accounts", JsonArray().apply {
+                    add(JsonObject().apply {
+                        addProperty("user", settings.localProxyUser)
+                        addProperty("pass", settings.localProxyPassword)
+                    })
+                })
+            }
+        })
+        add("sniffing", sniffing(settings))
+    }
+
+    private fun socksInbound(tag: String, listen: String, port: Int, user: String, password: String, settings: SettingsState) =
         JsonObject().apply {
             addProperty("tag", tag)
             addProperty("protocol", "socks")
@@ -211,14 +236,14 @@ object XrayConfigBuilder {
                     addProperty("auth", "noauth")
                 }
             })
-            add("sniffing", sniffing())
+            add("sniffing", sniffing(settings))
         }
 
-    private fun sniffing() = JsonObject().apply {
-        addProperty("enabled", true)
+    private fun sniffing(settings: SettingsState) = JsonObject().apply {
+        addProperty("enabled", settings.sniffing)
         add("destOverride", jsonArrayOf(listOf("http", "tls", "quic", "fakedns")))
         addProperty("metadataOnly", false)
-        addProperty("routeOnly", false)
+        addProperty("routeOnly", settings.sniffRouteOnly)
     }
 
     private fun buildOutbounds(

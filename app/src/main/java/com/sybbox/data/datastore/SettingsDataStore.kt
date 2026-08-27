@@ -81,6 +81,12 @@ class SettingsDataStore @Inject constructor(
     val fragmentEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_FRAGMENT_ENABLED] ?: true }
     val fragmentSleep: Flow<String> = dataStore.data.map { it[KEY_FRAGMENT_SLEEP] ?: "10" }
     val fragmentPackets: Flow<String> = dataStore.data.map { it[KEY_FRAGMENT_PACKETS] ?: "tlshello" }
+    val httpInbound: Flow<Boolean> = dataStore.data.map { it[KEY_HTTP_INBOUND] ?: false }
+    val httpInboundPort: Flow<Int> = dataStore.data.map { it[KEY_HTTP_INBOUND_PORT] ?: 10809 }
+    val subscriptionUserAgent: Flow<String> = dataStore.data.map { it[KEY_SUB_USER_AGENT] ?: "sybbox" }
+    val excludedRoutes: Flow<String> = dataStore.data.map { it[KEY_EXCLUDED_ROUTES] ?: "" }
+    val sniffing: Flow<Boolean> = dataStore.data.map { it[KEY_SNIFFING] ?: true }
+    val sniffRouteOnly: Flow<Boolean> = dataStore.data.map { it[KEY_SNIFF_ROUTE_ONLY] ?: false }
     val noiseEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_NOISE_ENABLED] ?: false }
     val xudpUdp443: Flow<String> = dataStore.data.map { it[KEY_XUDP_UDP443] ?: "reject" }
     val domainStrategy: Flow<String> = dataStore.data.map { it[KEY_DOMAIN_STRATEGY] ?: "IPIfNonMatch" }
@@ -122,6 +128,12 @@ class SettingsDataStore @Inject constructor(
             fragmentEnabled = p[KEY_FRAGMENT_ENABLED] ?: true,
             fragmentSleep = p[KEY_FRAGMENT_SLEEP] ?: "10",
             fragmentPackets = p[KEY_FRAGMENT_PACKETS] ?: "tlshello",
+            httpInbound = p[KEY_HTTP_INBOUND] ?: false,
+            httpInboundPort = p[KEY_HTTP_INBOUND_PORT] ?: 10809,
+            subscriptionUserAgent = p[KEY_SUB_USER_AGENT] ?: "sybbox",
+            excludedRoutes = p[KEY_EXCLUDED_ROUTES] ?: "",
+            sniffing = p[KEY_SNIFFING] ?: true,
+            sniffRouteOnly = p[KEY_SNIFF_ROUTE_ONLY] ?: false,
             noiseEnabled = p[KEY_NOISE_ENABLED] ?: false,
             xudpUdp443 = p[KEY_XUDP_UDP443] ?: "reject",
             domainStrategy = p[KEY_DOMAIN_STRATEGY] ?: "IPIfNonMatch",
@@ -255,6 +267,12 @@ class SettingsDataStore @Inject constructor(
     suspend fun setFragmentEnabled(value: Boolean) = dataStore.edit { it[KEY_FRAGMENT_ENABLED] = value }
     suspend fun setFragmentSleep(value: String) = dataStore.edit { it[KEY_FRAGMENT_SLEEP] = value }
     suspend fun setFragmentPackets(value: String) = dataStore.edit { it[KEY_FRAGMENT_PACKETS] = value }
+    suspend fun setHttpInbound(value: Boolean) = dataStore.edit { it[KEY_HTTP_INBOUND] = value }
+    suspend fun setHttpInboundPort(value: Int) = dataStore.edit { it[KEY_HTTP_INBOUND_PORT] = value }
+    suspend fun setSubscriptionUserAgent(value: String) = dataStore.edit { it[KEY_SUB_USER_AGENT] = value }
+    suspend fun setExcludedRoutes(value: String) = dataStore.edit { it[KEY_EXCLUDED_ROUTES] = value }
+    suspend fun setSniffing(value: Boolean) = dataStore.edit { it[KEY_SNIFFING] = value }
+    suspend fun setSniffRouteOnly(value: Boolean) = dataStore.edit { it[KEY_SNIFF_ROUTE_ONLY] = value }
     suspend fun setNoiseEnabled(value: Boolean) = dataStore.edit { it[KEY_NOISE_ENABLED] = value }
     suspend fun setXudpUdp443(value: String) = dataStore.edit { it[KEY_XUDP_UDP443] = value }
     suspend fun setDomainStrategy(value: String) = dataStore.edit { it[KEY_DOMAIN_STRATEGY] = value }
@@ -322,6 +340,12 @@ class SettingsDataStore @Inject constructor(
         private val KEY_FRAGMENT_ENABLED = booleanPreferencesKey("fragment_enabled")
         private val KEY_FRAGMENT_SLEEP = stringPreferencesKey("fragment_sleep")
         private val KEY_FRAGMENT_PACKETS = stringPreferencesKey("fragment_packets")
+        private val KEY_HTTP_INBOUND = booleanPreferencesKey("http_inbound")
+        private val KEY_HTTP_INBOUND_PORT = intPreferencesKey("http_inbound_port")
+        private val KEY_SUB_USER_AGENT = stringPreferencesKey("subscription_user_agent")
+        private val KEY_EXCLUDED_ROUTES = stringPreferencesKey("excluded_routes")
+        private val KEY_SNIFFING = booleanPreferencesKey("sniffing")
+        private val KEY_SNIFF_ROUTE_ONLY = booleanPreferencesKey("sniff_route_only")
         private val KEY_NOISE_ENABLED = booleanPreferencesKey("noise_enabled")
         private val KEY_XUDP_UDP443 = stringPreferencesKey("xudp_udp443")
         private val KEY_DOMAIN_STRATEGY = stringPreferencesKey("domain_strategy")

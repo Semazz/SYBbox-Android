@@ -336,6 +336,8 @@ class SybBoxVpnService : VpnService() {
             geoReady,
         )
 
+        Core.setSniffing(settings.sniffing, settings.sniffRouteOnly)
+
         val corePlatform = XrayPlatform(this)
         val instance = Core.newInstance(config, corePlatform)
         val descriptor = try {
@@ -372,6 +374,7 @@ class SybBoxVpnService : VpnService() {
                     .onFailure { CoreLog.warn("The system refused an IPv6 route: ${it.message}") }
             }
             builder.addDnsServer(ROUTED_DNS_SERVER)
+            excludeRoutes(builder, settings.excludedRoutes)
         }
 
         applyPackageFilter(builder, settings)
@@ -382,6 +385,35 @@ class SybBoxVpnService : VpnService() {
 
         return builder.establish()
             ?: throw IllegalStateException("VPN permission was revoked or another VPN is active")
+    }
+
+    private fun excludeRoutes(builder: Builder, raw: String) {
+        val prefixes = raw.split(',', ';').flatMap { it.lines() }
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+        if (prefixes.isEmpty()) return
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            CoreLog.warn("Excluded routes need Android 13 or newer, so they were ignored")
+            return
+        }
+
+        prefixes.forEach { prefix ->
+            val slash = prefix.lastIndexOf('/')
+            if (slash <= 0) {
+                CoreLog.warn("Skipped $prefix: a route needs a prefix length, like 10.0.0.0/8")
+                return@forEach
+            }
+            val host = prefix.substring(0, slash)
+            val bits = prefix.substring(slash + 1).toIntOrNull()
+            if (bits == null) {
+                CoreLog.warn("Skipped $prefix: $bits is not a prefix length")
+                return@forEach
+            }
+            runCatching {
+                builder.excludeRoute(android.net.IpPrefix(java.net.InetAddress.getByName(host), bits))
+            }.onFailure { CoreLog.warn("Skipped $prefix: ${it.message}") }
+        }
     }
 
     private fun applyPackageFilter(builder: Builder, settings: SettingsState) {

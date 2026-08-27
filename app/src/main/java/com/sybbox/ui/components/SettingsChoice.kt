@@ -42,6 +42,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.sybbox.ui.theme.SybRadius
 import com.sybbox.ui.theme.SybSpacing
 
 @Composable
@@ -143,7 +144,7 @@ fun <T> SybSegmented(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(SybRadius.tile))
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .padding(4.dp)
             .height(IntrinsicSize.Max),
@@ -169,7 +170,7 @@ fun <T> SybSegmented(
                     .weight(1f)
                     .fillMaxHeight()
                     .heightIn(min = minHeight)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(SybRadius.inner))
                     .background(fill)
                     .clickable { onSelect(option) }
                     .padding(horizontal = SybSpacing.small, vertical = SybSpacing.small + 1.dp),
@@ -220,7 +221,7 @@ private fun <T> ChoiceSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = SybSpacing.medium, vertical = 3.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(SybRadius.tile))
                     .background(
                         if (isSelected) {
                             MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)

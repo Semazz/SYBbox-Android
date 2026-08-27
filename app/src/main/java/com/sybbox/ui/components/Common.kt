@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sybbox.R
 import com.sybbox.domain.model.ProtocolType
+import com.sybbox.ui.theme.SybRadius
 import com.sybbox.ui.theme.SybSpacing
 import com.sybbox.ui.theme.LatencyFast
 import com.sybbox.ui.theme.LatencyMedium
@@ -72,9 +73,9 @@ import com.sybbox.ui.theme.ProtocolTuic
 import com.sybbox.ui.theme.ProtocolVless
 import com.sybbox.ui.theme.ProtocolVmess
 
-val CardShape = RoundedCornerShape(20.dp)
-val GroupShape = RoundedCornerShape(24.dp)
-val TileShape = RoundedCornerShape(14.dp)
+val CardShape = RoundedCornerShape(SybRadius.card)
+val GroupShape = RoundedCornerShape(SybRadius.group)
+val TileShape = RoundedCornerShape(SybRadius.tile)
 val PillShape = RoundedCornerShape(50)
 
 @Composable

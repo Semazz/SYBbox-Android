@@ -1,6 +1,8 @@
 package com.sybbox.ui.routing
 
 import com.sybbox.ui.components.SybSegmented
+import com.sybbox.ui.components.PillShape
+import com.sybbox.ui.theme.SybRadius
 import com.sybbox.ui.theme.SybSpacing
 import android.widget.ImageView
 import androidx.compose.animation.animateColorAsState
@@ -139,17 +141,22 @@ fun PerAppScreen(
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(horizontal = SybSpacing.screen, vertical = SybSpacing.rowV),
+            contentPadding = PaddingValues(
+                start = SybSpacing.screen,
+                end = SybSpacing.screen,
+                top = SybSpacing.small,
+                bottom = SybSpacing.listBottom,
+            ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "header") {
                 SybCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(18.dp)) {
+                    Column(modifier = Modifier.padding(horizontal = SybSpacing.cardH, vertical = SybSpacing.cardV)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
                                     .size(44.dp)
-                                    .clip(RoundedCornerShape(14.dp))
+                                    .clip(RoundedCornerShape(SybRadius.tile))
                                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
                                 contentAlignment = Alignment.Center,
                             ) {
@@ -224,7 +231,7 @@ fun PerAppScreen(
                                 }
                             },
                             singleLine = true,
-                            shape = RoundedCornerShape(28.dp),
+                            shape = PillShape,
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                                 unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -378,7 +385,7 @@ private fun AppRowExpressive(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(SybRadius.inner))
             .background(if (checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else Color.Transparent)
             .clickable(onClick = onToggle)
             .padding(horizontal = 12.dp, vertical = 10.dp),
@@ -387,7 +394,7 @@ private fun AppRowExpressive(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(SybRadius.tile))
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                 contentAlignment = Alignment.Center,
             ) {
@@ -396,7 +403,7 @@ private fun AppRowExpressive(
                     update = { view -> view.setImageDrawable(icon) },
                     modifier = Modifier
                         .size(42.dp)
-                        .clip(RoundedCornerShape(12.dp)),
+                        .clip(RoundedCornerShape(SybRadius.inner)),
                 )
             }
             Spacer(Modifier.width(14.dp))

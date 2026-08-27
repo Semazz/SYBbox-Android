@@ -89,11 +89,11 @@ private val LightScheme = lightColorScheme(
 )
 
 private val ExpressiveShapes = Shapes(
-    extraSmall = RoundedCornerShape(10.dp),
-    small = RoundedCornerShape(14.dp),
-    medium = RoundedCornerShape(18.dp),
-    large = RoundedCornerShape(22.dp),
-    extraLarge = RoundedCornerShape(28.dp),
+    extraSmall = RoundedCornerShape(SybRadius.inner),
+    small = RoundedCornerShape(SybRadius.tile),
+    medium = RoundedCornerShape(SybRadius.card),
+    large = RoundedCornerShape(SybRadius.group),
+    extraLarge = RoundedCornerShape(SybRadius.sheet),
 )
 
 @Composable

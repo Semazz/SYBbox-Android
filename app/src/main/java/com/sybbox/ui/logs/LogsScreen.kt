@@ -174,7 +174,12 @@ fun LogsScreen(server: String?, onBack: () -> Unit) {
                     state = listState,
                     reverseLayout = true,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = SybSpacing.screen, vertical = SybSpacing.small),
+                    contentPadding = PaddingValues(
+                        start = SybSpacing.screen,
+                        end = SybSpacing.screen,
+                        top = SybSpacing.small,
+                        bottom = SybSpacing.listBottom,
+                    ),
                 ) {
                     items(visible.asReversed(), key = { it.id }) { entry -> LogRow(entry) }
                 }

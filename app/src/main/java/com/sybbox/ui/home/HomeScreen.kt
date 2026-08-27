@@ -88,6 +88,7 @@ import com.sybbox.ui.components.IconTile
 import com.sybbox.ui.components.LatencyBadge
 import com.sybbox.ui.components.PillShape
 import com.sybbox.ui.components.SybCard
+import com.sybbox.ui.theme.SybRadius
 import com.sybbox.ui.theme.SybSpacing
 import com.sybbox.ui.theme.LatencySlow
 
@@ -425,11 +426,11 @@ private fun ActiveServerCard(
                 flagRes != 0 -> Image(
                     painter = androidx.compose.ui.res.painterResource(flagRes),
                     contentDescription = null,
-                    modifier = androidx.compose.ui.Modifier.size(42.dp).clip(RoundedCornerShape(12.dp)),
+                    modifier = androidx.compose.ui.Modifier.size(42.dp).clip(RoundedCornerShape(SybRadius.tile)),
                     contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                 )
                 code != null -> Box(
-                    modifier = androidx.compose.ui.Modifier.size(42.dp).clip(RoundedCornerShape(12.dp)).background(pColor.copy(alpha = 0.14f)),
+                    modifier = androidx.compose.ui.Modifier.size(42.dp).clip(RoundedCornerShape(SybRadius.tile)).background(pColor.copy(alpha = 0.14f)),
                     contentAlignment = Alignment.Center,
                 ) { Text(com.sybbox.ui.components.flagEmojiIn(displayNameRaw) ?: "", fontSize = androidx.compose.ui.unit.TextUnit(20f, androidx.compose.ui.unit.TextUnitType.Sp)) }
                 else -> IconTile(Icons.Rounded.Public, tint = pColor, container = pColor.copy(alpha = 0.14f))

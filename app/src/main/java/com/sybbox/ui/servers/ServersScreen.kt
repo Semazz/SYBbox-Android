@@ -1,5 +1,6 @@
 package com.sybbox.ui.servers
 
+import com.sybbox.ui.theme.SybRadius
 import com.sybbox.ui.theme.SybSpacing
 import android.content.ClipboardManager
 import android.content.Context
@@ -493,13 +494,13 @@ private fun ServerRow(
                 flagRes != 0 -> Image(
                     painter = androidx.compose.ui.res.painterResource(flagRes),
                     contentDescription = null,
-                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)),
+                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(SybRadius.tile)),
                     contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                 )
                 code != null -> Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(SybRadius.tile))
                         .background(pColor.copy(alpha = 0.14f)),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -847,7 +848,7 @@ private fun QrShareDialog(profile: ServerProfile, onDismiss: () -> Unit) {
                     contentDescription = "QR Code",
                     modifier = Modifier
                         .size(240.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(SybRadius.card))
                         .background(Color.White)
                         .padding(12.dp),
                 )

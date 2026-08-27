@@ -17,10 +17,10 @@ object SybSpacing {
     val rowV = 12.dp
 
     val chipH = 10.dp
-    val chipV = 5.dp
+    val chipV = 6.dp
 
     val iconGap = 14.dp
-    val labelGap = 3.dp
+    val labelGap = 4.dp
 
     val hair = 2.dp
     val tight = 4.dp
@@ -32,4 +32,13 @@ object SybSpacing {
     val xxlarge = 32.dp
 
     val listBottom = 24.dp
+}
+
+object SybRadius {
+
+    val inner = 12.dp
+    val tile = 16.dp
+    val card = 20.dp
+    val group = 24.dp
+    val sheet = 28.dp
 }

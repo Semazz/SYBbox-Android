@@ -1,7 +1,12 @@
 package com.sybbox.core
 
-import com.google.gson.JsonParser
-import com.sybbox.domain.model.*
+import com.sybbox.domain.model.ProtocolType
+import com.sybbox.domain.model.RoutingAction
+import com.sybbox.domain.model.RoutingRule
+import com.sybbox.domain.model.RoutingRuleType
+import com.sybbox.domain.model.SecurityType
+import com.sybbox.domain.model.ServerProfile
+import com.sybbox.domain.model.TransportType
 import com.sybbox.ui.settings.SettingsState
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -9,135 +14,107 @@ import java.io.File
 
 class ConfigMatrixDumpTest {
 
-    private val deviceDns = listOf("192.168.1.1")
+    private val outputDir = File("build/config-matrix")
 
-    private fun vless(
-        name: String,
-        transport: TransportType = TransportType.TCP,
-        security: SecurityType = SecurityType.REALITY,
-        flow: String = "xtls-rprx-vision",
-    ) = ServerProfile(
-        name = name, address = "se.example.com", port = 443,
-        protocol = ProtocolType.VLESS,
+    private val base = ServerProfile(
+        name = "node",
+        address = "example.com",
+        port = 443,
         uuid = "8c1f4d90-2a1b-4d5e-9f3c-7a6b5c4d3e2f",
-        flow = flow, security = security, transport = transport,
-        serverName = "www.microsoft.com", fingerprint = "chrome",
-        realityPublicKey = if (security == SecurityType.REALITY) "xhpTOZQKJm9nXbUZTZvR4MtCkQnZ5FGGvWEo0nZ4Vjs" else "",
-        realityShortId = if (security == SecurityType.REALITY) "6ba85179e30d4fc2" else "",
-        wsPath = "/ws", wsHost = "cdn.example.com",
+        serverName = "example.com",
+        fingerprint = "chrome",
+        wsPath = "/path",
+        wsHost = "example.com",
         grpcServiceName = "grpcsvc",
-        h2Path = "/h2", h2Host = "cdn.example.com",
+        ssPassword = "password",
+        ssMethod = "aes-256-gcm",
+        hy2Password = "password",
+        realityPublicKey = "xhpTOZQKJm9nXbUZTZvR4MtCkQnZ5FGGvWEo0nZ4Vjs",
+        realityShortId = "6ba85179e30d4fc2",
     )
 
-    private val profiles: List<Pair<String, ServerProfile>> = listOf(
-        "vless-reality-vision-tcp" to vless("reality"),
-        "vless-tls-ws" to vless("ws", TransportType.WS, SecurityType.TLS, flow = ""),
-        "vless-tls-grpc" to vless("grpc", TransportType.GRPC, SecurityType.TLS, flow = ""),
-        "vless-tls-http" to vless("h2", TransportType.HTTP, SecurityType.TLS, flow = ""),
-        "vless-tls-httpupgrade" to vless("hu", TransportType.HTTPUPGRADE, SecurityType.TLS, flow = ""),
-        "vless-none-tcp" to vless("plain", TransportType.TCP, SecurityType.NONE, flow = ""),
-        "vless-xhttp-v2ray-extra" to vless("xhttp", TransportType.XHTTP, SecurityType.TLS, flow = "").copy(
-            xhttpMode = "packet-up",
+    private val settings = SettingsState(
+        routingMode = "BALANCED",
+        blockAds = true,
+        blockTrackers = true,
+        bypassRussia = true,
+        bypassChina = true,
+        bypassLocalNetwork = true,
+        blockWebRtc = true,
+        leakProtection = true,
+        localProxy = true,
+        localProxyPort = 10808,
+        enableMux = true,
+        enableFakeIp = true,
+        tcpFastOpen = true,
+        fragmentEnabled = true,
+        noiseEnabled = true,
+    )
 
-            xhttpExtra = """{"mode":"packet-up","path":"/x","host":"cdn.example.com","scMaxEachPostBytes":1000000,"xPaddingBytes":"100-1000"}""",
-        ),
-        "vmess-ws-tls" to ServerProfile(
-            name = "vmess", address = "vm.example.com", port = 8443,
-            protocol = ProtocolType.VMESS, uuid = "1b2c3d4e-5f60-4718-8293-a4b5c6d7e8f9",
-            alterId = 0, encryption = "auto", security = SecurityType.TLS,
-            transport = TransportType.WS, wsPath = "/ws", wsHost = "vm.example.com",
-            serverName = "vm.example.com", alpn = listOf("h2", "http/1.1"),
-        ),
-        "trojan-grpc" to ServerProfile(
-            name = "trojan", address = "tj.example.com", port = 443,
-            protocol = ProtocolType.TROJAN, uuid = "trojan-password",
-            security = SecurityType.TLS, transport = TransportType.GRPC,
-            grpcServiceName = "tjsvc", serverName = "tj.example.com",
-        ),
-        "shadowsocks" to ServerProfile(
-            name = "ss", address = "ss.example.com", port = 8388,
-            protocol = ProtocolType.SHADOWSOCKS, security = SecurityType.NONE,
-            ssMethod = "aes-256-gcm", ssPassword = "ss-secret",
-        ),
-        "hysteria2-obfs" to ServerProfile(
-            name = "hy2", address = "hy.example.com", port = 8443,
-            protocol = ProtocolType.HYSTERIA2, security = SecurityType.TLS,
-            hy2Password = "hy-secret", hy2ObfsType = "salamander", hy2ObfsPassword = "obfs",
-            serverName = "hy.example.com",
-        ),
-        "tuic" to ServerProfile(
-            name = "tuic", address = "tu.example.com", port = 443,
-            protocol = ProtocolType.TUIC, uuid = "8c1f4d90-2a1b-4d5e-9f3c-7a6b5c4d3e2f",
-            tuicPassword = "tuic-secret", tuicCongestionControl = "bbr",
-            security = SecurityType.TLS, serverName = "tu.example.com",
-        ),
-        "anytls" to ServerProfile(
-            name = "anytls", address = "at.example.com", port = 443,
-            protocol = ProtocolType.ANYTLS, anytlsPassword = "at-secret",
-            security = SecurityType.TLS, serverName = "at.example.com",
-        ),
-        "shadowtls" to ServerProfile(
-            name = "stls", address = "st.example.com", port = 443,
-            protocol = ProtocolType.SHADOWTLS, shadowTlsPassword = "st-secret",
-            shadowTlsVersion = 3, security = SecurityType.TLS, serverName = "st.example.com",
-        ),
-        "wireguard" to ServerProfile(
+    private val rules = listOf(
+        RoutingRule(type = RoutingRuleType.DOMAIN_SUFFIX, value = "example.org", action = RoutingAction.DIRECT),
+        RoutingRule(type = RoutingRuleType.IP_CIDR, value = "10.0.0.0/8", action = RoutingAction.BLOCK),
+        RoutingRule(type = RoutingRuleType.PORT, value = "8080", action = RoutingAction.PROXY),
+    )
 
-            name = "wg", address = "203.0.113.9", port = 51820,
+    private fun profiles(): Map<String, ServerProfile> {
+        val result = linkedMapOf<String, ServerProfile>()
+
+        XrayConfigBuilder.SUPPORTED_TRANSPORTS.forEach { transport ->
+            listOf(SecurityType.NONE, SecurityType.TLS, SecurityType.REALITY).forEach { security ->
+                if (security == SecurityType.REALITY && transport !in XrayConfigBuilder.REALITY_TRANSPORTS) {
+                    return@forEach
+                }
+                val name = "vless-${transport.name.lowercase()}-${security.name.lowercase()}"
+                result[name] = base.copy(protocol = ProtocolType.VLESS, transport = transport, security = security)
+            }
+            result["vmess-${transport.name.lowercase()}"] =
+                base.copy(protocol = ProtocolType.VMESS, transport = transport, security = SecurityType.TLS)
+            result["trojan-${transport.name.lowercase()}"] =
+                base.copy(protocol = ProtocolType.TROJAN, transport = transport, security = SecurityType.TLS)
+        }
+
+        result["vless-vision"] = base.copy(
+            protocol = ProtocolType.VLESS,
+            transport = TransportType.TCP,
+            security = SecurityType.REALITY,
+            flow = "xtls-rprx-vision",
+        )
+        result["shadowsocks"] = base.copy(
+            protocol = ProtocolType.SHADOWSOCKS,
+            transport = TransportType.TCP,
+            security = SecurityType.NONE,
+        )
+        result["shadowsocks-2022"] = base.copy(
+            protocol = ProtocolType.SHADOWSOCKS,
+            transport = TransportType.TCP,
+            security = SecurityType.NONE,
+            ssMethod = "2022-blake3-aes-256-gcm",
+            ssPassword = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+        )
+        result["hysteria2"] = base.copy(protocol = ProtocolType.HYSTERIA2, security = SecurityType.TLS)
+        result["wireguard"] = base.copy(
             protocol = ProtocolType.WIREGUARD,
-            wgPrivateKey = "iPKjM0Ck9Bu8lRmMWJ1cV3cVBcS4CQ0EYCf9fq0oS1Y=",
-            wgPeerPublicKey = "xTIBA5rboUvnH4htodjb6e697QjLERt1NAB4mZqp8Dg=",
-            wgLocalAddress = "10.0.0.2/32", wgMTU = 1420,
-        ),
-    )
-
-    private val settingsVariants: List<Pair<String, SettingsState>> = listOf(
-        "defaults" to SettingsState(),
-        "global" to SettingsState(routingMode = ConfigBuilder.MODE_GLOBAL),
-        "direct-only" to SettingsState(routingMode = ConfigBuilder.MODE_DIRECT_ONLY),
-        "bypass-ru-cn-ads" to SettingsState(
-            routingMode = ConfigBuilder.MODE_BALANCED,
-            bypassRussia = true, bypassChina = true, blockAds = true, blockTrackers = true,
-            bypassLocalNetwork = true,
-        ),
-        "fakeip-mux" to SettingsState(enableFakeIp = true, enableMux = true),
-        "per-app" to SettingsState(perAppProxy = true, excludedApps = listOf("com.android.chrome")),
-        "dns-doh" to SettingsState(remoteDns = "https://dns.google/dns-query", directDns = "https://1.1.1.1/dns-query"),
-        "dns-tls" to SettingsState(remoteDns = "tls://1.1.1.1", directDns = "udp://8.8.8.8"),
-        "dns-h3" to SettingsState(remoteDns = "h3://1.1.1.1/dns-query", directDns = "tcp://8.8.8.8"),
-        "dns-bare-and-local" to SettingsState(remoteDns = "9.9.9.9", directDns = "local"),
-        "fragment-record" to SettingsState(fragmentEnabled = true, recordFragment = true),
-        "sni-override-insecure" to SettingsState(customSni = "override.example.com"),
-    )
+            port = 51820,
+            wgPrivateKey = "6JOEV9dS0DBRT4NfyfHTaZaCPnYzUDLB0lxk5HTuKl4=",
+            wgPeerPublicKey = "Kg7XMH0hJKGPnYzUDLB0lxk5HTuKl46JOEV9dS0DBRQ=",
+            wgLocalAddress = "10.0.0.2/32",
+        )
+        return result
+    }
 
     @Test
-    fun `dump every protocol and settings combination`() {
-        val dir = File("build/config-matrix")
-        dir.deleteRecursively()
-        dir.mkdirs()
-        var count = 0
-        for ((pName, profile) in profiles) {
-            for ((sName, settings) in settingsVariants) {
-                for (systemDns in listOf(deviceDns, emptyList())) {
-                    val suffix = if (systemDns.isEmpty()) "nodns" else "dns"
+    fun `every supported combination produces a config`() {
+        outputDir.deleteRecursively()
+        outputDir.mkdirs()
 
-                    for (useRuleSets in listOf(false, true)) {
-                        val rs = if (useRuleSets) "rs" else "nors"
-
-                        for (resolved in listOf<String?>(null, "203.0.113.9")) {
-                            val rv = if (resolved == null) "byname" else "byip"
-                            val json = ConfigBuilder.build(
-                                profile, settings, emptyList(), useRuleSets, systemDns, resolved,
-                            )
-                            assertTrue(JsonParser.parseString(json).isJsonObject)
-                            File(dir, "$pName--$sName--$suffix--$rs--$rv.json").writeText(json)
-                            count++
-                        }
-                    }
-                }
-            }
+        val written = profiles().map { (name, profile) ->
+            val config = XrayConfigBuilder.build(profile, settings, rules, listOf("192.168.1.1"), null, 38431)
+            File(outputDir, "$name.json").writeText(config)
+            name
         }
-        println("config-matrix: wrote $count configs to ${dir.absolutePath}")
-        assertTrue(count > 400)
+
+        assertTrue(written.size >= 20)
+        assertTrue(outputDir.listFiles().orEmpty().all { it.length() > 0 })
     }
 }

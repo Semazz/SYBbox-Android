@@ -12,10 +12,11 @@ import androidx.core.app.NotificationCompat
 import com.sybbox.MainActivity
 import com.sybbox.R
 import com.sybbox.SybBoxApp
-import com.sybbox.core.ConfigBuilder
+import com.sybbox.core.XrayConfigBuilder
 import com.sybbox.core.CoreLog
-import com.sybbox.core.SingBoxPlatform
-import com.sybbox.core.UnsupportedProtocolException
+import com.sybbox.core.GeoAssets
+import com.sybbox.core.XrayPlatform
+import com.sybbox.core.UnsupportedProfileException
 import com.sybbox.data.datastore.SettingsDataStore
 import com.sybbox.data.repository.ProfileRepository
 import com.sybbox.data.repository.RoutingRepository
@@ -23,8 +24,8 @@ import com.sybbox.domain.model.AppState
 import com.sybbox.domain.model.ConnectionState
 import com.sybbox.domain.model.ConnectionStats
 import com.sybbox.domain.model.ServerProfile
-import com.sybbox.core.BoxService
 import com.sybbox.core.Core
+import com.sybbox.core.Instance
 import com.sybbox.ui.settings.SettingsState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -62,9 +63,8 @@ class SybBoxVpnService : VpnService() {
     private var settingsWatcher: Job? = null
     private var connectionJob: Job? = null
 
-    private var boxService: BoxService? = null
-    private var platform: SingBoxPlatform? = null
-    private var tunDescriptor: ParcelFileDescriptor? = null
+    private var xrayInstance: Instance? = null
+    private var platform: XrayPlatform? = null
 
     private var activeProfileId = -1L
 
@@ -212,11 +212,12 @@ class SybBoxVpnService : VpnService() {
 
                 CoreLog.setServer(profile.name.ifBlank { profile.address })
                 CoreLog.info("Connecting to ${profile.name.ifBlank { profile.address }} (${profile.protocol})")
-                Core.setup(filesDir.absolutePath, filesDir.absolutePath, cacheDir.absolutePath)
+                val geoReady = GeoAssets.install(this@SybBoxVpnService)
+                Core.setAssetPath(filesDir.absolutePath)
 
-                val (platform, service) = coreMutex.withLock { startCore(profile, settings, rules) }
-                this@SybBoxVpnService.platform = platform
-                this@SybBoxVpnService.boxService = service
+                val (corePlatform, instance) = coreMutex.withLock { startCore(profile, settings, rules, geoReady) }
+                this@SybBoxVpnService.platform = corePlatform
+                this@SybBoxVpnService.xrayInstance = instance
                 activeProfileId = currentProfileId
                 appliedConfigSignature = configSignature(settingsDataStore.rawPreferences.first())
                 liveInstance = this@SybBoxVpnService
@@ -322,38 +323,83 @@ class SybBoxVpnService : VpnService() {
         profile: ServerProfile,
         settings: SettingsState,
         rules: List<com.sybbox.domain.model.RoutingRule>,
-    ): Pair<SingBoxPlatform, BoxService> {
-        var lastError: Throwable? = null
-        for (useRuleSets in listOf(true, false)) {
-            val platform = SingBoxPlatform(this) { descriptor ->
-                tunDescriptor?.runCatching { close() }
-                tunDescriptor = descriptor
-            }
-            try {
-                probePort = freeProbePort()
-                val config = ConfigBuilder.build(
-                    profile, settings, rules, useRuleSets,
-                    systemDnsServers(),
-                    if (settings.resolveServer) resolveServerAddress(profile.address) else null,
-                    probePort,
-                )
-                val service = Core.newService(config, platform)
-                platform.boxService = service
-                service.start()
-                if (!useRuleSets) {
-                    CoreLog.warn("Started without downloaded rule sets; geo based routing is disabled")
-                }
-                return platform to service
-            } catch (error: Throwable) {
-                lastError = error
-                platform.runCatching { closeInterfaceMonitor() }
-                tunDescriptor?.runCatching { close() }
-                tunDescriptor = null
-                if (!useRuleSets || !isRuleSetFailure(error)) throw error
-                CoreLog.warn("Rule set download failed, retrying without it: ${describe(error)}")
-            }
+        geoReady: Boolean,
+    ): Pair<XrayPlatform, Instance> {
+        probePort = freeProbePort()
+        val config = XrayConfigBuilder.build(
+            profile,
+            settings,
+            rules,
+            systemDnsServers(),
+            if (settings.resolveServer) resolveServerAddress(profile.address) else null,
+            probePort,
+            geoReady,
+        )
+
+        val corePlatform = XrayPlatform(this)
+        val instance = Core.newInstance(config, corePlatform)
+        val descriptor = try {
+            establishTun(settings)
+        } catch (error: Throwable) {
+            instance.runCatching { close() }
+            throw error
         }
-        throw lastError ?: IllegalStateException("Core failed to start")
+
+        try {
+            instance.start(descriptor.detachFd(), settings.tunMTU.coerceIn(MTU_MIN, MTU_MAX))
+        } catch (error: Throwable) {
+            instance.runCatching { close() }
+            throw error
+        }
+        return corePlatform to instance
+    }
+
+    private fun establishTun(settings: SettingsState): ParcelFileDescriptor {
+        val builder = Builder()
+            .setSession(SESSION_NAME)
+            .setMtu(settings.tunMTU.coerceIn(MTU_MIN, MTU_MAX))
+
+        val address = if (settings.hideTunnelAddress) TUN_ADDRESS_V4_HIDDEN else TUN_ADDRESS_V4
+        builder.addAddress(address, TUN_PREFIX_V4)
+        if (!settings.leakProtection) {
+            runCatching { builder.addAddress(TUN_ADDRESS_V6, TUN_PREFIX_V6) }
+        }
+
+        if (settings.autoRoute) {
+            builder.addRoute("0.0.0.0", 0)
+            if (!settings.leakProtection || settings.strictRoute) {
+                runCatching { builder.addRoute("::", 0) }
+                    .onFailure { CoreLog.warn("The system refused an IPv6 route: ${it.message}") }
+            }
+            builder.addDnsServer(ROUTED_DNS_SERVER)
+        }
+
+        applyPackageFilter(builder, settings)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            builder.setMetered(false)
+        }
+
+        return builder.establish()
+            ?: throw IllegalStateException("VPN permission was revoked or another VPN is active")
+    }
+
+    private fun applyPackageFilter(builder: Builder, settings: SettingsState) {
+        runCatching { builder.addDisallowedApplication(packageName) }
+        if (!settings.perAppProxy) return
+
+        if (settings.perAppIncludeMode) {
+            settings.includedApps.forEach { name ->
+                runCatching { builder.addAllowedApplication(name) }
+                    .onFailure { CoreLog.warn("Cannot include $name: ${it.message}") }
+            }
+            return
+        }
+        settings.excludedApps.forEach { name ->
+            if (name == packageName) return@forEach
+            runCatching { builder.addDisallowedApplication(name) }
+                .onFailure { CoreLog.warn("Cannot exclude $name: ${it.message}") }
+        }
     }
 
     @Volatile
@@ -444,7 +490,7 @@ class SybBoxVpnService : VpnService() {
         error.message?.contains("rule-set", ignoreCase = true) == true
 
     private fun describe(error: Throwable): String = when (error) {
-        is UnsupportedProtocolException -> "Protocol ${error.protocol} is not supported"
+        is UnsupportedProfileException -> error.reason.replaceFirstChar { it.uppercase() }
         else -> error.message?.takeIf { it.isNotBlank() } ?: error.javaClass.simpleName
     }
 
@@ -510,8 +556,20 @@ class SybBoxVpnService : VpnService() {
     }
 
     suspend fun urlTest(url: String = DEFAULT_TEST_URL): Int = withContext(Dispatchers.IO) {
-        val service = boxService ?: return@withContext -1
-        runCatching { service.urlTest(ConfigBuilder.TAG_PROXY, url, 5000) }.getOrDefault(-1)
+        if (xrayInstance == null || probePort == 0) return@withContext -1
+        val client = okhttp3.OkHttpClient.Builder()
+            .proxy(java.net.Proxy(java.net.Proxy.Type.SOCKS, java.net.InetSocketAddress("127.0.0.1", probePort)))
+            .connectTimeout(URL_TEST_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
+            .callTimeout(URL_TEST_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
+            .retryOnConnectionFailure(false)
+            .build()
+        val request = okhttp3.Request.Builder().url(url).header("User-Agent", "SYBbox").build()
+        runCatching {
+            val started = System.nanoTime()
+            val reached = client.newCall(request).execute().use { it.code in 200..399 }
+            if (!reached) return@runCatching -1
+            ((System.nanoTime() - started) / 1_000_000L).toInt().coerceAtLeast(1)
+        }.getOrDefault(-1)
     }
 
     private fun standby() {
@@ -554,12 +612,9 @@ class SybBoxVpnService : VpnService() {
     private suspend fun stopCore() = coreMutex.withLock { shutdownCore() }
 
     private fun shutdownCore() {
-        platform?.runCatching { closeInterfaceMonitor() }
-        boxService?.runCatching { close() }
-        boxService = null
+        xrayInstance?.runCatching { close() }
+        xrayInstance = null
         platform = null
-        tunDescriptor?.runCatching { close() }
-        tunDescriptor = null
         liveInstance = null
     }
 
@@ -658,6 +713,17 @@ class SybBoxVpnService : VpnService() {
             DEFAULT_TEST_URL,
             "http://cp.cloudflare.com/generate_204",
         )
+        private const val URL_TEST_TIMEOUT_SECONDS = 5L
+
+        private const val SESSION_NAME = "SYBbox"
+        private const val TUN_ADDRESS_V4 = "172.19.0.1"
+        private const val TUN_ADDRESS_V4_HIDDEN = "169.254.19.1"
+        private const val TUN_PREFIX_V4 = 30
+        private const val TUN_ADDRESS_V6 = "fdfe:dcba:9876::1"
+        private const val TUN_PREFIX_V6 = 126
+        private const val ROUTED_DNS_SERVER = "172.19.0.53"
+        private const val MTU_MIN = 1280
+        private const val MTU_MAX = 9000
         private const val PROBE_TIMEOUT_SECONDS = 7L
 
         @Volatile

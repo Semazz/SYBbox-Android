@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -141,9 +143,10 @@ fun <T> SybSegmented(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            .padding(3.dp),
+            .padding(4.dp)
+            .height(IntrinsicSize.Max),
     ) {
         options.forEachIndexed { index, option ->
             val isSelected = option == selected
@@ -164,10 +167,11 @@ fun <T> SybSegmented(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(11.dp))
+                    .fillMaxHeight()
+                    .heightIn(min = minHeight)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(fill)
                     .clickable { onSelect(option) }
-                    .heightIn(min = minHeight)
                     .padding(horizontal = SybSpacing.small, vertical = SybSpacing.small + 1.dp),
                 contentAlignment = Alignment.Center,
             ) {

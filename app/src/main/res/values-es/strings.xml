@@ -78,8 +78,8 @@
     <string name="per_app_routing">Enrutamiento por app</string>
     <string name="per_app_summary">Elige qué apps usan el túnel</string>
     <string name="apps_selected">%1$d seleccionadas</string>
-    <string name="mode_include">Solo las seleccionadas</string>
-    <string name="mode_exclude">Todas menos las seleccionadas</string>
+    <string name="mode_include">Solo seleccionadas</string>
+    <string name="mode_exclude">Excepto seleccionadas</string>
     <string name="search_apps">Buscar apps</string>
     <string name="show_system_apps">Mostrar apps del sistema</string>
 

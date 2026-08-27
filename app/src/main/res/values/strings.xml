@@ -78,8 +78,8 @@
     <string name="per_app_routing">Per-app routing</string>
     <string name="per_app_summary">Choose which apps use the tunnel</string>
     <string name="apps_selected">%1$d selected</string>
-    <string name="mode_include">Only the selected apps</string>
-    <string name="mode_exclude">Everything except the selected</string>
+    <string name="mode_include">Only selected</string>
+    <string name="mode_exclude">All but selected</string>
     <string name="search_apps">Search apps</string>
     <string name="show_system_apps">Show system apps</string>
 

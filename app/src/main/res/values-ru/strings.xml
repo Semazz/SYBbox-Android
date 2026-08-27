@@ -78,7 +78,7 @@
     <string name="per_app_summary">Выберите, какие приложения идут через туннель</string>
     <string name="apps_selected">Выбрано: %1$d</string>
     <string name="mode_include">Только выбранные</string>
-    <string name="mode_exclude">Все, кроме выбранных</string>
+    <string name="mode_exclude">Кроме выбранных</string>
     <string name="search_apps">Поиск приложений</string>
     <string name="show_system_apps">Показать системные</string>
 

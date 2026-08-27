@@ -14,6 +14,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicBoolean
 
 enum class WidgetShape(
     val layout: Int,
@@ -31,10 +34,13 @@ abstract class SybBoxWidget(private val shape: WidgetShape) : AppWidgetProvider(
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, widgetIds: IntArray) {
         val pending = goAsync()
+        val app = context.applicationContext
         scope.launch {
             try {
-                val data = WidgetSource.read(context)
-                widgetIds.forEach { manager.updateAppWidget(it, render(context, shape, data)) }
+                refreshLock.withLock {
+                    val data = WidgetSource.read(app)
+                    widgetIds.forEach { manager.updateAppWidget(it, render(app, shape, data)) }
+                }
             } finally {
                 pending.finish()
             }
@@ -53,6 +59,9 @@ abstract class SybBoxWidget(private val shape: WidgetShape) : AppWidgetProvider(
 
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+        private val refreshLock = Mutex()
+        private val refreshQueued = AtomicBoolean(false)
+
         private val providers = mapOf(
             WidgetShape.BUTTON to Button::class.java,
             WidgetShape.SWITCH to Switch::class.java,
@@ -61,6 +70,18 @@ abstract class SybBoxWidget(private val shape: WidgetShape) : AppWidgetProvider(
         )
 
         fun refresh(context: Context) {
+            val app = context.applicationContext
+            if (!refreshQueued.compareAndSet(false, true)) return
+
+            scope.launch {
+                refreshLock.withLock {
+                    refreshQueued.set(false)
+                    push(app)
+                }
+            }
+        }
+
+        private suspend fun push(context: Context) {
             val manager = AppWidgetManager.getInstance(context) ?: return
             val live = providers.mapNotNull { (shape, provider) ->
                 val ids = runCatching {
@@ -70,11 +91,9 @@ abstract class SybBoxWidget(private val shape: WidgetShape) : AppWidgetProvider(
             }
             if (live.isEmpty()) return
 
-            scope.launch {
-                val data = WidgetSource.read(context)
-                live.forEach { (shape, ids) ->
-                    runCatching { manager.updateAppWidget(ids, render(context, shape, data)) }
-                }
+            val data = WidgetSource.read(context)
+            live.forEach { (shape, ids) ->
+                runCatching { manager.updateAppWidget(ids, render(context, shape, data)) }
             }
         }
 

@@ -20,6 +20,7 @@ class WidgetActionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != ACTION_TOGGLE) return
+        if (!tapAccepted()) return
 
         when (SybBoxVpnService.appState.value.connectionState) {
             ConnectionState.CONNECTED, ConnectionState.CONNECTING -> {
@@ -53,5 +54,15 @@ class WidgetActionReceiver : BroadcastReceiver() {
 
     companion object {
         const val ACTION_TOGGLE = "com.sybbox.WIDGET_TOGGLE"
+
+        private const val TAP_GUARD_MILLIS = 500L
+        private val lastTap = java.util.concurrent.atomic.AtomicLong(0)
+
+        private fun tapAccepted(): Boolean {
+            val now = android.os.SystemClock.elapsedRealtime()
+            val previous = lastTap.get()
+            if (now - previous < TAP_GUARD_MILLIS) return false
+            return lastTap.compareAndSet(previous, now)
+        }
     }
 }

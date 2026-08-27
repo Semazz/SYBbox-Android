@@ -34,6 +34,9 @@
 
 Защита соединения — TLS и REALITY, с подменой отпечатка TLS (uTLS) и XTLS Vision.
 
+REALITY работает поверх TCP, XHTTP и gRPC — так устроено ядро. Сервер с REALITY поверх
+WebSocket, mKCP или HTTP Upgrade помечается в списке как неподдерживаемый.
+
 ### Транспорты
 
 TCP · WebSocket · gRPC · HTTP Upgrade · mKCP · XHTTP

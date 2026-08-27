@@ -18,7 +18,7 @@ fork, the patched shadowsocks2 and the third-party XHTTP fork are all gone.
   region works offline and from the first second. If they are missing, region rules switch off
   and the tunnel still comes up rather than failing outright.
 
-### Removed — protocols and transports the new core does not have
+### Removed — what the new core does not have
 - **TUIC, AnyTLS and ShadowTLS** do not exist in Xray. Servers using them are kept in the list
   and marked as unsupported instead of disappearing from a subscription.
 - **SSH, NaiveProxy and Mieru** are gone from the protocol list. They were never built into a
@@ -35,8 +35,31 @@ fork, the patched shadowsocks2 and the third-party XHTTP fork are all gone.
 - **What to fragment**, alongside the existing switch: the TLS hello, or the first packets.
 - **How the router resolves domains** — as-is, on no match, or on demand.
 - **XUDP on port 443** — reject, allow or skip, for multiplexed UDP.
+- **HTTP proxy**, a second local entrance for apps that only speak HTTP proxy.
+- **Reading the destination from traffic** is switchable, along with using the domain for routing
+  only. It reaches both the local entrances and the tunnel itself.
+- **Routes outside the tunnel**, for addresses that should bypass it. Android 13 and newer.
+- **Identify as**, so subscriptions can be fetched as a browser. Some panels hand out different
+  servers depending on who is asking.
 
-### Fixed
+### Added — the interface
+- **The address to hand other devices** is shown once connections from the LAN are allowed, so it
+  can be typed straight into another device rather than guessed.
+- **A warning when the local proxy is left open.** Allowing connections from the LAN without a
+  user and password lets anyone on the same network route their traffic through the tunnel.
+  Nothing said so before.
+- **Ping from the notification shade**, next to the disconnect button. It measures the same way
+  the app does, and writes the result back, so the two can no longer disagree.
+- **The core version** in About. The string existed in four languages but was never shown.
+
+### Fixed — leaks and routing
+- **IPv6 escaped the tunnel while leak protection was on.** The setting stopped the tunnel from
+  taking an IPv6 address, and Android then refused the IPv6 route that was supposed to catch that
+  traffic. Nothing was captured, so anything with IPv6 connectivity went straight out. The tunnel
+  now always takes IPv6, and the setting decides what the core does with it: block it, or carry it.
+- **Only the selected apps sent everything through the tunnel.** Android refuses to mix an allowed
+  list with a disallowed one, and the app quietly asked for both — every app in the list failed to
+  register, leaving an empty list that let everything through. The two modes no longer overlap.
 - **Fragmentation now applies to the proxied connection.** It is a property of the outbound that
   dials, so it is set up as its own outbound that the proxy dials through. It stays off for
   XTLS Vision and for QUIC-based protocols, where it does nothing useful.
@@ -46,13 +69,15 @@ fork, the patched shadowsocks2 and the third-party XHTTP fork are all gone.
   handled by the VPN interface and never involved the core.
 - **Turning the tunnel on and off no longer leaks the descriptor.** The core owns it from the
   moment it is handed over and closes it on every path out.
-- **IPv6 escaped the tunnel while leak protection was on.** The setting stopped the tunnel from
-  taking an IPv6 address, and Android then refused the IPv6 route that was supposed to catch that
-  traffic. Nothing was captured, so anything with IPv6 connectivity went straight out. The tunnel
-  now always takes IPv6, and the setting decides what the core does with it: block it, or carry it.
-- **Only the selected apps sent everything through the tunnel.** Android refuses to mix an allowed
-  list with a disallowed one, and the app quietly asked for both — every app in the list failed to
-  register, leaving an empty list that let everything through. The two modes no longer overlap.
+
+### Fixed — settings kept across a reinstall
+- **Backup never ran.** The rules file listing what to keep was never referenced from the
+  manifest, so Android backed up the whole app folder — and the geo data alone is larger than the
+  25 MB an app is allowed. Servers, subscriptions and settings are now the only things sent, and
+  they fit with room to spare. Rules for Android 12 and newer were missing entirely and have been
+  added.
+
+### Fixed — the interface
 - **Two screens were drawn on top of each other** when a row was tapped twice. Navigation ran on
   springs that keep a screen alive long after it fades out, and a second tap during that window
   pushed the same screen again. Transitions are timed now, and a tap that arrives mid-transition
@@ -61,18 +86,19 @@ fork, the patched shadowsocks2 and the third-party XHTTP fork are all gone.
   others, and one reading stale data could finish last. They are updated one at a time now, all
   from the same snapshot.
 - The big widget took three rows instead of two, and left an empty strip along its bottom.
-
-### Added — after the core swap
-- **HTTP proxy**, a second local entrance for apps that only speak HTTP proxy.
-- **Reading the destination from traffic** is switchable, along with using the domain for routing
-  only. It reaches both the local entrances and the tunnel itself.
-- **Routes outside the tunnel**, for addresses that should bypass it. Android 13 and newer.
-- **Identify as**, so subscriptions can be fetched as a browser. Some panels hand out different
-  servers depending on who is asking.
-- **The address to hand other devices** is shown once connections from the LAN are allowed, so it
-  can be typed straight into another device rather than guessed.
-- **The core version** in About. The string existed in four languages but was never shown.
-
+- **App icons had a grey frame** and each kept its own shape, because the icon was drawn smaller
+  than the tile behind it and Android applied its own mask. Icons are flattened to a square before
+  any mask is applied and then cut to the app's own corner, so every one is the same size and
+  shape.
+- **The mode switch jumped** when one of its labels wrapped onto a second line.
+- **Corner rounding and padding had drifted apart.** Ten different corner radii were in use, two
+  competing scales, and interchangeable elements in the same slot were rounded differently. There
+  is one scale now. Lists that ended flush against the bottom of the screen were given the same
+  breathing room as the rest.
+- **The notification no longer redraws every second.** It carried a live speed and duration, which
+  meant rebuilding it and asking the system for the same two intents once a second, screen on or
+  off — around ten thousand needless calls an hour. Speed and duration are still live inside the
+  app.
 
 ## v2.0.2 (2026-08-27)
 

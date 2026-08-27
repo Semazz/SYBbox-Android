@@ -7,6 +7,7 @@ import (
 
 	"github.com/sagernet/gvisor/pkg/tcpip"
 	xnet "github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/common/session"
 )
 
 const (
@@ -56,3 +57,27 @@ func copyStream(destination, source net.Conn, idle time.Duration, finished chan<
 }
 
 var sniffedProtocols = []string{"http", "tls", "quic", "fakedns"}
+
+var (
+	sniffGuard     sync.RWMutex
+	sniffEnabled   = true
+	sniffRouteOnly = false
+)
+
+func SetSniffing(enabled bool, routeOnly bool) {
+	sniffGuard.Lock()
+	sniffEnabled = enabled
+	sniffRouteOnly = routeOnly
+	sniffGuard.Unlock()
+}
+
+func sniffingRequest() session.SniffingRequest {
+	sniffGuard.RLock()
+	defer sniffGuard.RUnlock()
+	return session.SniffingRequest{
+		Enabled:                        sniffEnabled,
+		OverrideDestinationForProtocol: sniffedProtocols,
+		MetadataOnly:                   false,
+		RouteOnly:                      sniffRouteOnly,
+	}
+}

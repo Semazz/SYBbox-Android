@@ -27,6 +27,10 @@ func SetAssetPath(path string) error {
 	return os.Setenv("XRAY_LOCATION_ASSET", path)
 }
 
+func SetSniffing(enabled bool, routeOnly bool) {
+	tun.SetSniffing(enabled, routeOnly)
+}
+
 func Version() string {
 	return xcore.Version()
 }

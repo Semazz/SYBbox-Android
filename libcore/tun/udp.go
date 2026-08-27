@@ -30,14 +30,7 @@ func (s *Stack) relayUDP(local *gonet.UDPConn, id stack.TransportEndpointID) {
 	source := xnet.UDPDestination(addressOf(id.RemoteAddress), xnet.Port(id.RemotePort))
 
 	ctx := session.ContextWithInbound(s.ctx, &session.Inbound{Tag: InboundTag, Source: source})
-	ctx = session.ContextWithContent(ctx, &session.Content{
-		SniffingRequest: session.SniffingRequest{
-			Enabled:                        true,
-			OverrideDestinationForProtocol: sniffedProtocols,
-			MetadataOnly:                   false,
-			RouteOnly:                      false,
-		},
-	})
+	ctx = session.ContextWithContent(ctx, &session.Content{SniffingRequest: sniffingRequest()})
 	remote, dialErr := xcore.Dial(ctx, s.instance, destination)
 	if dialErr != nil {
 		s.log(0, "udp to "+destination.String()+" failed: "+dialErr.Error())

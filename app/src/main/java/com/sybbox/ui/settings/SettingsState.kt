@@ -76,6 +76,7 @@ data class SettingsState(
 
     val themeMode: String = "SYSTEM",
     val dynamicColor: Boolean = true,
+    val cornerStyle: String = "MEDIUM",
     val language: String = "SYSTEM",
     val logLevel: String = "info",
 )

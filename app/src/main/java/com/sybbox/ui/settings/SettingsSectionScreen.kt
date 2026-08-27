@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Route
+import androidx.compose.material.icons.rounded.RoundedCorner
 import androidx.compose.material.icons.rounded.Router
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.SettingsEthernet
@@ -138,8 +139,7 @@ fun SettingsSectionScreen(
             ),
         ) {
             item {
-                SybCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(vertical = SybSpacing.small)) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
                         when (section) {
                             SettingsSection.APPEARANCE -> AppearanceSettings(state, viewModel)
                             SettingsSection.CONNECTION -> ConnectionSettings(state, viewModel)
@@ -155,7 +155,6 @@ fun SettingsSectionScreen(
                             SettingsSection.ABOUT -> AboutSettings(viewModel)
                         }
                     }
-                }
             }
             item { Spacer(Modifier.height(SybSpacing.xlarge)) }
         }
@@ -164,6 +163,25 @@ fun SettingsSectionScreen(
 
 @Composable
 private fun AppearanceSettings(state: SettingsState, viewModel: SettingsViewModel) {
+    SettingsChoice(
+        title = stringResource(R.string.corner_style),
+        summary = stringResource(R.string.corner_style_summary),
+        options = com.sybbox.ui.theme.CORNER_STYLES,
+        selected = state.cornerStyle,
+        onSelect = viewModel::setCornerStyle,
+        label = {
+            stringResource(
+                when (it) {
+                    com.sybbox.ui.theme.CORNER_SHARP -> R.string.corner_sharp
+                    com.sybbox.ui.theme.CORNER_ROUND -> R.string.corner_round
+                    com.sybbox.ui.theme.CORNER_EXTRA -> R.string.corner_extra
+                    else -> R.string.corner_medium
+                },
+            )
+        },
+        icon = Icons.Rounded.RoundedCorner,
+    )
+    SettingsDivider()
     val context = LocalContext.current
     SettingsChoice(
         title = stringResource(R.string.language),

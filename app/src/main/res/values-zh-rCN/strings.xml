@@ -326,4 +326,10 @@
     <string name="excluded_routes_summary">此处列出的地址将完全绕过隧道。需要 Android 13 或更高版本</string>
     <string name="subscription_user_agent">标识为</string>
     <string name="subscription_user_agent_summary">部分面板会根据请求方的身份下发不同的服务器</string>
+    <string name="corner_style">圆角</string>
+    <string name="corner_style_summary">整个应用中圆角的程度</string>
+    <string name="corner_sharp">直角</string>
+    <string name="corner_medium">中等</string>
+    <string name="corner_round">圆润</string>
+    <string name="corner_extra">最大</string>
 </resources>

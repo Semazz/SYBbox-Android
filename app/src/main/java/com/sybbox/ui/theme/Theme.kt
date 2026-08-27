@@ -11,12 +11,30 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+
+const val CORNER_SHARP = "SHARP"
+const val CORNER_MEDIUM = "MEDIUM"
+const val CORNER_ROUND = "ROUND"
+const val CORNER_EXTRA = "EXTRA"
+
+val CORNER_STYLES = listOf(CORNER_SHARP, CORNER_MEDIUM, CORNER_ROUND, CORNER_EXTRA)
+
+val LocalCornerScale = compositionLocalOf { 1f }
+
+fun cornerScaleFor(style: String): Float = when (style.uppercase()) {
+    CORNER_SHARP -> 0.35f
+    CORNER_ROUND -> 1.45f
+    CORNER_EXTRA -> 2f
+    else -> 1f
+}
 
 const val THEME_SYSTEM = "SYSTEM"
 const val THEME_LIGHT = "LIGHT"
@@ -100,6 +118,7 @@ private val ExpressiveShapes = Shapes(
 fun SYBboxTheme(
     themeMode: String = THEME_DARK,
     dynamicColor: Boolean = false,
+    cornerStyle: String = CORNER_MEDIUM,
     content: @Composable () -> Unit,
 ) {
     val dark = when (themeMode.uppercase()) {
@@ -127,10 +146,12 @@ fun SYBboxTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = scheme,
-        typography = Typography,
-        shapes = ExpressiveShapes,
-        content = content,
-    )
+    CompositionLocalProvider(LocalCornerScale provides cornerScaleFor(cornerStyle)) {
+        MaterialTheme(
+            colorScheme = scheme,
+            typography = Typography,
+            shapes = ExpressiveShapes,
+            content = content,
+        )
+    }
 }

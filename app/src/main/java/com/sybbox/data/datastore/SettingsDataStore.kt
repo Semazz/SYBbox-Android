@@ -81,6 +81,7 @@ class SettingsDataStore @Inject constructor(
     val fragmentEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_FRAGMENT_ENABLED] ?: true }
     val fragmentSleep: Flow<String> = dataStore.data.map { it[KEY_FRAGMENT_SLEEP] ?: "10" }
     val fragmentPackets: Flow<String> = dataStore.data.map { it[KEY_FRAGMENT_PACKETS] ?: "tlshello" }
+    val cornerStyle: Flow<String> = dataStore.data.map { it[KEY_CORNER_STYLE] ?: "MEDIUM" }
     val httpInbound: Flow<Boolean> = dataStore.data.map { it[KEY_HTTP_INBOUND] ?: false }
     val httpInboundPort: Flow<Int> = dataStore.data.map { it[KEY_HTTP_INBOUND_PORT] ?: 10809 }
     val subscriptionUserAgent: Flow<String> = dataStore.data.map { it[KEY_SUB_USER_AGENT] ?: "sybbox" }
@@ -128,6 +129,7 @@ class SettingsDataStore @Inject constructor(
             fragmentEnabled = p[KEY_FRAGMENT_ENABLED] ?: true,
             fragmentSleep = p[KEY_FRAGMENT_SLEEP] ?: "10",
             fragmentPackets = p[KEY_FRAGMENT_PACKETS] ?: "tlshello",
+            cornerStyle = p[KEY_CORNER_STYLE] ?: "MEDIUM",
             httpInbound = p[KEY_HTTP_INBOUND] ?: false,
             httpInboundPort = p[KEY_HTTP_INBOUND_PORT] ?: 10809,
             subscriptionUserAgent = p[KEY_SUB_USER_AGENT] ?: "sybbox",
@@ -267,6 +269,7 @@ class SettingsDataStore @Inject constructor(
     suspend fun setFragmentEnabled(value: Boolean) = dataStore.edit { it[KEY_FRAGMENT_ENABLED] = value }
     suspend fun setFragmentSleep(value: String) = dataStore.edit { it[KEY_FRAGMENT_SLEEP] = value }
     suspend fun setFragmentPackets(value: String) = dataStore.edit { it[KEY_FRAGMENT_PACKETS] = value }
+    suspend fun setCornerStyle(value: String) = dataStore.edit { it[KEY_CORNER_STYLE] = value }
     suspend fun setHttpInbound(value: Boolean) = dataStore.edit { it[KEY_HTTP_INBOUND] = value }
     suspend fun setHttpInboundPort(value: Int) = dataStore.edit { it[KEY_HTTP_INBOUND_PORT] = value }
     suspend fun setSubscriptionUserAgent(value: String) = dataStore.edit { it[KEY_SUB_USER_AGENT] = value }
@@ -340,6 +343,7 @@ class SettingsDataStore @Inject constructor(
         private val KEY_FRAGMENT_ENABLED = booleanPreferencesKey("fragment_enabled")
         private val KEY_FRAGMENT_SLEEP = stringPreferencesKey("fragment_sleep")
         private val KEY_FRAGMENT_PACKETS = stringPreferencesKey("fragment_packets")
+        private val KEY_CORNER_STYLE = stringPreferencesKey("corner_style")
         private val KEY_HTTP_INBOUND = booleanPreferencesKey("http_inbound")
         private val KEY_HTTP_INBOUND_PORT = intPreferencesKey("http_inbound_port")
         private val KEY_SUB_USER_AGENT = stringPreferencesKey("subscription_user_agent")

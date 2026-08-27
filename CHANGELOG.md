@@ -1,5 +1,53 @@
 # Changelog
 
+## v3.0.0 (2026-08-27)
+
+The app now runs on Xray-core instead of sing-box. The core was replaced whole: the sing-box
+fork, the patched shadowsocks2 and the third-party XHTTP fork are all gone.
+
+### Changed — the core
+- **Xray-core** replaces sing-box. XTLS Vision, REALITY and XHTTP are now the core's own
+  implementations rather than a fork carrying patches. XHTTP in particular was held together by
+  someone else's fork of sing-box; it is native here.
+- **The tunnel has its own network stack.** Xray has no TUN of its own, so packets from the VPN
+  interface are taken apart by a gvisor stack inside the app and handed straight to the core.
+  There is no local SOCKS hop in between, which is one copy and one round trip less than the
+  usual arrangement on Android.
+- **geosite.dat and geoip.dat ship with the app.** Rules used to be downloaded while connecting,
+  through the tunnel that was still being built. They are read from disk now, so routing by
+  region works offline and from the first second. If they are missing, region rules switch off
+  and the tunnel still comes up rather than failing outright.
+
+### Removed — protocols and transports the new core does not have
+- **TUIC, AnyTLS and ShadowTLS** do not exist in Xray. Servers using them are kept in the list
+  and marked as unsupported instead of disappearing from a subscription.
+- **SSH, NaiveProxy and Mieru** are gone from the protocol list. They were never built into a
+  configuration in the first place.
+- **The HTTP/2 and QUIC transports** were removed from Xray itself. A server using either is
+  marked unsupported. This matters more than it sounds: the core refuses the whole configuration
+  when it meets one, so a single such server would have taken the tunnel down with it.
+- **REALITY over WebSocket, mKCP or HTTP Upgrade** is refused. Xray carries REALITY over RAW,
+  XHTTP and gRPC only, and would otherwise reject everything.
+
+### Added — settings
+- **Noise.** Junk packets before the handshake, to give deep packet inspection something else to
+  look at.
+- **What to fragment**, alongside the existing switch: the TLS hello, or the first packets.
+- **How the router resolves domains** — as-is, on no match, or on demand.
+- **XUDP on port 443** — reject, allow or skip, for multiplexed UDP.
+
+### Fixed
+- **Fragmentation now applies to the proxied connection.** It is a property of the outbound that
+  dials, so it is set up as its own outbound that the proxy dials through. It stays off for
+  XTLS Vision and for QUIC-based protocols, where it does nothing useful.
+- **Multiplexing is never layered on top of XTLS Vision.**
+- Routing rules that match a package or a process name are dropped rather than emitted. Xray
+  cannot map an Android uid onto a package. Proxying only chosen apps is untouched — that is
+  handled by the VPN interface and never involved the core.
+- **Turning the tunnel on and off no longer leaks the descriptor.** The core owns it from the
+  moment it is handed over and closes it on every path out.
+
+
 ## v2.0.2 (2026-08-27)
 
 ### Added — settings

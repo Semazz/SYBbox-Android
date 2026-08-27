@@ -3,7 +3,7 @@
 # SYBbox
 
 [![Android](https://img.shields.io/badge/Android-7.0%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=24)
-[![Release](https://img.shields.io/badge/release-2.0.2-blue?style=flat)](https://github.com/Semazz/SYBbox-Android/releases/latest)
+[![Release](https://img.shields.io/badge/release-3.0.0-blue?style=flat)](https://github.com/Semazz/SYBbox-Android/releases/latest)
 [![License](https://img.shields.io/badge/license-GPL--3.0-orange.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 [Скачать](#скачать) · [Возможности](#возможности) · [Как пользоваться](#как-пользоваться) · [Сборка](#сборка) · [Структура](#структура-проекта)
@@ -18,9 +18,9 @@
 
 | ABI | Для кого | Ссылка |
 | --- | --- | --- |
-| **arm64-v8a** | почти все телефоны с 2018 года | [SYBbox-2.0.2-arm64-v8a.apk](https://github.com/Semazz/SYBbox-Android/releases/download/v2.0.2/SYBbox-2.0.2-arm64-v8a.apk) |
-| armeabi-v7a | старые 32-битные устройства | [SYBbox-2.0.2-armeabi-v7a.apk](https://github.com/Semazz/SYBbox-Android/releases/download/v2.0.2/SYBbox-2.0.2-armeabi-v7a.apk) |
-| x86_64 | эмуляторы, планшеты на Intel | [SYBbox-2.0.2-x86_64.apk](https://github.com/Semazz/SYBbox-Android/releases/download/v2.0.2/SYBbox-2.0.2-x86_64.apk) |
+| **arm64-v8a** | почти все телефоны с 2018 года | [SYBbox-3.0.0-arm64-v8a.apk](https://github.com/Semazz/SYBbox-Android/releases/download/v3.0.0/SYBbox-3.0.0-arm64-v8a.apk) |
+| armeabi-v7a | старые 32-битные устройства | [SYBbox-3.0.0-armeabi-v7a.apk](https://github.com/Semazz/SYBbox-Android/releases/download/v3.0.0/SYBbox-3.0.0-armeabi-v7a.apk) |
+| x86_64 | эмуляторы, планшеты на Intel | [SYBbox-3.0.0-x86_64.apk](https://github.com/Semazz/SYBbox-Android/releases/download/v3.0.0/SYBbox-3.0.0-x86_64.apk) |
 
 Не знаете, что выбрать — берите **arm64-v8a**. Требуется **Android 7.0** и новее.
 
@@ -36,7 +36,7 @@
 
 ### Транспорты
 
-TCP · WebSocket · HTTP/2 · gRPC · HTTP Upgrade · QUIC · KCP · XHTTP
+TCP · WebSocket · gRPC · HTTP Upgrade · mKCP · XHTTP
 
 ### Подписки
 
@@ -137,7 +137,7 @@ APK появятся в `app/build/outputs/apk/release/`.
 
 ### Ядро (Go)
 
-Нужно только если меняете сам sing-box или набор протоколов:
+Нужно только если меняете само ядро или набор протоколов:
 
 ```bash
 cd libcore && ./build.sh
@@ -147,30 +147,27 @@ cd libcore && ./build.sh
 
 ### Проверка конфигураций
 
-Конфигурации проверяются не только разбором, но и **запуском настоящего ядра** — часть
-ошибок возникает при старте транспортов, и `sing-box check` их не ловит:
+Конфигурации проверяются не только разбором, но и **сборкой настоящим ядром** — часть
+ошибок возникает при построении транспортов, а не при чтении JSON:
 
 ```bash
-cd libcore/singbox-fork
-go build -tags "with_gvisor,with_quic,with_utls,with_clash_api,with_wireguard" -o /tmp/sing-box ./cmd/sing-box
-cd ../..
 ./gradlew :app:testDebugUnitTest --tests '*ConfigMatrixDumpTest*'
-tools/validate-configs.sh /tmp/sing-box
+tools/validate-configs.sh
 ```
 
-Прогоняет 1440 конфигураций: каждый протокол и транспорт во всех сочетаниях настроек.
+Прогоняет каждый протокол и транспорт во всех сочетаниях с шифрованием.
 
 ### Версия
 
 Берётся из git-тега, править ничего в файлах не нужно:
 
 ```bash
-git tag -a v2.0.2 -m "SYBbox 2.0.2"
-git push origin v2.0.2
+git tag -a v3.0.0 -m "SYBbox 3.0.0"
+git push origin v3.0.0
 ./gradlew assembleRelease
 ```
 
-Тег `v2.0.2` даст `versionName 2.0.2` и имя файла `SYBbox-2.0.2-arm64-v8a.apk`.
+Тег `v3.0.0` даст `versionName 3.0.0` и имя файла `SYBbox-3.0.0-arm64-v8a.apk`.
 
 ---
 
@@ -179,7 +176,8 @@ git push origin v2.0.2
 ```
 SYBbox/
 ├── app/                        Android-приложение
-│   ├── libs/sybbox_core.aar    собранное ядро sing-box
+│   ├── libs/sybbox_core.aar    собранное ядро Xray
+│   ├── src/main/assets/        geosite.dat и geoip.dat
 │   └── src/
 │       ├── main/java/com/sybbox/
 │       │   ├── core/           сборка конфигурации и мост к ядру
@@ -192,7 +190,8 @@ SYBbox/
 │       └── test/               юнит-тесты
 ├── libcore/                    ядро на Go
 │   ├── core/                   мост gomobile ↔ Android
-│   ├── singbox-fork/           форк sing-box с поддержкой XHTTP
+│   ├── tun/                    TUN-стек на gvisor
+│   ├── cmd/validate/           проверка конфигураций
 │   └── build.sh                сборка AAR
 └── tools/
     └── validate-configs.sh     запуск конфигураций настоящим ядром
@@ -224,4 +223,4 @@ CameraX + ML Kit (QR) · Go + gomobile
 
 [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0)
 
-Основано на [sing-box](https://github.com/SagerNet/sing-box) от SagerNet.
+Основано на [Xray-core](https://github.com/XTLS/Xray-core) от Project X.

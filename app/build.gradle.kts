@@ -17,7 +17,7 @@ fun git(vararg args: String): String? = runCatching {
     if (process.waitFor() == 0 && output.isNotEmpty()) output else null
 }.getOrNull()
 
-val fallbackVersion = "2.0.2"
+val fallbackVersion = "3.0.0"
 
 val latestTag = git("describe", "--tags", "--abbrev=0")
 val computedVersionName = latestTag?.removePrefix("v") ?: fallbackVersion
